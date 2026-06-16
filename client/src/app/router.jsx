@@ -9,12 +9,12 @@ import SpeechPracticePage from "../features/speech/pages/SpeechPracticePage.jsx"
 import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage.jsx";
 
 export const router = createBrowserRouter([
+  { path: "/login", element: <LoginPage /> },
   {
     path: "/",
     element: <MainLayout />,
     children: [
       { index: true, element: <Navigate to="/dashboard" replace /> },
-      { path: "login", element: <LoginPage /> },
       { path: "dashboard", element: <DashboardPage /> },
       { path: "vocabulary", element: <VocabularyPage /> },
       { path: "grammar", element: <GrammarPage /> },
