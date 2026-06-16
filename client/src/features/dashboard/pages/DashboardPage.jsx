@@ -20,7 +20,7 @@ export default function DashboardPage() {
 
         <video
           autoPlay
-          className="mt-8 max-h-[66vh] w-full max-w-[520px] object-contain sm:mt-10 sm:max-w-[610px]"
+          className="mt-6 max-h-[76vh] w-full max-w-[680px] object-contain sm:mt-8 sm:max-w-[820px]"
           loop
           muted
           playsInline

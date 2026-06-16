@@ -85,15 +85,6 @@ function SidebarContent({ onLogout, onNavigate, user }) {
       </nav>
 
       <div className="mt-auto border-t border-coal/10 pt-4">
-        <div className="mb-3 flex items-center gap-2 px-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-coal text-sm font-bold text-matcha">
-            {user?.name?.charAt(0) || "M"}
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-xs font-bold">{user?.name || "Meomeo"}</p>
-            <p className="text-[11px] text-coal/50">{user?.role || "student"}</p>
-          </div>
-        </div>
         <button
           className="w-full rounded-xl px-3 py-2 text-left text-[13px] font-bold text-red-500 transition hover:bg-red-50"
           onClick={onLogout}
@@ -101,7 +92,7 @@ function SidebarContent({ onLogout, onNavigate, user }) {
         >
           <span className="inline-flex items-center gap-2">
             <LogOut aria-hidden="true" size={16} strokeWidth={2.4} />
-            Dang xuat
+            Đăng xuất
           </span>
         </button>
       </div>
