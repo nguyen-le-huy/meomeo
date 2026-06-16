@@ -1,5 +1,5 @@
-import { Eye, EyeOff, Merge, Pencil, RefreshCw, Save } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Eye, EyeOff, Merge, Pause, Pencil, Play, RefreshCw, Save } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
@@ -13,6 +13,28 @@ import {
 } from "../hooks/useVideoLearning.js";
 
 const difficulties = ["easy", "normal", "hard"];
+let youtubeApiPromise;
+
+function loadYouTubeIframeApi() {
+  if (window.YT?.Player) return Promise.resolve(window.YT);
+
+  youtubeApiPromise ||= new Promise((resolve) => {
+    const previousCallback = window.onYouTubeIframeAPIReady;
+
+    window.onYouTubeIframeAPIReady = () => {
+      previousCallback?.();
+      resolve(window.YT);
+    };
+
+    if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+      const script = document.createElement("script");
+      script.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(script);
+    }
+  });
+
+  return youtubeApiPromise;
+}
 
 export default function VideoLearningPage() {
   const { id } = useParams();
@@ -33,11 +55,6 @@ export default function VideoLearningPage() {
   const updateSegmentMutation = useUpdateTranscriptSegment(id);
   const mergeSegmentMutation = useMergeTranscriptSegment(id);
   const segment = segments[currentIndex];
-  const embedUrl = useMemo(() => {
-    if (!video?.youtubeVideoId) return "";
-    const start = Math.floor(segment?.startTime || 0);
-    return `https://www.youtube.com/embed/${video.youtubeVideoId}?start=${start}&rel=0`;
-  }, [segment?.startTime, video?.youtubeVideoId]);
 
   function move(delta) {
     setCurrentIndex((current) => {
@@ -93,17 +110,7 @@ export default function VideoLearningPage() {
               </p>
             ) : null}
           </div>
-          <div className="overflow-hidden rounded-xl border border-coal/15 bg-black shadow-sm">
-            {embedUrl ? (
-              <iframe
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="aspect-video w-full"
-                src={embedUrl}
-                title={video.title}
-              />
-            ) : null}
-          </div>
+          <SegmentYoutubePlayer segment={segment} title={video.title} youtubeVideoId={video.youtubeVideoId} />
           <div className="rounded-xl bg-white/75 p-4">
             <div className="mb-3 flex flex-wrap gap-2">
               <button
@@ -205,6 +212,128 @@ export default function VideoLearningPage() {
         </div>
       </div>
     </section>
+  );
+}
+
+function SegmentYoutubePlayer({ segment, title, youtubeVideoId }) {
+  const hostRef = useRef(null);
+  const playerRef = useRef(null);
+  const boundaryTimerRef = useRef(null);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const stopBoundaryTimer = useCallback(() => {
+    if (boundaryTimerRef.current) {
+      window.clearInterval(boundaryTimerRef.current);
+      boundaryTimerRef.current = null;
+    }
+  }, []);
+
+  const pauseVideo = useCallback(() => {
+    stopBoundaryTimer();
+    playerRef.current?.pauseVideo?.();
+    setIsPlaying(false);
+  }, [stopBoundaryTimer]);
+
+  const playSegment = useCallback(() => {
+    const player = playerRef.current;
+    if (!player || !segment) return;
+
+    const startTime = Number(segment.startTime || 0);
+    const endTime = Number(segment.endTime || startTime);
+
+    stopBoundaryTimer();
+    player.seekTo(startTime, true);
+    player.playVideo();
+    setIsPlaying(true);
+
+    boundaryTimerRef.current = window.setInterval(() => {
+      const currentTime = Number(player.getCurrentTime?.() || 0);
+
+      if (currentTime >= endTime) {
+        pauseVideo();
+      }
+    }, 120);
+  }, [pauseVideo, segment, stopBoundaryTimer]);
+
+  useEffect(() => {
+    let isMounted = true;
+    setIsPlayerReady(false);
+    setIsPlaying(false);
+    stopBoundaryTimer();
+
+    if (!youtubeVideoId || !hostRef.current) return undefined;
+
+    loadYouTubeIframeApi().then((YT) => {
+      if (!isMounted || !hostRef.current) return;
+
+      playerRef.current?.destroy?.();
+      playerRef.current = new YT.Player(hostRef.current, {
+        videoId: youtubeVideoId,
+        playerVars: {
+          enablejsapi: 1,
+          playsinline: 1,
+          rel: 0,
+          origin: window.location.origin,
+        },
+        events: {
+          onReady: () => {
+            if (isMounted) setIsPlayerReady(true);
+          },
+          onStateChange: (event) => {
+            if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
+              setIsPlaying(false);
+            }
+
+            if (event.data === YT.PlayerState.PLAYING) {
+              setIsPlaying(true);
+            }
+          },
+        },
+      });
+    });
+
+    return () => {
+      isMounted = false;
+      stopBoundaryTimer();
+      playerRef.current?.destroy?.();
+      playerRef.current = null;
+    };
+  }, [stopBoundaryTimer, youtubeVideoId]);
+
+  useEffect(() => {
+    if (isPlayerReady && segment) {
+      playSegment();
+    }
+  }, [isPlayerReady, playSegment, segment?._id]);
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-coal/15 bg-black shadow-sm">
+      <div className="aspect-video w-full" ref={hostRef} title={title} />
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-coal px-3 py-2 text-white">
+        <p className="text-xs font-bold text-white/70">
+          {segment ? `Tự phát segment #${segment.index}: ${segment.startTime}s - ${segment.endTime}s` : "Chưa có transcript segment"}
+        </p>
+        <div className="flex gap-2">
+          <button
+            className="inline-flex h-9 items-center gap-2 rounded-lg bg-white px-3 text-xs font-black text-coal disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!isPlayerReady || !segment}
+            onClick={playSegment}
+            type="button"
+          >
+            <Play size={15} /> Phát đoạn
+          </button>
+          <button
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/20 px-3 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!isPlayerReady || !isPlaying}
+            onClick={pauseVideo}
+            type="button"
+          >
+            <Pause size={15} /> Dừng
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
