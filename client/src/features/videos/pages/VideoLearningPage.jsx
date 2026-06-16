@@ -8,6 +8,7 @@ import {
   Merge,
   Mic,
   NotebookPen,
+  Pause,
   Pencil,
   Play,
   RefreshCw,
@@ -63,6 +64,9 @@ export default function VideoLearningPage() {
   const [showTranscript, setShowTranscript] = useState(false);
   const [answer, setAnswer] = useState("");
   const [editingSegmentId, setEditingSegmentId] = useState("");
+  const [hasStarted, setHasStarted] = useState(false);
+  const [isPlayerPlaying, setIsPlayerPlaying] = useState(false);
+  const [isYoutubeReady, setIsYoutubeReady] = useState(false);
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
   const { data: video, isLoading: isVideoLoading } = useVideo(id);
@@ -86,12 +90,41 @@ export default function VideoLearningPage() {
     selectSegment(next);
   }
 
-  function startFirstSegment() {
-    const firstSegment = segments[0];
-    if (!firstSegment) return;
+  function playSegmentAt(index) {
+    const targetSegment = segments[index];
+    if (!targetSegment) return;
 
-    selectSegment(0);
-    playerRef.current?.playSegment(firstSegment);
+    setHasStarted(true);
+    selectSegment(index);
+    playerRef.current?.playSegment(targetSegment);
+  }
+
+  function startFirstSegment() {
+    playSegmentAt(0);
+  }
+
+  function replayCurrentSegment() {
+    if (!segment) return;
+
+    setHasStarted(true);
+    playerRef.current?.playSegment(segment);
+  }
+
+  function toggleCurrentSegmentPlayback() {
+    if (!segment) return;
+
+    setHasStarted(true);
+    if (isPlayerPlaying) {
+      playerRef.current?.pauseVideo();
+      return;
+    }
+
+    playerRef.current?.playSegment(segment);
+  }
+
+  function moveAndPlay(delta) {
+    const next = Math.min(Math.max(currentIndex + delta, 0), Math.max(segments.length - 1, 0));
+    playSegmentAt(next);
   }
 
   async function submitDictation(event) {
@@ -127,13 +160,20 @@ export default function VideoLearningPage() {
             ) : null}
           </div>
           <div className="space-y-4">
-            <SegmentYoutubePlayer ref={playerRef} segment={segment} title={video.title} youtubeVideoId={video.youtubeVideoId} />
+            <SegmentYoutubePlayer
+              onPlayingChange={setIsPlayerPlaying}
+              onReadyChange={setIsYoutubeReady}
+              ref={playerRef}
+              segment={segment}
+              title={video.title}
+              youtubeVideoId={video.youtubeVideoId}
+            />
             <div className="hidden xl:block">
               <p className="mb-2 text-xs font-black uppercase tracking-wide text-coal/65">Điều khiển</p>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   className="inline-flex h-14 items-center justify-center gap-3 rounded-xl bg-[#292f68] px-4 text-base font-black uppercase text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={!segment}
+                  disabled={!segment || !isYoutubeReady}
                   onClick={startFirstSegment}
                   type="button"
                 >
@@ -141,8 +181,8 @@ export default function VideoLearningPage() {
                 </button>
                 <button
                   className="inline-flex h-14 items-center justify-center gap-3 rounded-xl bg-[#3b99d8] px-4 text-base font-black uppercase text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={!segment}
-                  onClick={() => playerRef.current?.playSegment()}
+                  disabled={!segment || !isYoutubeReady}
+                  onClick={replayCurrentSegment}
                   type="button"
                 >
                   <RefreshCw size={18} /> Phát lại
@@ -206,11 +246,11 @@ export default function VideoLearningPage() {
                   <button className={toolbarButtonClass} disabled={currentIndex === 0} onClick={() => move(-1)} type="button">
                     <ChevronLeft size={17} />
                   </button>
-                  <button className={toolbarButtonClass} disabled={!segment} onClick={() => playerRef.current?.playSegment()} type="button">
+                  <button className={toolbarButtonClass} disabled={!segment || !isYoutubeReady} onClick={replayCurrentSegment} type="button">
                     <RotateCcw size={17} />
                   </button>
-                  <button className={toolbarButtonClass} disabled={!segment} onClick={() => playerRef.current?.playSegment()} type="button">
-                    <Play size={17} />
+                  <button className={toolbarButtonClass} disabled={!segment || !isYoutubeReady} onClick={toggleCurrentSegmentPlayback} type="button">
+                    {isPlayerPlaying ? <Pause size={17} /> : <Play size={17} />}
                   </button>
                   <button className={toolbarButtonClass} disabled={currentIndex >= segments.length - 1} onClick={() => move(1)} type="button">
                     <ChevronRight size={17} />
@@ -288,14 +328,51 @@ export default function VideoLearningPage() {
                 {checkMutation.isPending ? "Đang kiểm tra..." : "Kiểm tra"}
               </button>
               <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#dbe4ee] bg-white p-3 xl:hidden">
-                <button
-                  className="h-14 w-full rounded-2xl bg-[#292f68] text-base font-black uppercase text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={!segment}
-                  onClick={startFirstSegment}
-                  type="button"
-                >
-                  <Play className="mr-2 inline" size={17} /> Bắt đầu
-                </button>
+                {hasStarted ? (
+                  <div className="grid grid-cols-4 gap-2">
+                    <button
+                      className="inline-flex h-14 items-center justify-center rounded-2xl bg-[#292f68] text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={!segment || !isYoutubeReady}
+                      onClick={toggleCurrentSegmentPlayback}
+                      type="button"
+                    >
+                      {isPlayerPlaying ? <Pause size={19} /> : <Play size={19} />}
+                    </button>
+                    <button
+                      className="inline-flex h-14 items-center justify-center rounded-2xl border border-[#dbe4ee] bg-white text-coal shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+                      disabled={!segment || !isYoutubeReady}
+                      onClick={replayCurrentSegment}
+                      type="button"
+                    >
+                      <RotateCcw size={19} />
+                    </button>
+                    <button
+                      className="inline-flex h-14 items-center justify-center rounded-2xl border border-[#dbe4ee] bg-white text-coal shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+                      disabled={currentIndex === 0 || !isYoutubeReady}
+                      onClick={() => moveAndPlay(-1)}
+                      type="button"
+                    >
+                      <ChevronLeft size={19} />
+                    </button>
+                    <button
+                      className="inline-flex h-14 items-center justify-center rounded-2xl border border-[#dbe4ee] bg-white text-coal shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+                      disabled={currentIndex >= segments.length - 1 || !isYoutubeReady}
+                      onClick={() => moveAndPlay(1)}
+                      type="button"
+                    >
+                      <ChevronRight size={19} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="h-14 w-full rounded-2xl bg-[#292f68] text-base font-black uppercase text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!segment || !isYoutubeReady}
+                    onClick={startFirstSegment}
+                    type="button"
+                  >
+                    <Play className="mr-2 inline" size={17} /> Bắt đầu
+                  </button>
+                )}
               </div>
               {checkMutation.data?.data?.data ? <DictationResult result={checkMutation.data.data.data} /> : null}
             </form>
@@ -333,7 +410,7 @@ export default function VideoLearningPage() {
   );
 }
 
-const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer({ segment, title, youtubeVideoId }, ref) {
+const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer({ onPlayingChange, onReadyChange, segment, title, youtubeVideoId }, ref) {
   const hostRef = useRef(null);
   const playerRef = useRef(null);
   const boundaryTimerRef = useRef(null);
@@ -351,7 +428,8 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer({ segment,
     stopBoundaryTimer();
     playerRef.current?.pauseVideo?.();
     setIsPlaying(false);
-  }, [stopBoundaryTimer]);
+    onPlayingChange?.(false);
+  }, [onPlayingChange, stopBoundaryTimer]);
 
   const playSegment = useCallback((targetSegment = segment) => {
     const player = playerRef.current;
@@ -364,6 +442,7 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer({ segment,
     player.seekTo(startTime, true);
     player.playVideo();
     setIsPlaying(true);
+    onPlayingChange?.(true);
 
     boundaryTimerRef.current = window.setInterval(() => {
       const currentTime = Number(player.getCurrentTime?.() || 0);
@@ -372,12 +451,14 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer({ segment,
         pauseVideo();
       }
     }, 120);
-  }, [pauseVideo, segment, stopBoundaryTimer]);
+  }, [onPlayingChange, pauseVideo, segment, stopBoundaryTimer]);
 
   useEffect(() => {
     let isMounted = true;
     setIsPlayerReady(false);
     setIsPlaying(false);
+    onReadyChange?.(false);
+    onPlayingChange?.(false);
     stopBoundaryTimer();
 
     if (!youtubeVideoId || !hostRef.current) return undefined;
@@ -396,15 +477,20 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer({ segment,
         },
         events: {
           onReady: () => {
-            if (isMounted) setIsPlayerReady(true);
+            if (isMounted) {
+              setIsPlayerReady(true);
+              onReadyChange?.(true);
+            }
           },
           onStateChange: (event) => {
             if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
               setIsPlaying(false);
+              onPlayingChange?.(false);
             }
 
             if (event.data === YT.PlayerState.PLAYING) {
               setIsPlaying(true);
+              onPlayingChange?.(true);
             }
           },
         },
@@ -417,13 +503,7 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer({ segment,
       playerRef.current?.destroy?.();
       playerRef.current = null;
     };
-  }, [stopBoundaryTimer, youtubeVideoId]);
-
-  useEffect(() => {
-    if (isPlayerReady && segment) {
-      playSegment();
-    }
-  }, [isPlayerReady, playSegment, segment?._id]);
+  }, [onPlayingChange, onReadyChange, stopBoundaryTimer, youtubeVideoId]);
 
   useImperativeHandle(ref, () => ({ pauseVideo, playSegment }), [pauseVideo, playSegment]);
 
