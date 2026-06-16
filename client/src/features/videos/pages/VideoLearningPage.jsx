@@ -509,7 +509,11 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer({ onPlayin
 
   return (
     <div className="overflow-hidden rounded-none border-b-[5px] border-[#2ea8e5] bg-black shadow-sm md:rounded-2xl md:border-8">
-      <div className="aspect-video w-full" ref={hostRef} title={title} />
+      <div
+        className="h-[210px] w-full [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:object-contain md:aspect-video md:h-auto"
+        ref={hostRef}
+        title={title}
+      />
       <span className="sr-only">{isPlayerReady ? "Player ready" : "Player loading"} {isPlaying ? "playing" : "paused"}</span>
     </div>
   );
