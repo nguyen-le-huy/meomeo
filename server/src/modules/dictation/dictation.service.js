@@ -29,9 +29,14 @@ function compareWords(expectedText, actualText) {
   }
 
   const score = expectedWords.length ? Math.round((correctCount / expectedWords.length) * 100) : 0;
+  const normalizedCorrectText = normalizeAnswer(expectedText);
+  const normalizedUserAnswer = normalizeAnswer(actualText);
+
   return {
-    isCorrect: normalizeAnswer(expectedText) === normalizeAnswer(actualText),
+    isCorrect: normalizedCorrectText === normalizedUserAnswer,
     score,
+    normalizedCorrectText,
+    normalizedUserAnswer,
     mistakes,
   };
 }

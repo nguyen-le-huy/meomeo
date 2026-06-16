@@ -27,7 +27,10 @@ export const getVideoDetailController = asyncHandler(async (req, res) => {
 
 export const getVideoTranscriptsController = asyncHandler(async (req, res) => {
   const segments = await getVideoTranscripts(req.validated.params.id, { admin: isAdmin(req) });
-  return successResponse(res, "Video transcripts fetched successfully", { segments });
+  return successResponse(res, "Video transcripts fetched successfully", {
+    videoId: req.validated.params.id,
+    segments,
+  });
 });
 
 export const createVideoController = asyncHandler(async (req, res) => {

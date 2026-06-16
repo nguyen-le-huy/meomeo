@@ -101,6 +101,13 @@ export async function createVideo(data, adminUser) {
   }
 
   const transcriptInputs = data.transcripts || analyzed.transcripts || [];
+  const transcriptStatus = transcriptInputs.length ? "completed" : "failed";
+  const requestedPublish = data.isPublished ?? false;
+
+  if (requestedPublish && transcriptStatus !== "completed") {
+    throw createHttpError(400, analyzed.transcriptError || "Cannot publish video before transcript is completed");
+  }
+
   const video = await VideoLesson.create({
     topicId: data.topicId,
     youtubeUrl: analyzed.video.youtubeUrl,
@@ -110,14 +117,20 @@ export async function createVideo(data, adminUser) {
     thumbnailUrl: analyzed.video.thumbnailUrl,
     duration: analyzed.video.duration,
     level: data.level || "A2",
-    transcriptStatus: transcriptInputs.length ? "completed" : "pending",
+    transcriptStatus,
     transcriptLanguage: analyzed.transcriptLanguage || "en",
-    isPublished: data.isPublished ?? false,
+    transcriptError: transcriptInputs.length ? "" : analyzed.transcriptError || "No English transcript found for this video.",
+    isPublished: requestedPublish,
     createdBy: adminUser.id,
   });
 
   const segments = await createTranscriptSegments(video._id, transcriptInputs);
-  return { video, segments, analysisWarning: analyzed.warning };
+  return {
+    video,
+    segments,
+    transcriptsCount: segments.length,
+    analysisWarning: analyzed.warning,
+  };
 }
 
 export async function updateVideo(id, data) {
@@ -153,6 +166,15 @@ export async function deleteVideo(id) {
 
 export async function publishVideo(id, isPublished) {
   const video = await getVideoById(id, { admin: true });
+
+  if (isPublished) {
+    const segmentsCount = await TranscriptSegment.countDocuments({ videoId: video._id });
+
+    if (video.transcriptStatus !== "completed" || segmentsCount < 1) {
+      throw createHttpError(400, "Cannot publish video before transcript is completed");
+    }
+  }
+
   video.isPublished = isPublished;
   await video.save();
   return video;
@@ -165,9 +187,10 @@ export async function analyzeVideoTranscript(id) {
 
   const analyzed = await analyzeYoutubeUrl(video.youtubeUrl);
   const segments = await createTranscriptSegments(video._id, analyzed.transcripts || []);
-  video.transcriptStatus = segments.length ? "completed" : "pending";
+  video.transcriptStatus = segments.length ? "completed" : "failed";
   video.transcriptLanguage = analyzed.transcriptLanguage || video.transcriptLanguage;
+  video.transcriptError = segments.length ? "" : analyzed.transcriptError || "No English transcript found for this video.";
   await video.save();
 
-  return { video, segments, analysisWarning: analyzed.warning };
+  return { video, segments, transcriptsCount: segments.length, analysisWarning: analyzed.warning };
 }

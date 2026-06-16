@@ -20,6 +20,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <VideoLibraryPage /> },
       { path: "videos/:id", element: <VideoLearningPage /> },
+      { path: "videos/:id/dictation", element: <VideoLearningPage /> },
       { path: "dashboard", element: <Navigate to="/" replace /> },
       { path: "vocabulary", element: <Navigate to="/" replace /> },
       { path: "grammar", element: <Navigate to="/" replace /> },

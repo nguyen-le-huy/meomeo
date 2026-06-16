@@ -17,6 +17,7 @@ const videoLessonSchema = new mongoose.Schema(
       default: "pending",
     },
     transcriptLanguage: { type: String, default: "en" },
+    transcriptError: { type: String, default: "" },
     viewCount: { type: Number, default: 0 },
     studyCount: { type: Number, default: 0 },
     isPublished: { type: Boolean, default: false },

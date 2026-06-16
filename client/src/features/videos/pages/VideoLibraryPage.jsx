@@ -1,9 +1,17 @@
-import { ChevronLeft, ChevronRight, Crown, Headphones, Trash2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Crown, Headphones, Plus, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "../../../components/ui/badge.jsx";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../../../components/ui/dialog.jsx";
 import { Input } from "../../../components/ui/input.jsx";
 import {
   Select,
@@ -134,6 +142,7 @@ const demoVideos = [
 
 export default function VideoLibraryPage() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
   const [page, setPage] = useState(1);
   const { data: topics = [] } = useTopics({ includeUnpublished: isAdmin || undefined });
@@ -152,9 +161,10 @@ export default function VideoLibraryPage() {
     <section className="h-full overflow-auto bg-[#f7f9fb] px-0 py-3 text-[#202235] md:px-6">
       <div className="mx-auto max-w-[1500px] space-y-8">
         {isAdmin ? (
-          <AdminCreatePanel
+          <AddVideoDialog
             createTopicMutation={createTopicMutation}
             createVideoMutation={createVideoMutation}
+            onVideoCreated={(video) => navigate(`/videos/${video._id}`)}
             topics={topics}
           />
         ) : null}
@@ -322,7 +332,8 @@ function LessonCard({ deleteVideoMutation, isAdmin, publishVideoMutation, usingD
   );
 }
 
-function AdminCreatePanel({ createTopicMutation, createVideoMutation, topics }) {
+function AddVideoDialog({ createTopicMutation, createVideoMutation, onVideoCreated, topics }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [topicName, setTopicName] = useState("");
   const [videoForm, setVideoForm] = useState({
     topicId: "",
@@ -342,87 +353,105 @@ function AdminCreatePanel({ createTopicMutation, createVideoMutation, topics }) 
 
   async function handleCreateVideo(event) {
     event.preventDefault();
-    await createVideoMutation.mutateAsync({
+    const response = await createVideoMutation.mutateAsync({
       ...videoForm,
       title: videoForm.title || undefined,
       description: videoForm.description || undefined,
     });
+    const video = response.data.data.video;
     setVideoForm({ topicId: "", youtubeUrl: "", title: "", description: "", level: "A2", isPublished: false });
+    setIsOpen(false);
+    onVideoCreated(video);
   }
 
   return (
-    <Card className="mx-3 bg-white/95 md:mx-0">
-      <CardContent className="grid gap-3 p-4 md:grid-cols-[minmax(220px,0.65fr)_minmax(360px,1.35fr)]">
-        <form className="flex gap-2" onSubmit={handleCreateTopic}>
-          <Input
-            onChange={(event) => setTopicName(event.target.value)}
-            placeholder="Tên chủ đề mới"
-            value={topicName}
-          />
-          <Button disabled={createTopicMutation.isPending} type="submit">
-            Thêm
+    <div className="flex justify-end px-3 md:px-0">
+      <Dialog onOpenChange={setIsOpen} open={isOpen}>
+        <DialogTrigger asChild>
+          <Button className="rounded-xl">
+            <Plus size={16} /> Thêm video
           </Button>
-        </form>
-        <form className="grid gap-2 md:grid-cols-[1fr_1.2fr_120px_auto]" onSubmit={handleCreateVideo}>
-          <Select
-            onValueChange={(value) => setVideoForm((current) => ({ ...current, topicId: value }))}
-            value={videoForm.topicId || undefined}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Chọn chủ đề" />
-            </SelectTrigger>
-            <SelectContent>
-            {topics.map((topic) => (
-              <SelectItem key={topic._id} value={topic._id}>
-                {topic.name}
-              </SelectItem>
-            ))}
-            </SelectContent>
-          </Select>
-          <Input
-            onChange={(event) => setVideoForm((current) => ({ ...current, youtubeUrl: event.target.value }))}
-            placeholder="YouTube URL"
-            required
-            value={videoForm.youtubeUrl}
-          />
-          <Select
-            onValueChange={(value) => setVideoForm((current) => ({ ...current, level: value }))}
-            value={videoForm.level}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Level" />
-            </SelectTrigger>
-            <SelectContent>
-            {levels.map((item) => (
-              <SelectItem key={item} value={item}>
-                {item}
-              </SelectItem>
-            ))}
-            </SelectContent>
-          </Select>
-          <Button disabled={createVideoMutation.isPending} type="submit">
-            {createVideoMutation.isPending ? "Đang thêm..." : "Thêm video"}
-          </Button>
-          <Input
-            className="md:col-span-2"
-            onChange={(event) => setVideoForm((current) => ({ ...current, title: event.target.value }))}
-            placeholder="Title tùy chỉnh"
-            value={videoForm.title}
-          />
-          <Textarea
-            className="md:col-span-2"
-            onChange={(event) => setVideoForm((current) => ({ ...current, description: event.target.value }))}
-            placeholder="Mô tả ngắn"
-            value={videoForm.description}
-          />
-        </form>
-        {createVideoMutation.error ? (
-          <p className="text-sm font-bold text-red-600 md:col-span-2">
-            {createVideoMutation.error.response?.data?.message || "Không thêm được video."}
-          </p>
-        ) : null}
-      </CardContent>
-    </Card>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Thêm video YouTube</DialogTitle>
+            <DialogDescription>
+              Video mới mặc định chưa publish. Kiểm tra transcript xong rồi publish.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form className="flex gap-2" onSubmit={handleCreateTopic}>
+            <Input
+              onChange={(event) => setTopicName(event.target.value)}
+              placeholder="Tạo nhanh topic mới"
+              value={topicName}
+            />
+            <Button disabled={createTopicMutation.isPending} type="submit" variant="outline">
+              Thêm topic
+            </Button>
+          </form>
+
+          <form className="grid gap-3" onSubmit={handleCreateVideo}>
+            <Select
+              onValueChange={(value) => setVideoForm((current) => ({ ...current, topicId: value }))}
+              value={videoForm.topicId || undefined}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn topic" />
+              </SelectTrigger>
+              <SelectContent>
+                {topics.map((topic) => (
+                  <SelectItem key={topic._id} value={topic._id}>
+                    {topic.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              onChange={(event) => setVideoForm((current) => ({ ...current, youtubeUrl: event.target.value }))}
+              placeholder="YouTube URL"
+              required
+              value={videoForm.youtubeUrl}
+            />
+            <div className="grid gap-3 md:grid-cols-[1fr_120px]">
+              <Input
+                onChange={(event) => setVideoForm((current) => ({ ...current, title: event.target.value }))}
+                placeholder="Title tùy chỉnh"
+                value={videoForm.title}
+              />
+              <Select
+                onValueChange={(value) => setVideoForm((current) => ({ ...current, level: value }))}
+                value={videoForm.level}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Level" />
+                </SelectTrigger>
+                <SelectContent>
+                  {levels.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Textarea
+              onChange={(event) => setVideoForm((current) => ({ ...current, description: event.target.value }))}
+              placeholder="Mô tả ngắn"
+              value={videoForm.description}
+            />
+            {createVideoMutation.error ? (
+              <p className="text-sm font-bold text-red-600">
+                {createVideoMutation.error.response?.data?.message || "Không thêm được video."}
+              </p>
+            ) : null}
+            <Button disabled={createVideoMutation.isPending || !videoForm.topicId} type="submit">
+              {createVideoMutation.isPending ? "Đang phân tích transcript..." : "Thêm video"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
