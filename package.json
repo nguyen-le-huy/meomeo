@@ -1,0 +1,25 @@
+{
+  "name": "meomeo",
+  "version": "0.1.0",
+  "description": "MERN monorepo for a TOEIC English learning app with separate React frontend and Express backend.",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n client,server -c cyan,green \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "build": "npm run build --prefix client",
+    "start": "npm run start --prefix server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nguyen-le-huy/meomeo.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/nguyen-le-huy/meomeo/issues"
+  },
+  "homepage": "https://github.com/nguyen-le-huy/meomeo#readme",
+  "devDependencies": {
+    "concurrently": "^10.0.3"
+  }
+}
