@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "seed:users": "node src/seed/seedUsers.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

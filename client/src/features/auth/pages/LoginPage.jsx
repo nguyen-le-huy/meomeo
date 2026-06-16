@@ -1,21 +1,54 @@
 import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import { z } from "zod";
+import { loginApi } from "../services/authApi.js";
+import { useAuthStore } from "../stores/authStore.js";
 
 const catImageUrl =
   "https://res.cloudinary.com/dknin0hhf/image/upload/v1781600479/Cat_Smile_Sticker_by_CHERRISK_l4h8vh.gif";
 
+const loginSchema = z.object({
+  email: z.string().trim().min(1, "Vui lòng nhập tài khoản"),
+  password: z.string().min(1, "Vui lòng nhập mật khẩu"),
+});
+
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const { register, handleSubmit } = useForm({
+  const [loginError, setLoginError] = useState("");
+  const navigate = useNavigate();
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const {
+    formState: { errors, isSubmitting },
+    handleSubmit,
+    register,
+  } = useForm({
     defaultValues: {
-      email: "info.madhu786@gmail.com",
-      password: "password",
-      remember: true,
+      email: "admin",
+      password: "1234567",
     },
+    resolver: zodResolver(loginSchema),
   });
 
-  function onSubmit() {
-    // Backend login will be connected in the auth feature step.
+  async function onSubmit(values) {
+    setLoginError("");
+
+    try {
+      const response = await loginApi(values);
+      const { user, token } = response.data.data;
+
+      setAuth({ user, token });
+
+      if (user.role === "admin") {
+        navigate("/admin", { replace: true });
+        return;
+      }
+
+      navigate("/dashboard", { replace: true });
+    } catch (error) {
+      setLoginError(error.response?.data?.message || "Đăng nhập thất bại");
+    }
   }
 
   return (
@@ -29,7 +62,7 @@ export default function LoginPage() {
 
         <img
           alt="Smiling cat"
-          className="pointer-events-none absolute right-[-6px] top-[86px] z-0 h-[156px] w-[126px] object-contain sm:right-[-4px] sm:top-[112px] sm:h-[226px] sm:w-[190px]"
+          className="pointer-events-none absolute right-[-6px] top-[86px] z-0 h-[250px] w-[180px] object-contain sm:right-[-4px] sm:top-[112px] sm:h-[226px] sm:w-[190px]"
           src={catImageUrl}
         />
 
@@ -37,27 +70,30 @@ export default function LoginPage() {
           <div className="w-full max-w-[520px] sm:ml-2 sm:mr-20">
             <div className="mb-9">
               <h1 className="text-[28px] font-bold leading-tight tracking-normal text-[#060a3d] sm:text-[38px]">
-                Welcome Back to Realnest!
+                Vào học nhanh
               </h1>
-              <p className="mt-3 text-sm font-normal text-[#9a9aaa]">Sign in your account</p>
+              <p className="mt-3 text-sm font-normal text-[#9a9aaa]">Đăng nhập đi</p>
             </div>
 
             <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <div>
                 <label className="mb-2.5 block text-sm font-semibold text-[#11143f]" htmlFor="email">
-                  Your Email
+                  Tài khoản
                 </label>
                 <input
                   className="h-14 w-full rounded-md border border-[#0a0b35] px-7 text-base font-semibold text-[#17193f] outline-none transition placeholder:text-[#b8b8c7] focus:border-[#151655] focus:ring-2 focus:ring-[#11143f]/15"
                   id="email"
-                  type="email"
+                  type="text"
                   {...register("email")}
                 />
+                {errors.email ? (
+                  <p className="mt-2 text-sm font-medium text-red-600">{errors.email.message}</p>
+                ) : null}
               </div>
 
               <div>
                 <label className="mb-2.5 block text-sm font-medium text-[#9d9cac]" htmlFor="password">
-                  Password
+                  Mật khẩu
                 </label>
                 <div className="relative">
                   <input
@@ -77,36 +113,32 @@ export default function LoginPage() {
                     </span>
                   </button>
                 </div>
+                {errors.password ? (
+                  <p className="mt-2 text-sm font-medium text-red-600">
+                    {errors.password.message}
+                  </p>
+                ) : null}
               </div>
 
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-3 font-medium text-[#252746]">
-                  <input
-                    className="h-3.5 w-3.5 accent-black"
-                    type="checkbox"
-                    {...register("remember")}
-                  />
-                  Remember Me
-                </label>
-                <a className="font-medium text-[#a2a1b3] hover:text-[#060a3d]" href="/login">
-                  Forgot Password?
-                </a>
-              </div>
+              {loginError ? (
+                <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  {loginError}
+                </div>
+              ) : null}
 
               <button
-                className="h-14 w-full rounded-md bg-[#17181b] text-base font-semibold text-white shadow-sm transition hover:bg-black"
+                className="h-14 w-full rounded-md bg-[#17181b] text-base font-semibold text-white shadow-sm transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-70"
+                disabled={isSubmitting}
                 type="submit"
               >
-                Login
+                {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
               </button>
             </form>
 
-            <p className="mt-14 text-center text-sm font-medium text-[#9d9cac]">
-              Don&apos;t have any account?{" "}
-              <a className="font-bold text-[#1f79c8]" href="/login">
-                Register
-              </a>
-            </p>
+            <div className="mt-6 rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              <p>Admin: admin / 1234567</p>
+              <p>Student: meomeo / 123456</p>
+            </div>
           </div>
         </div>
       </section>
