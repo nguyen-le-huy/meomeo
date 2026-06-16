@@ -1,5 +1,22 @@
-import { Eye, EyeOff, Merge, Pause, Pencil, Play, RefreshCw, Save } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Keyboard,
+  Merge,
+  Mic,
+  NotebookPen,
+  Pencil,
+  Play,
+  RefreshCw,
+  RotateCcw,
+  Save,
+  Settings,
+  Zap,
+} from "lucide-react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
@@ -55,14 +72,18 @@ export default function VideoLearningPage() {
   const updateSegmentMutation = useUpdateTranscriptSegment(id);
   const mergeSegmentMutation = useMergeTranscriptSegment(id);
   const segment = segments[currentIndex];
+  const playerRef = useRef(null);
+  const progressPercent = segments.length ? Math.round((currentIndex / segments.length) * 100) : 0;
 
-  function move(delta) {
-    setCurrentIndex((current) => {
-      const next = Math.min(Math.max(current + delta, 0), Math.max(segments.length - 1, 0));
-      return next;
-    });
+  function selectSegment(index) {
+    setCurrentIndex(index);
     setAnswer("");
     checkMutation.reset();
+  }
+
+  function move(delta) {
+    const next = Math.min(Math.max(currentIndex + delta, 0), Math.max(segments.length - 1, 0));
+    selectSegment(next);
   }
 
   async function submitDictation(event) {
@@ -85,15 +106,47 @@ export default function VideoLearningPage() {
   }
 
   return (
-    <section className="h-full overflow-auto bg-matcha p-4 md:p-6">
-      <div className="mx-auto grid max-w-7xl gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
-        <div className="space-y-4">
-          <div>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-black text-coal/55">YouTube - {video.level}</p>
+    <section className="h-full overflow-auto bg-[#eef4ee] p-2 md:p-4">
+      <div className="mx-auto grid max-w-[1500px] gap-2 xl:grid-cols-[minmax(360px,0.9fr)_minmax(420px,0.78fr)_minmax(300px,0.56fr)]">
+        <section className="min-h-[calc(100vh-2rem)] rounded-2xl border border-[#d9e2ec] bg-white p-4 shadow-sm">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-sm font-black uppercase tracking-wide text-coal">Video</h2>
+            {video.duration ? (
+              <span className="inline-flex items-center gap-2 rounded-xl bg-[#f3f6fb] px-3 py-1.5 text-sm font-black text-coal/75">
+                <span className="h-2 w-2 rounded-full bg-coal/45" />
+                {formatDuration(video.duration)}
+              </span>
+            ) : null}
+          </div>
+          <div className="space-y-4">
+            <SegmentYoutubePlayer ref={playerRef} segment={segment} title={video.title} youtubeVideoId={video.youtubeVideoId} />
+            <div>
+              <p className="mb-2 text-xs font-black uppercase tracking-wide text-coal/65">Điều khiển</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  className="inline-flex h-14 items-center justify-center gap-3 rounded-xl bg-[#292f68] px-4 text-base font-black uppercase text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={!segment}
+                  onClick={() => playerRef.current?.playSegment()}
+                  type="button"
+                >
+                  <Play size={18} /> Bắt đầu
+                </button>
+                <button
+                  className="inline-flex h-14 items-center justify-center gap-3 rounded-xl bg-[#3b99d8] px-4 text-base font-black uppercase text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={!segment}
+                  onClick={() => playerRef.current?.playSegment()}
+                  type="button"
+                >
+                  <RefreshCw size={18} /> Phát lại
+                </button>
+              </div>
+            </div>
+            <div className="border-t border-coal/10 pt-4">
+              <p className="text-sm font-black leading-tight text-coal">{video.title}</p>
+              <p className="mt-1 text-sm font-bold text-coal/55">YouTube - {video.level}</p>
               {isAdmin ? (
                 <button
-                  className={inactiveButtonClass}
+                  className={`${inactiveButtonClass} mt-3`}
                   disabled={analyzeMutation.isPending}
                   onClick={() => analyzeMutation.mutate()}
                   type="button"
@@ -102,64 +155,22 @@ export default function VideoLearningPage() {
                   {analyzeMutation.isPending ? "Đang phân tích..." : "Phân tích transcript"}
                 </button>
               ) : null}
-            </div>
-            <h1 className="text-2xl font-black leading-tight md:text-3xl">{video.title}</h1>
-            {video.transcriptStatus === "failed" && video.transcriptError ? (
-              <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-700">
-                {video.transcriptError}
-              </p>
-            ) : null}
-          </div>
-          <SegmentYoutubePlayer segment={segment} title={video.title} youtubeVideoId={video.youtubeVideoId} />
-          <div className="rounded-xl bg-white/75 p-4">
-            <div className="mb-3 flex flex-wrap gap-2">
-              <button
-                className={mode === "dictation" ? activeButtonClass : inactiveButtonClass}
-                onClick={() => setMode("dictation")}
-                type="button"
-              >
-                Dictation
-              </button>
-              <button
-                className={mode === "shadowing" ? activeButtonClass : inactiveButtonClass}
-                onClick={() => setMode("shadowing")}
-                type="button"
-              >
-                Shadowing
-              </button>
-              <button className={inactiveButtonClass} onClick={() => setShowTranscript((value) => !value)} type="button">
-                {showTranscript ? <EyeOff size={16} /> : <Eye size={16} />} {showTranscript ? "Ẩn transcript" : "Hiện transcript"}
-              </button>
-            </div>
-            {segment ? (
-              <div className="space-y-3">
-                <p className="text-sm font-bold text-coal/55">
-                  Segment {currentIndex + 1}/{segments.length} - {segment.startTime}s đến {segment.endTime}s
+              {video.transcriptStatus === "failed" && video.transcriptError ? (
+                <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-700">
+                  {video.transcriptError}
                 </p>
-                {showTranscript ? <p className="rounded-lg bg-matcha/70 p-3 text-lg font-black">{segment.text}</p> : <DictationPrompt difficulty={difficulty} text={segment.text} />}
-                <div className="flex gap-2">
-                  <button className={inactiveButtonClass} disabled={currentIndex === 0} onClick={() => move(-1)} type="button">
-                    Previous
-                  </button>
-                  <button className={inactiveButtonClass} disabled={currentIndex >= segments.length - 1} onClick={() => move(1)} type="button">
-                    Next
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p className="font-bold">Video này chưa có transcript segment.</p>
-            )}
+              ) : null}
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div className="rounded-xl bg-white/75 p-4">
+        <section className="min-h-[calc(100vh-2rem)] rounded-2xl border border-[#d9e2ec] bg-white p-4 shadow-sm">
           {mode === "dictation" ? (
             <form className="space-y-3" onSubmit={submitDictation}>
-              <h2 className="text-xl font-black">Dictation</h2>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex justify-center gap-2">
                 {difficulties.map((item) => (
                   <button
-                    className={difficulty === item ? activeButtonClass : inactiveButtonClass}
+                    className={difficulty === item ? compactActiveButtonClass : compactButtonClass}
                     key={item}
                     onClick={() => setDifficulty(item)}
                     type="button"
@@ -168,32 +179,89 @@ export default function VideoLearningPage() {
                   </button>
                 ))}
               </div>
-              <TranscriptScroller
-                currentIndex={currentIndex}
-                difficulty={difficulty}
-                editingSegmentId={editingSegmentId}
-                isAdmin={isAdmin}
-                mergeSegmentMutation={mergeSegmentMutation}
-                onEdit={setEditingSegmentId}
-                onSelect={(index) => {
-                  setCurrentIndex(index);
-                  setAnswer("");
-                  checkMutation.reset();
-                }}
-                onUpdate={async (item, data) => {
-                  await updateSegmentMutation.mutateAsync({ segmentId: item._id, data });
-                  setEditingSegmentId("");
-                }}
-                segments={segments}
-                setEditingSegmentId={setEditingSegmentId}
-              />
-              <textarea
-                className="min-h-36 w-full rounded-lg border border-coal/15 bg-white p-3 text-sm font-semibold outline-none focus:border-coal"
-                onChange={(event) => setAnswer(event.target.value)}
-                placeholder="Gõ câu trả lời của bạn ở đây..."
-                value={answer}
-              />
-              <button className="rounded-lg bg-black px-4 py-2 text-sm font-bold text-white" disabled={!segment || checkMutation.isPending}>
+              <div className="flex items-center justify-between rounded-2xl border border-[#dbe4ee] bg-[#f9fbff] px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <button className={toolbarButtonClass} disabled={currentIndex === 0} onClick={() => move(-1)} type="button">
+                    <ChevronLeft size={17} />
+                  </button>
+                  <button className={toolbarButtonClass} disabled={!segment} onClick={() => playerRef.current?.playSegment()} type="button">
+                    <RotateCcw size={17} />
+                  </button>
+                  <button className={toolbarButtonClass} disabled={!segment} onClick={() => playerRef.current?.playSegment()} type="button">
+                    <Play size={17} />
+                  </button>
+                  <button className={toolbarButtonClass} disabled={currentIndex >= segments.length - 1} onClick={() => move(1)} type="button">
+                    <ChevronRight size={17} />
+                  </button>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1 text-sm font-black text-coal">
+                    <Zap size={16} /> 1x
+                  </span>
+                  <button className={toolbarButtonClass} type="button">
+                    <Settings size={17} />
+                  </button>
+                  <button className={toolbarButtonClass} type="button">
+                    <Keyboard size={17} />
+                  </button>
+                </div>
+              </div>
+              <div className="lg:hidden">
+                <TranscriptScroller
+                  currentIndex={currentIndex}
+                  difficulty={difficulty}
+                  editingSegmentId={editingSegmentId}
+                  isAdmin={isAdmin}
+                  mergeSegmentMutation={mergeSegmentMutation}
+                  onEdit={setEditingSegmentId}
+                  onSelect={selectSegment}
+                  onUpdate={async (item, data) => {
+                    await updateSegmentMutation.mutateAsync({ segmentId: item._id, data });
+                    setEditingSegmentId("");
+                  }}
+                  segments={segments}
+                  setEditingSegmentId={setEditingSegmentId}
+                />
+              </div>
+              <div className="relative rounded-2xl border border-[#dbe4ee] bg-white p-4 shadow-sm">
+                <label className="mb-3 block text-sm font-black uppercase tracking-wide text-coal/65">Gõ những gì bạn nghe được:</label>
+                <textarea
+                  className="min-h-32 w-full resize-none rounded-xl border-0 bg-transparent text-lg font-semibold text-coal outline-none placeholder:text-coal/55"
+                  onChange={(event) => setAnswer(event.target.value)}
+                  placeholder="Gõ câu trả lời của bạn ở đây..."
+                  value={answer}
+                />
+                <button
+                  className="absolute bottom-[-14px] right-6 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#dbe4ee] bg-white text-coal shadow-sm"
+                  type="button"
+                >
+                  <Mic size={16} />
+                </button>
+              </div>
+              {segment ? (
+                <div className="space-y-2">
+                  <MaskedWordChips difficulty={difficulty} text={segment.text} />
+                  <p className="text-sm font-semibold text-coal/65">Các từ được tiết lộ sẽ bị tính là lỗi và ảnh hưởng đến điểm số của bạn.</p>
+                </div>
+              ) : null}
+              <button
+                className="h-12 w-full rounded-2xl border-2 border-[#ffc72c] bg-[#fffaf0] text-sm font-black uppercase text-[#bf5700]"
+                onClick={() => setShowTranscript((value) => !value)}
+                type="button"
+              >
+                {showTranscript ? <EyeOff className="mr-2 inline" size={17} /> : <Eye className="mr-2 inline" size={17} />}
+                {showTranscript ? "Ẩn tất cả từ" : "Hiện tất cả từ"}
+              </button>
+              {showTranscript && segment ? <p className="rounded-xl bg-matcha/70 p-3 text-lg font-black">{segment.text}</p> : null}
+              <button
+                className="h-14 w-full rounded-2xl bg-[#292f68] text-base font-black uppercase text-white disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!segment || currentIndex >= segments.length - 1}
+                onClick={() => move(1)}
+                type="button"
+              >
+                Tiếp theo <ChevronRight className="inline" size={18} />
+              </button>
+              <button className="sr-only" disabled={!segment || checkMutation.isPending} type="submit">
                 {checkMutation.isPending ? "Đang kiểm tra..." : "Kiểm tra"}
               </button>
               {checkMutation.data?.data?.data ? <DictationResult result={checkMutation.data.data.data} /> : null}
@@ -209,13 +277,30 @@ export default function VideoLearningPage() {
               </button>
             </div>
           )}
-        </div>
+        </section>
+
+        <TranscriptPanel
+          currentIndex={currentIndex}
+          difficulty={difficulty}
+          editingSegmentId={editingSegmentId}
+          isAdmin={isAdmin}
+          mergeSegmentMutation={mergeSegmentMutation}
+          onEdit={setEditingSegmentId}
+          onSelect={selectSegment}
+          onUpdate={async (item, data) => {
+            await updateSegmentMutation.mutateAsync({ segmentId: item._id, data });
+            setEditingSegmentId("");
+          }}
+          progressPercent={progressPercent}
+          segments={segments}
+          setEditingSegmentId={setEditingSegmentId}
+        />
       </div>
     </section>
   );
 }
 
-function SegmentYoutubePlayer({ segment, title, youtubeVideoId }) {
+const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer({ segment, title, youtubeVideoId }, ref) {
   const hostRef = useRef(null);
   const playerRef = useRef(null);
   const boundaryTimerRef = useRef(null);
@@ -307,33 +392,85 @@ function SegmentYoutubePlayer({ segment, title, youtubeVideoId }) {
     }
   }, [isPlayerReady, playSegment, segment?._id]);
 
+  useImperativeHandle(ref, () => ({ pauseVideo, playSegment }), [pauseVideo, playSegment]);
+
   return (
-    <div className="overflow-hidden rounded-xl border border-coal/15 bg-black shadow-sm">
+    <div className="overflow-hidden rounded-2xl border-8 border-[#2ea8e5] bg-black shadow-sm">
       <div className="aspect-video w-full" ref={hostRef} title={title} />
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-coal px-3 py-2 text-white">
-        <p className="text-xs font-bold text-white/70">
-          {segment ? `Tự phát segment #${segment.index}: ${segment.startTime}s - ${segment.endTime}s` : "Chưa có transcript segment"}
-        </p>
-        <div className="flex gap-2">
-          <button
-            className="inline-flex h-9 items-center gap-2 rounded-lg bg-white px-3 text-xs font-black text-coal disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!isPlayerReady || !segment}
-            onClick={playSegment}
-            type="button"
-          >
-            <Play size={15} /> Phát đoạn
-          </button>
-          <button
-            className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/20 px-3 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!isPlayerReady || !isPlaying}
-            onClick={pauseVideo}
-            type="button"
-          >
-            <Pause size={15} /> Dừng
-          </button>
-        </div>
-      </div>
+      <span className="sr-only">{isPlayerReady ? "Player ready" : "Player loading"} {isPlaying ? "playing" : "paused"}</span>
     </div>
+  );
+});
+
+function TranscriptPanel({
+  currentIndex,
+  difficulty,
+  editingSegmentId,
+  isAdmin,
+  mergeSegmentMutation,
+  onEdit,
+  onSelect,
+  onUpdate,
+  progressPercent,
+  segments,
+  setEditingSegmentId,
+}) {
+  return (
+    <aside className="hidden max-h-[calc(100vh-2rem)] min-h-[calc(100vh-2rem)] flex-col rounded-2xl border border-[#d9e2ec] bg-white p-4 shadow-sm xl:flex">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-black uppercase tracking-wide text-coal">Bản chép</h2>
+        <span className="rounded-lg border border-[#dbe4ee] bg-[#f9fbff] px-3 py-1 text-sm font-black text-coal">{progressPercent}%</span>
+      </div>
+      <div className="mb-4 h-3 overflow-hidden rounded-full border border-[#dbe4ee] bg-[#eef3fb]">
+        <div className="h-full rounded-full bg-[#292f68]" style={{ width: `${progressPercent}%` }} />
+      </div>
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
+        {segments.length ? (
+          segments.map((item, index) => (
+            <div
+              className={[
+                "rounded-2xl border p-4 text-sm shadow-sm transition",
+                index === currentIndex ? "border-[#292f68] bg-[#eef2ff]" : "border-[#dbe4ee] bg-white",
+              ].join(" ")}
+              key={item._id}
+            >
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <button
+                  className="rounded-lg border border-[#dbe4ee] bg-[#f9fbff] px-3 py-1 text-sm font-black text-coal"
+                  onClick={() => onSelect(index)}
+                  type="button"
+                >
+                  #{item.index}
+                </button>
+                {isAdmin ? (
+                  <div className="flex items-center gap-2 text-coal/70">
+                    <button className="inline-flex h-8 w-8 items-center justify-center rounded-lg hover:bg-coal/5" onClick={() => onEdit(item._id)} type="button">
+                      <NotebookPen size={16} />
+                    </button>
+                    <AlertTriangle size={16} />
+                  </div>
+                ) : (
+                  <AlertTriangle className="text-coal/40" size={16} />
+                )}
+              </div>
+              {editingSegmentId === item._id ? (
+                <TranscriptEditForm
+                  item={item}
+                  onCancel={() => setEditingSegmentId("")}
+                  onSave={(data) => onUpdate(item, data)}
+                />
+              ) : (
+                <MaskedTranscriptText difficulty={difficulty} text={item.text} />
+              )}
+            </div>
+          ))
+        ) : (
+          <div className="rounded-2xl border border-dashed border-[#dbe4ee] bg-[#f9fbff] p-4 text-sm font-bold text-coal/60">
+            Chưa có transcript. Admin bấm “Phân tích transcript” để lấy subtitle từ YouTube.
+          </div>
+        )}
+      </div>
+    </aside>
   );
 }
 
@@ -407,6 +544,51 @@ function TranscriptScroller({
   );
 }
 
+function getMaskedWords(difficulty, text) {
+  const words = text.split(/\s+/).filter(Boolean);
+
+  if (difficulty === "hard") {
+    return words.map((word) => ({ value: "*".repeat(Math.max(word.length, 3)), revealed: false }));
+  }
+
+  return words.map((word, index) => {
+    if (difficulty === "easy") {
+      return index % 4 === 1
+        ? { value: "*".repeat(Math.max(word.length, 3)), revealed: false }
+        : { value: word, revealed: true };
+    }
+
+    return index % 2 === 0
+      ? { value: "*".repeat(Math.max(word.length, 3)), revealed: false }
+      : { value: word.replace(/[A-Za-zÀ-ỹ]/g, "*"), revealed: false };
+  });
+}
+
+function MaskedWordChips({ difficulty, text }) {
+  const maskedWords = getMaskedWords(difficulty, text).slice(0, 8);
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {maskedWords.map((word, index) => (
+        <span className="inline-flex flex-col items-center gap-1" key={`${word.value}-${index}`}>
+          <Eye size={14} />
+          <span className="rounded-md border border-[#dbe4ee] bg-[#f9fbff] px-3 py-2 text-sm font-black text-coal">{word.value}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function MaskedTranscriptText({ difficulty, text }) {
+  return (
+    <p className="text-sm font-black leading-7 text-coal">
+      {getMaskedWords(difficulty, text)
+        .map((word) => word.value)
+        .join(" ")}
+    </p>
+  );
+}
+
 function DictationPrompt({ difficulty, text }) {
   const words = text.split(/\s+/).filter(Boolean);
 
@@ -420,6 +602,13 @@ function DictationPrompt({ difficulty, text }) {
   });
 
   return <p className="rounded-lg bg-matcha/70 p-3 text-lg font-black">{masked.join(" ")}</p>;
+}
+
+function formatDuration(seconds) {
+  const totalSeconds = Math.max(Number(seconds || 0), 0);
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainingSeconds = Math.floor(totalSeconds % 60);
+  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
 }
 
 function DictationResult({ result }) {
@@ -492,3 +681,6 @@ function TranscriptEditForm({ item, onCancel, onSave }) {
 
 const activeButtonClass = "inline-flex items-center gap-1 rounded-lg bg-black px-3 py-2 text-sm font-bold text-white disabled:opacity-50";
 const inactiveButtonClass = "inline-flex items-center gap-1 rounded-lg border border-coal/20 bg-white/70 px-3 py-2 text-sm font-bold disabled:opacity-50";
+const compactActiveButtonClass = "rounded-lg bg-[#292f68] px-3 py-2 text-sm font-black text-white";
+const compactButtonClass = "rounded-lg bg-[#f3f6fb] px-3 py-2 text-sm font-bold text-coal";
+const toolbarButtonClass = "inline-flex h-8 w-8 items-center justify-center rounded-lg text-coal disabled:cursor-not-allowed disabled:opacity-40";
