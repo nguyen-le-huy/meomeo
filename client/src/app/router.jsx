@@ -1,0 +1,26 @@
+import { createBrowserRouter, Navigate } from "react-router-dom";
+import MainLayout from "../components/layout/MainLayout.jsx";
+import LoginPage from "../features/auth/pages/LoginPage.jsx";
+import DashboardPage from "../features/dashboard/pages/DashboardPage.jsx";
+import VocabularyPage from "../features/vocabulary/pages/VocabularyPage.jsx";
+import GrammarPage from "../features/grammar/pages/GrammarPage.jsx";
+import ExercisePage from "../features/exercises/pages/ExercisePage.jsx";
+import SpeechPracticePage from "../features/speech/pages/SpeechPracticePage.jsx";
+import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage.jsx";
+
+export const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <MainLayout />,
+    children: [
+      { index: true, element: <Navigate to="/dashboard" replace /> },
+      { path: "login", element: <LoginPage /> },
+      { path: "dashboard", element: <DashboardPage /> },
+      { path: "vocabulary", element: <VocabularyPage /> },
+      { path: "grammar", element: <GrammarPage /> },
+      { path: "exercises", element: <ExercisePage /> },
+      { path: "speech", element: <SpeechPracticePage /> },
+      { path: "admin", element: <AdminDashboardPage /> },
+    ],
+  },
+]);
