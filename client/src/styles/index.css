@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 body {
+  background: #c2d8c4;
+  color: #222222;
   font-family: "Google Sans", Arial, sans-serif;
   margin: 0;
 }

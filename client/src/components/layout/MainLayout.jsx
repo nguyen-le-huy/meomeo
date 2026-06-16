@@ -20,8 +20,8 @@ export default function MainLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950">
-      <header className="border-b bg-white">
+    <div className="min-h-screen bg-matcha text-coal">
+      <header className="border-b border-coal/10 bg-white/85">
         <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
           <NavLink className="font-semibold" to="/dashboard">
             Meomeo TOEIC
@@ -31,7 +31,7 @@ export default function MainLayout() {
               {links.map((link) => (
                 <NavLink
                   className={({ isActive }) =>
-                    isActive ? "font-medium text-slate-950" : "text-slate-600 hover:text-slate-950"
+                    isActive ? "font-medium text-coal" : "text-coal/60 hover:text-coal"
                   }
                   key={link.to}
                   to={link.to}
@@ -41,9 +41,9 @@ export default function MainLayout() {
               ))}
             </div>
             <div className="flex items-center gap-3 text-sm">
-              {user ? <span className="text-slate-500">{user.name}</span> : null}
+              {user ? <span className="text-coal/60">{user.name}</span> : null}
               <button
-                className="rounded-md border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
+                className="rounded-md border border-coal/20 px-3 py-1.5 font-medium text-coal hover:bg-matcha/50"
                 onClick={handleLogout}
                 type="button"
               >

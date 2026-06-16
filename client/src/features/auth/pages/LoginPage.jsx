@@ -55,10 +55,10 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="h-screen overflow-hidden bg-[#f3f3f3] px-4 py-4 text-[#060a3d] sm:px-6 sm:py-7">
-      <section className="relative mx-auto h-full max-w-[900px] overflow-hidden bg-white shadow-[0_1px_0_#b4d28e]">
+    <main className="h-screen overflow-hidden bg-matcha px-4 py-4 text-coal sm:px-6 sm:py-7">
+      <section className="relative mx-auto h-full max-w-[900px] overflow-hidden rounded-[18px] bg-white shadow-[0_1px_0_#222222]">
         <div className="absolute right-14 top-7 z-10 hidden sm:block">
-          <button className="rounded-full bg-black px-12 py-3.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#1b1b1b]">
+          <button className="rounded-full bg-coal px-12 py-3.5 text-sm font-medium text-matcha shadow-sm transition hover:bg-black">
             Sign in
           </button>
         </div>
@@ -72,23 +72,23 @@ export default function LoginPage() {
         <div className="relative z-10 flex h-full items-center justify-center px-5 py-16 sm:px-10 sm:py-20">
           <div className="w-full max-w-[520px] sm:ml-2 sm:mr-20">
             <div className="mb-9">
-              <h1 className="text-[28px] font-bold leading-tight tracking-normal text-[#060a3d] sm:text-[38px]">
+              <h1 className="text-[28px] font-bold leading-tight tracking-normal text-coal sm:text-[38px]">
                 Vào học nhanh
               </h1>
-              <p className="mt-3 text-sm font-normal text-[#9a9aaa]">Đăng nhập đi</p>
+              <p className="mt-3 text-sm font-normal text-coal/55">Đăng nhập đi</p>
             </div>
 
             <form autoComplete="off" className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <div>
                 <label
-                  className="mb-2.5 block text-sm font-semibold text-[#11143f]"
+                  className="mb-2.5 block text-sm font-semibold text-coal"
                   htmlFor="login-username"
                 >
                   Tài khoản
                 </label>
                 <input
                   autoComplete="off"
-                  className="h-14 w-full rounded-md border border-[#0a0b35] px-7 text-base font-semibold text-[#17193f] outline-none transition placeholder:text-[#b8b8c7] focus:border-[#151655] focus:ring-2 focus:ring-[#11143f]/15"
+                  className="h-14 w-full rounded-md border border-coal/70 px-7 text-base font-semibold text-coal outline-none transition placeholder:text-coal/35 focus:border-coal focus:ring-2 focus:ring-coal/15"
                   id="login-username"
                   type="text"
                   {...register("username")}
@@ -101,20 +101,20 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="mb-2.5 block text-sm font-medium text-[#9d9cac]" htmlFor="password">
+                <label className="mb-2.5 block text-sm font-medium text-coal/55" htmlFor="password">
                   Mật khẩu
                 </label>
                 <div className="relative">
                   <input
                     autoComplete="new-password"
-                    className="h-14 w-full rounded-md border border-[#b9bac4] px-7 pr-14 text-base font-semibold text-[#17193f] outline-none transition placeholder:text-[#b8b8c7] focus:border-[#151655] focus:ring-2 focus:ring-[#11143f]/15"
+                    className="h-14 w-full rounded-md border border-coal/30 px-7 pr-14 text-base font-semibold text-coal outline-none transition placeholder:text-coal/35 focus:border-coal focus:ring-2 focus:ring-coal/15"
                     id="password"
                     type={showPassword ? "text" : "password"}
                     {...register("password")}
                   />
                   <button
                     aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="absolute right-5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-[#8a8b9b]"
+                    className="absolute right-5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-coal/55"
                     onClick={() => setShowPassword((value) => !value)}
                     type="button"
                   >
@@ -137,7 +137,7 @@ export default function LoginPage() {
               ) : null}
 
               <button
-                className="h-14 w-full rounded-md bg-[#17181b] text-base font-semibold text-white shadow-sm transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-70"
+                className="h-14 w-full rounded-md bg-coal text-base font-semibold text-matcha shadow-sm transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-70"
                 disabled={isSubmitting}
                 type="submit"
               >
@@ -145,7 +145,7 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <div className="mt-6 rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            <div className="mt-6 rounded-md bg-matcha/40 px-4 py-3 text-sm text-coal/70">
               <p>Admin: admin / 123456</p>
               <p>Student: meomeo / 123456</p>
             </div>
