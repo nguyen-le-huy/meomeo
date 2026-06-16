@@ -57,12 +57,6 @@ export default function LoginPage() {
   return (
     <main className="h-screen overflow-hidden bg-matcha px-4 py-4 text-coal sm:px-6 sm:py-7">
       <section className="relative mx-auto h-full max-w-[900px] overflow-hidden rounded-[18px] border border-coal/10 bg-matcha/55 shadow-[0_1px_0_#222222]">
-        <div className="absolute right-14 top-7 z-10 hidden sm:block">
-          <button className="rounded-full bg-coal px-12 py-3.5 text-sm font-medium text-matcha shadow-sm transition hover:bg-black">
-            Sign in
-          </button>
-        </div>
-
         <img
           alt="Smiling cat"
           className="pointer-events-none absolute right-[-6px] top-[86px] z-0 h-[250px] w-[180px] object-contain sm:right-[-4px] sm:top-[112px] sm:h-[226px] sm:w-[190px]"
@@ -137,14 +131,13 @@ export default function LoginPage() {
               ) : null}
 
               <button
-                className="h-14 w-full rounded-md bg-coal text-base font-semibold text-matcha shadow-sm transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-70"
+                className="h-14 w-full rounded-md bg-black text-base font-semibold text-matcha shadow-sm transition hover:bg-coal disabled:cursor-not-allowed disabled:opacity-70"
                 disabled={isSubmitting}
                 type="submit"
               >
                 {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
               </button>
             </form>
-
           </div>
         </div>
       </section>
