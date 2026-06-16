@@ -1,4 +1,10 @@
-export default function VocabularyCourseTable({ courses, onDelete, onEdit, onTogglePublish }) {
+export default function VocabularyCourseTable({
+  courses,
+  onDelete,
+  onEdit,
+  onManageWords,
+  onTogglePublish,
+}) {
   return (
     <div className="overflow-hidden rounded-xl border border-coal/10 bg-white/80">
       <table className="w-full border-collapse text-left text-sm">
@@ -23,6 +29,9 @@ export default function VocabularyCourseTable({ courses, onDelete, onEdit, onTog
                 {course.createdAt ? new Date(course.createdAt).toLocaleDateString() : "-"}
               </td>
               <td className="space-x-2 px-4 py-3">
+                <button className="font-bold text-coal underline" onClick={() => onManageWords(course)}>
+                  Manage Words
+                </button>
                 <button className="font-bold text-coal underline" onClick={() => onEdit(course)}>
                   Edit
                 </button>

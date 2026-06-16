@@ -1,4 +1,5 @@
 import { Course } from "./course.model.js";
+import { VocabularyItem } from "../vocabulary/vocabulary.model.js";
 import { createHttpError } from "../../utils/createHttpError.js";
 
 function escapeRegExp(value) {
@@ -125,6 +126,7 @@ export async function updateVocabularyCourse(id, data) {
 export async function deleteVocabularyCourse(id) {
   const course = await getVocabularyCourseById(id);
 
+  await VocabularyItem.deleteMany({ courseId: course._id });
   await course.deleteOne();
   return { id };
 }

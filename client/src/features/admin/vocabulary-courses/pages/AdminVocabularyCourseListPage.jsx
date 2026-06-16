@@ -84,6 +84,7 @@ export default function AdminVocabularyCourseListPage() {
           courses={courses}
           onDelete={(course) => deleteMutation.mutate(course._id)}
           onEdit={(course) => navigate(`/admin/vocabulary-courses/${course._id}/edit`)}
+          onManageWords={(course) => navigate(`/admin/vocabulary-courses/${course._id}/items`)}
           onTogglePublish={(course) => toggleMutation.mutate(course._id)}
         />
       ) : null}

@@ -12,6 +12,10 @@ import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage.jsx";
 import AdminVocabularyCourseCreatePage from "../features/admin/vocabulary-courses/pages/AdminVocabularyCourseCreatePage.jsx";
 import AdminVocabularyCourseEditPage from "../features/admin/vocabulary-courses/pages/AdminVocabularyCourseEditPage.jsx";
 import AdminVocabularyCourseListPage from "../features/admin/vocabulary-courses/pages/AdminVocabularyCourseListPage.jsx";
+import AdminVocabularyImportJsonPage from "../features/admin/vocabulary/pages/AdminVocabularyImportJsonPage.jsx";
+import AdminVocabularyItemCreatePage from "../features/admin/vocabulary/pages/AdminVocabularyItemCreatePage.jsx";
+import AdminVocabularyItemEditPage from "../features/admin/vocabulary/pages/AdminVocabularyItemEditPage.jsx";
+import AdminVocabularyItemPage from "../features/admin/vocabulary/pages/AdminVocabularyItemPage.jsx";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -43,6 +47,22 @@ export const router = createBrowserRouter([
           {
             path: "admin/vocabulary-courses/:id/edit",
             element: <AdminVocabularyCourseEditPage />,
+          },
+          {
+            path: "admin/vocabulary-courses/:courseId/items",
+            element: <AdminVocabularyItemPage />,
+          },
+          {
+            path: "admin/vocabulary-courses/:courseId/items/create",
+            element: <AdminVocabularyItemCreatePage />,
+          },
+          {
+            path: "admin/vocabulary-courses/:courseId/items/import-json",
+            element: <AdminVocabularyImportJsonPage />,
+          },
+          {
+            path: "admin/vocabulary-items/:itemId/edit",
+            element: <AdminVocabularyItemEditPage />,
           },
         ],
       },

@@ -54,6 +54,20 @@ function uploadBufferToCloudinary(file, options) {
   });
 }
 
+function uploadRawBufferToCloudinary(buffer, options) {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) {
+        return reject(createHttpError(502, "Cloudinary upload failed"));
+      }
+
+      return resolve(result);
+    });
+
+    Readable.from(buffer).pipe(uploadStream);
+  });
+}
+
 export async function uploadMedia(file) {
   if (!file) {
     throw createHttpError(400, "No media file was uploaded");
@@ -71,5 +85,28 @@ export async function uploadMedia(file) {
     bytes: result.bytes,
     duration: result.duration || null,
     originalFilename: file.originalname,
+  };
+}
+
+export async function uploadAudioBufferToCloudinary(buffer, options = {}) {
+  if (!buffer || !Buffer.isBuffer(buffer)) {
+    throw createHttpError(400, "Audio buffer is required");
+  }
+
+  const result = await uploadRawBufferToCloudinary(buffer, {
+    folder: "meomeo-toeic/audio/vocabulary",
+    public_id: options.publicId,
+    resource_type: "video",
+    format: "mp3",
+  });
+
+  return {
+    secureUrl: result.secure_url,
+    url: result.url,
+    publicId: result.public_id,
+    resourceType: result.resource_type,
+    format: result.format,
+    bytes: result.bytes,
+    duration: result.duration || null,
   };
 }
