@@ -21,7 +21,7 @@ const links = [
   { to: "/grammar", Icon: NotebookText, label: "Ngữ pháp" },
   { to: "/speech", Icon: Mic, label: "Shadowing và dictation với Youtube" },
   { to: "/exercises", Icon: ClipboardList, label: "Luyện thi TOEIC" },
-  { to: "/exercises", Icon: Headphones, label: "Dictation với TOEIC" },
+  { to: "/toeic-dictation", Icon: Headphones, label: "Dictation với TOEIC" },
 ];
 
 function SidebarContent({ onLogout, onNavigate, user }) {

@@ -6,6 +6,7 @@ import DashboardPage from "../features/dashboard/pages/DashboardPage.jsx";
 import VocabularyPage from "../features/vocabulary/pages/VocabularyPage.jsx";
 import GrammarPage from "../features/grammar/pages/GrammarPage.jsx";
 import ExercisePage from "../features/exercises/pages/ExercisePage.jsx";
+import ToeicDictationPage from "../features/exercises/pages/ToeicDictationPage.jsx";
 import SpeechPracticePage from "../features/speech/pages/SpeechPracticePage.jsx";
 import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage.jsx";
 
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
           { path: "vocabulary", element: <VocabularyPage /> },
           { path: "grammar", element: <GrammarPage /> },
           { path: "exercises", element: <ExercisePage /> },
+          { path: "toeic-dictation", element: <ToeicDictationPage /> },
           { path: "speech", element: <SpeechPracticePage /> },
         ],
       },
