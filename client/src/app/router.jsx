@@ -9,6 +9,9 @@ import ExercisePage from "../features/exercises/pages/ExercisePage.jsx";
 import ToeicDictationPage from "../features/exercises/pages/ToeicDictationPage.jsx";
 import SpeechPracticePage from "../features/speech/pages/SpeechPracticePage.jsx";
 import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage.jsx";
+import AdminVocabularyCourseCreatePage from "../features/admin/vocabulary-courses/pages/AdminVocabularyCourseCreatePage.jsx";
+import AdminVocabularyCourseEditPage from "../features/admin/vocabulary-courses/pages/AdminVocabularyCourseEditPage.jsx";
+import AdminVocabularyCourseListPage from "../features/admin/vocabulary-courses/pages/AdminVocabularyCourseListPage.jsx";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -30,7 +33,18 @@ export const router = createBrowserRouter([
       },
       {
         element: <ProtectedRoute allowedRoles={["admin"]} />,
-        children: [{ path: "admin", element: <AdminDashboardPage /> }],
+        children: [
+          { path: "admin", element: <AdminDashboardPage /> },
+          { path: "admin/vocabulary-courses", element: <AdminVocabularyCourseListPage /> },
+          {
+            path: "admin/vocabulary-courses/create",
+            element: <AdminVocabularyCourseCreatePage />,
+          },
+          {
+            path: "admin/vocabulary-courses/:id/edit",
+            element: <AdminVocabularyCourseEditPage />,
+          },
+        ],
       },
     ],
   },

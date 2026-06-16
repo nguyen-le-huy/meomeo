@@ -17,7 +17,7 @@ import { useAuthStore } from "../../features/auth/stores/authStore.js";
 
 const links = [
   { to: "/dashboard", Icon: Home, label: "Trang chủ" },
-  { to: "/vocabulary", Icon: BookOpen, label: "Từ vựng" },
+  { adminTo: "/admin/vocabulary-courses", to: "/vocabulary", Icon: BookOpen, label: "Từ vựng" },
   { to: "/grammar", Icon: NotebookText, label: "Ngữ pháp" },
   { to: "/speech", Icon: Mic, label: "Shadowing và dictation với Youtube" },
   { to: "/exercises", Icon: ClipboardList, label: "Luyện thi TOEIC" },
@@ -28,19 +28,17 @@ function SidebarContent({ onLogout, onNavigate, user }) {
   return (
     <>
       <NavLink
-        className="mb-5 flex items-center gap-2 px-1 text-sm font-bold"
+        className="mb-5 flex items-center gap-2 px-1 text-lg font-bold"
         onClick={onNavigate}
         to="/dashboard"
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-matcha text-sm font-black">
-          M
-        </span>
         Meomeo
       </NavLink>
 
       <nav className="space-y-1.5">
         {links.map((link, index) => {
           const Icon = link.Icon;
+          const to = user?.role === "admin" && link.adminTo ? link.adminTo : link.to;
 
           return (
             <NavLink
@@ -54,7 +52,7 @@ function SidebarContent({ onLogout, onNavigate, user }) {
               }
               key={`${link.to}-${index}`}
               onClick={onNavigate}
-              to={link.to}
+              to={to}
             >
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-matcha/70">
                 <Icon aria-hidden="true" size={16} strokeWidth={2.4} />
@@ -128,10 +126,7 @@ export default function MainLayout() {
             <Menu aria-hidden="true" size={22} strokeWidth={2.4} />
           </button>
 
-          <NavLink className="flex items-center gap-2 text-sm font-bold" to="/dashboard">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-matcha text-sm font-black">
-              M
-            </span>
+          <NavLink className="flex items-center gap-2 text-lg font-bold" to="/dashboard">
             Meomeo
           </NavLink>
 
