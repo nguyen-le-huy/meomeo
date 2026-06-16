@@ -131,7 +131,7 @@ export default function LoginPage() {
               ) : null}
 
               <button
-                className="h-14 w-full rounded-md bg-black text-base font-semibold text-matcha shadow-sm transition hover:bg-coal disabled:cursor-not-allowed disabled:opacity-70"
+                className="h-14 w-full rounded-md bg-black text-base font-semibold text-white shadow-sm transition hover:bg-coal disabled:cursor-not-allowed disabled:opacity-70"
                 disabled={isSubmitting}
                 type="submit"
               >
