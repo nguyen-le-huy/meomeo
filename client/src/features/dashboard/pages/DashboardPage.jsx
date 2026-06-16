@@ -13,20 +13,20 @@ export default function DashboardPage() {
         src="https://res.cloudinary.com/dknin0hhf/image/upload/v1781605588/Cat_Dancing_Sticker_ym40gn.gif"
       />
 
-      <div className="relative z-20 flex h-full flex-col items-center justify-center px-6 pb-0 pt-10 text-center">
-        <h1 className="mt-8 text-[30px] font-black leading-tight text-black sm:mt-0 sm:text-[36px]">
+      <div className="relative z-20 flex h-full flex-col items-center px-6 pt-[24vh] text-center sm:pt-[27vh]">
+        <h1 className="text-[30px] font-black leading-tight text-black sm:text-[38px]">
           meo meo chào buổi sáng nhé
         </h1>
-
-        <video
-          autoPlay
-          className="mt-6 max-h-[76vh] w-full max-w-[680px] object-contain sm:mt-8 sm:max-w-[820px]"
-          loop
-          muted
-          playsInline
-          src="https://res.cloudinary.com/dknin0hhf/video/upload/v1781603836/cat_tdv7xe.webm"
-        />
       </div>
+
+      <video
+        autoPlay
+        className="absolute bottom-0 left-1/2 z-10 max-h-[78vh] w-[118vw] max-w-[880px] -translate-x-1/2 object-contain sm:max-h-[82vh] sm:w-[92vw] sm:max-w-[1080px]"
+        loop
+        muted
+        playsInline
+        src="https://res.cloudinary.com/dknin0hhf/video/upload/v1781603836/cat_tdv7xe.webm"
+      />
     </section>
   );
 }
