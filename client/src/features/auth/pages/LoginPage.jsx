@@ -56,7 +56,7 @@ export default function LoginPage() {
 
   return (
     <main className="h-screen overflow-hidden bg-matcha px-4 py-4 text-coal sm:px-6 sm:py-7">
-      <section className="relative mx-auto h-full max-w-[900px] overflow-hidden rounded-[18px] bg-white shadow-[0_1px_0_#222222]">
+      <section className="relative mx-auto h-full max-w-[900px] overflow-hidden rounded-[18px] border border-coal/10 bg-matcha/55 shadow-[0_1px_0_#222222]">
         <div className="absolute right-14 top-7 z-10 hidden sm:block">
           <button className="rounded-full bg-coal px-12 py-3.5 text-sm font-medium text-matcha shadow-sm transition hover:bg-black">
             Sign in
@@ -88,7 +88,7 @@ export default function LoginPage() {
                 </label>
                 <input
                   autoComplete="off"
-                  className="h-14 w-full rounded-md border border-coal/70 px-7 text-base font-semibold text-coal outline-none transition placeholder:text-coal/35 focus:border-coal focus:ring-2 focus:ring-coal/15"
+                  className="h-14 w-full rounded-md border border-coal/50 bg-matcha/25 px-7 text-base font-semibold text-coal outline-none transition placeholder:text-coal/35 focus:border-coal focus:bg-matcha/35 focus:ring-2 focus:ring-coal/15"
                   id="login-username"
                   type="text"
                   {...register("username")}
@@ -107,7 +107,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <input
                     autoComplete="new-password"
-                    className="h-14 w-full rounded-md border border-coal/30 px-7 pr-14 text-base font-semibold text-coal outline-none transition placeholder:text-coal/35 focus:border-coal focus:ring-2 focus:ring-coal/15"
+                    className="h-14 w-full rounded-md border border-coal/30 bg-matcha/25 px-7 pr-14 text-base font-semibold text-coal outline-none transition placeholder:text-coal/35 focus:border-coal focus:bg-matcha/35 focus:ring-2 focus:ring-coal/15"
                     id="password"
                     type={showPassword ? "text" : "password"}
                     {...register("password")}
@@ -145,10 +145,6 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <div className="mt-6 rounded-md bg-matcha/40 px-4 py-3 text-sm text-coal/70">
-              <p>Admin: admin / 123456</p>
-              <p>Student: meomeo / 123456</p>
-            </div>
           </div>
         </div>
       </section>
