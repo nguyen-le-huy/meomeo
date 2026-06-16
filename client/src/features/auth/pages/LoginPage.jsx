@@ -10,7 +10,7 @@ const catImageUrl =
   "https://res.cloudinary.com/dknin0hhf/image/upload/v1781600479/Cat_Smile_Sticker_by_CHERRISK_l4h8vh.gif";
 
 const loginSchema = z.object({
-  email: z.string().trim().min(1, "Vui lòng nhập tài khoản"),
+  username: z.string().trim().min(1, "Vui lòng nhập tài khoản"),
   password: z.string().min(1, "Vui lòng nhập mật khẩu"),
 });
 
@@ -25,7 +25,7 @@ export default function LoginPage() {
     register,
   } = useForm({
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
     resolver: zodResolver(loginSchema),
@@ -35,7 +35,10 @@ export default function LoginPage() {
     setLoginError("");
 
     try {
-      const response = await loginApi(values);
+      const response = await loginApi({
+        email: values.username,
+        password: values.password,
+      });
       const { user, token } = response.data.data;
 
       setAuth({ user, token });
@@ -75,19 +78,25 @@ export default function LoginPage() {
               <p className="mt-3 text-sm font-normal text-[#9a9aaa]">Đăng nhập đi</p>
             </div>
 
-            <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            <form autoComplete="off" className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <div>
-                <label className="mb-2.5 block text-sm font-semibold text-[#11143f]" htmlFor="email">
+                <label
+                  className="mb-2.5 block text-sm font-semibold text-[#11143f]"
+                  htmlFor="login-username"
+                >
                   Tài khoản
                 </label>
                 <input
+                  autoComplete="off"
                   className="h-14 w-full rounded-md border border-[#0a0b35] px-7 text-base font-semibold text-[#17193f] outline-none transition placeholder:text-[#b8b8c7] focus:border-[#151655] focus:ring-2 focus:ring-[#11143f]/15"
-                  id="email"
+                  id="login-username"
                   type="text"
-                  {...register("email")}
+                  {...register("username")}
                 />
-                {errors.email ? (
-                  <p className="mt-2 text-sm font-medium text-red-600">{errors.email.message}</p>
+                {errors.username ? (
+                  <p className="mt-2 text-sm font-medium text-red-600">
+                    {errors.username.message}
+                  </p>
                 ) : null}
               </div>
 
@@ -97,6 +106,7 @@ export default function LoginPage() {
                 </label>
                 <div className="relative">
                   <input
+                    autoComplete="new-password"
                     className="h-14 w-full rounded-md border border-[#b9bac4] px-7 pr-14 text-base font-semibold text-[#17193f] outline-none transition placeholder:text-[#b8b8c7] focus:border-[#151655] focus:ring-2 focus:ring-[#11143f]/15"
                     id="password"
                     type={showPassword ? "text" : "password"}
