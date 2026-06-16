@@ -3,5 +3,6 @@
 @tailwind utilities;
 
 body {
+  font-family: "Google Sans", Arial, sans-serif;
   margin: 0;
 }
