@@ -1,5 +1,18 @@
+import { execFile } from "node:child_process";
+import { constants as fsConstants } from "node:fs";
+import { access } from "node:fs/promises";
+import { createRequire } from "node:module";
+import path from "node:path";
+import { promisify } from "node:util";
 import ytdlp from "yt-dlp-exec";
 import { createHttpError } from "../../utils/createHttpError.js";
+
+const execFileAsync = promisify(execFile);
+const require = createRequire(import.meta.url);
+const ytDlpPostinstallPath = require.resolve("yt-dlp-exec/scripts/postinstall.js");
+const ytDlpPackageRoot = path.dirname(path.dirname(ytDlpPostinstallPath));
+const ytDlpBinaryPath = path.join(ytDlpPackageRoot, "bin", process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp");
+let ytDlpBinaryPromise;
 
 const transcriptLanguagePriority = [
   { container: "subtitles", language: "en" },
@@ -9,6 +22,30 @@ const transcriptLanguagePriority = [
 ];
 
 const transcriptExtensionPriority = ["json3", "vtt", "srv3", "ttml"];
+
+async function ensureYtDlpBinary() {
+  try {
+    await access(ytDlpBinaryPath, fsConstants.X_OK);
+    return;
+  } catch {
+    // The package downloads the native yt-dlp binary in postinstall. Some local
+    // installs skip scripts, so recover once at runtime before failing analysis.
+  }
+
+  ytDlpBinaryPromise ||= execFileAsync(process.execPath, [ytDlpPostinstallPath], {
+    cwd: ytDlpPackageRoot,
+    timeout: 120000,
+  }).then(async () => {
+    await access(ytDlpBinaryPath, fsConstants.X_OK);
+  });
+
+  await ytDlpBinaryPromise;
+}
+
+async function runYtDlp(youtubeUrl, options) {
+  await ensureYtDlpBinary();
+  return ytdlp(youtubeUrl, options);
+}
 
 export function extractYoutubeVideoId(url) {
   const value = String(url || "").trim();
@@ -96,7 +133,7 @@ function pickPreferredSubtitleTrack(metadata) {
 
 export async function getYoutubeMetadata(youtubeUrl) {
   const youtubeVideoId = extractYoutubeVideoId(youtubeUrl);
-  const output = await ytdlp(youtubeUrl, {
+  const output = await runYtDlp(youtubeUrl, {
     dumpSingleJson: true,
     skipDownload: true,
     writeSub: true,

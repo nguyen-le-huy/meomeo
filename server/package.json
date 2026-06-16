@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon",
+    "install:yt-dlp": "node node_modules/yt-dlp-exec/scripts/postinstall.js",
+    "postinstall": "npm run install:yt-dlp",
     "start": "node src/server.js",
     "seed:users": "node src/seed/seedUsers.js"
   },
