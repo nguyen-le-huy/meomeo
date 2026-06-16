@@ -146,7 +146,7 @@ export default function LoginPage() {
             </form>
 
             <div className="mt-6 rounded-md bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              <p>Admin: admin / 1234567</p>
+              <p>Admin: admin / 123456</p>
               <p>Student: meomeo / 123456</p>
             </div>
           </div>

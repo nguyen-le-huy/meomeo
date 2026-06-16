@@ -7,7 +7,7 @@ const seedUsers = [
   {
     name: "Admin",
     email: "admin",
-    password: "1234567",
+    password: "123456",
     role: "admin",
   },
   {
@@ -24,12 +24,16 @@ async function seedDefaultUsers() {
   for (const seedUser of seedUsers) {
     const email = seedUser.email.toLowerCase();
     const existingUser = await User.findOne({ email });
+    const passwordHash = await bcrypt.hash(seedUser.password, 10);
 
     if (existingUser) {
+      existingUser.name = seedUser.name;
+      existingUser.passwordHash = passwordHash;
+      existingUser.role = seedUser.role;
+      existingUser.isActive = true;
+      await existingUser.save();
       continue;
     }
-
-    const passwordHash = await bcrypt.hash(seedUser.password, 10);
 
     await User.create({
       name: seedUser.name,
@@ -41,7 +45,7 @@ async function seedDefaultUsers() {
   }
 
   console.log("Seed users completed");
-  console.log("Admin account: admin / 1234567");
+  console.log("Admin account: admin / 123456");
   console.log("Student account: meomeo / 123456");
 }
 
