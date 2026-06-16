@@ -26,12 +26,29 @@ Frontend:
 - React
 - Vite
 - Tailwind CSS
+- shadcn/ui
 - React Router DOM
 - TanStack Query
 - Zustand
 - React Hook Form
 - Zod
 - Axios
+
+## Frontend UI Rule
+
+Use shadcn/ui 100% for application UI from now on.
+
+Requirements:
+
+- New UI must be built from shadcn/ui components first: `Button`, `Input`, `Textarea`, `Select`, `Dialog`, `Sheet`, `Card`, `Tabs`, `Badge`, `Table`, `Form`, `DropdownMenu`, `Alert`, `Toast/Sonner`, and related primitives.
+- Existing custom Tailwind-only UI should be migrated to shadcn/ui when touched.
+- Do not create new ad hoc button/input/card/modal/table styles if a shadcn/ui component exists.
+- Tailwind utility classes are allowed only for layout, spacing, responsive behavior, and small visual adjustments around shadcn/ui components.
+- Shared shadcn/ui primitives should live in `client/src/components/ui`.
+- Feature-specific compositions should live inside their feature folder and compose `components/ui` primitives.
+- Use `lucide-react` icons inside shadcn/ui buttons/menus where icons are needed.
+- Keep the matcha/coal theme through shadcn tokens in CSS variables and Tailwind theme, not scattered hardcoded colors.
+- If a needed component is missing, add it with the shadcn CLI pattern before building the feature UI.
 
 Backend:
 

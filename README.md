@@ -50,12 +50,28 @@ Frontend:
 - React
 - Vite
 - Tailwind CSS
+- shadcn/ui
 - React Router DOM
 - TanStack Query
 - Zustand
 - React Hook Form
 - Zod
 - Axios
+
+## UI Standard
+
+Từ thời điểm này, frontend sử dụng shadcn/ui 100% cho UI application.
+
+Quy định:
+
+- UI mới phải ưu tiên shadcn/ui components: `Button`, `Input`, `Textarea`, `Select`, `Dialog`, `Sheet`, `Card`, `Tabs`, `Badge`, `Table`, `Form`, `DropdownMenu`, `Alert`, `Toast/Sonner`.
+- Không tạo button/input/card/modal/table custom bằng Tailwind thuần nếu shadcn/ui đã có component phù hợp.
+- Khi sửa màn hình cũ, phần UI được chạm tới nên migrate sang shadcn/ui.
+- Tailwind vẫn dùng cho layout, spacing, responsive và tinh chỉnh nhỏ quanh shadcn components.
+- Shared UI primitives đặt trong `client/src/components/ui`.
+- Component theo feature chỉ compose lại primitives từ `components/ui`.
+- Icon dùng `lucide-react` bên trong shadcn buttons/menus.
+- Theme matcha/coal nên đi qua CSS variables/Tailwind theme của shadcn, tránh rải hardcoded colors.
 
 Backend:
 
