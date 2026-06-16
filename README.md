@@ -40,7 +40,7 @@ Tài khoản admin mặc định:
 
 ```txt
 username: admin
-password: 1234567
+password: 123456
 ```
 
 ## Tech Stack
@@ -349,7 +349,7 @@ CLOUDINARY_API_SECRET=your_api_secret
 
 ADMIN_USERNAME=admin
 ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=1234567
+ADMIN_PASSWORD=123456
 ```
 
 `client/.env`:
