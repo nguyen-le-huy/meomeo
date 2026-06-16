@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createTopic } from "../../topics/services/topicApi.js";
 import {
+  analyzeVideoTranscript,
   checkDictation,
   createVideo,
   deleteVideo,
@@ -103,6 +104,18 @@ export function usePublishVideo() {
     onSuccess: (_, variables) => {
       invalidateLibrary(queryClient);
       queryClient.invalidateQueries({ queryKey: ["video", variables.id] });
+    },
+  });
+}
+
+export function useAnalyzeVideoTranscript(videoId) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => analyzeVideoTranscript(videoId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["video", videoId] });
+      queryClient.invalidateQueries({ queryKey: ["video-transcripts", videoId] });
+      queryClient.invalidateQueries({ queryKey: ["videos"] });
     },
   });
 }

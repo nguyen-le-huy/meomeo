@@ -28,6 +28,10 @@ export function publishVideo(id, isPublished) {
   return apiClient.patch(`/videos/${id}/publish`, { isPublished });
 }
 
+export function analyzeVideoTranscript(id) {
+  return apiClient.post(`/videos/${id}/analyze-transcript`);
+}
+
 export function checkDictation(data) {
   return apiClient.post("/dictation/check", data);
 }

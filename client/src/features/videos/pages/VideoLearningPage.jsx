@@ -1,9 +1,10 @@
-import { Eye, EyeOff, Merge, Pencil, Save } from "lucide-react";
+import { Eye, EyeOff, Merge, Pencil, RefreshCw, Save } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
 import {
+  useAnalyzeVideoTranscript,
   useCheckDictation,
   useMergeTranscriptSegment,
   useUpdateTranscriptSegment,
@@ -28,6 +29,7 @@ export default function VideoLearningPage() {
   const { data: video, isLoading: isVideoLoading } = useVideo(id);
   const { data: segments = [], isLoading: isSegmentsLoading } = useVideoTranscripts(id);
   const checkMutation = useCheckDictation();
+  const analyzeMutation = useAnalyzeVideoTranscript(id);
   const updateSegmentMutation = useUpdateTranscriptSegment(id);
   const mergeSegmentMutation = useMergeTranscriptSegment(id);
   const segment = segments[currentIndex];
@@ -67,11 +69,29 @@ export default function VideoLearningPage() {
 
   return (
     <section className="h-full overflow-auto bg-matcha p-4 md:p-6">
-      <div className="mx-auto grid max-w-7xl gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)_360px]">
+      <div className="mx-auto grid max-w-7xl gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
         <div className="space-y-4">
           <div>
-            <p className="text-sm font-black text-coal/55">{video.topicId?.name || "YouTube"} - {video.level}</p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-black text-coal/55">YouTube - {video.level}</p>
+              {isAdmin ? (
+                <button
+                  className={inactiveButtonClass}
+                  disabled={analyzeMutation.isPending}
+                  onClick={() => analyzeMutation.mutate()}
+                  type="button"
+                >
+                  <RefreshCw className={analyzeMutation.isPending ? "animate-spin" : ""} size={16} />
+                  {analyzeMutation.isPending ? "Đang phân tích..." : "Phân tích transcript"}
+                </button>
+              ) : null}
+            </div>
             <h1 className="text-2xl font-black leading-tight md:text-3xl">{video.title}</h1>
+            {video.transcriptStatus === "failed" && video.transcriptError ? (
+              <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-700">
+                {video.transcriptError}
+              </p>
+            ) : null}
           </div>
           <div className="overflow-hidden rounded-xl border border-coal/15 bg-black shadow-sm">
             {embedUrl ? (
@@ -141,6 +161,25 @@ export default function VideoLearningPage() {
                   </button>
                 ))}
               </div>
+              <TranscriptScroller
+                currentIndex={currentIndex}
+                difficulty={difficulty}
+                editingSegmentId={editingSegmentId}
+                isAdmin={isAdmin}
+                mergeSegmentMutation={mergeSegmentMutation}
+                onEdit={setEditingSegmentId}
+                onSelect={(index) => {
+                  setCurrentIndex(index);
+                  setAnswer("");
+                  checkMutation.reset();
+                }}
+                onUpdate={async (item, data) => {
+                  await updateSegmentMutation.mutateAsync({ segmentId: item._id, data });
+                  setEditingSegmentId("");
+                }}
+                segments={segments}
+                setEditingSegmentId={setEditingSegmentId}
+              />
               <textarea
                 className="min-h-36 w-full rounded-lg border border-coal/15 bg-white p-3 text-sm font-semibold outline-none focus:border-coal"
                 onChange={(event) => setAnswer(event.target.value)}
@@ -164,49 +203,78 @@ export default function VideoLearningPage() {
             </div>
           )}
         </div>
-
-        <aside className="rounded-xl bg-white/75 p-4">
-          <h2 className="mb-3 text-xl font-black">Transcript</h2>
-          <div className="max-h-[70vh] space-y-2 overflow-auto pr-1">
-            {segments.map((item, index) => (
-              <div
-                className={[
-                  "rounded-lg border p-3 text-sm",
-                  index === currentIndex ? "border-coal bg-matcha/70" : "border-coal/10 bg-white/70",
-                ].join(" ")}
-                key={item._id}
-              >
-                <button className="block w-full text-left font-bold" onClick={() => setCurrentIndex(index)} type="button">
-                  #{item.index} {item.startTime}s - {item.endTime}s
-                </button>
-                {editingSegmentId === item._id ? (
-                  <TranscriptEditForm
-                    item={item}
-                    onCancel={() => setEditingSegmentId("")}
-                    onSave={async (data) => {
-                      await updateSegmentMutation.mutateAsync({ segmentId: item._id, data });
-                      setEditingSegmentId("");
-                    }}
-                  />
-                ) : (
-                  <p className="mt-1 text-coal/75">{item.text}</p>
-                )}
-                {isAdmin ? (
-                  <div className="mt-2 flex gap-2">
-                    <button className="rounded-md border border-coal/15 px-2 py-1 text-xs font-bold" onClick={() => setEditingSegmentId(item._id)} type="button">
-                      <Pencil size={13} /> Edit
-                    </button>
-                    <button className="rounded-md border border-coal/15 px-2 py-1 text-xs font-bold" onClick={() => mergeSegmentMutation.mutate(item._id)} type="button">
-                      <Merge size={13} /> Merge next
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </aside>
       </div>
     </section>
+  );
+}
+
+function TranscriptScroller({
+  currentIndex,
+  difficulty,
+  editingSegmentId,
+  isAdmin,
+  mergeSegmentMutation,
+  onEdit,
+  onSelect,
+  onUpdate,
+  segments,
+  setEditingSegmentId,
+}) {
+  if (!segments.length) {
+    return (
+      <div className="rounded-xl border border-dashed border-coal/20 bg-white/75 p-4 text-sm font-bold text-coal/65">
+        Chưa có transcript. Admin bấm “Phân tích transcript” để lấy subtitle từ YouTube.
+      </div>
+    );
+  }
+
+  return (
+    <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-transcript-scroller>
+      <div className="flex min-w-full snap-x snap-mandatory gap-3" data-transcript-track>
+        {segments.map((item, index) => (
+          <div
+            className={[
+              "min-h-32 w-[78%] shrink-0 snap-start rounded-xl border p-3 text-sm shadow-sm sm:w-[48%] lg:w-[42%]",
+              index === currentIndex ? "border-coal bg-[#eef2ff]" : "border-coal/10 bg-white/80",
+            ].join(" ")}
+            data-transcript-card
+            key={item._id}
+          >
+            <button className="block w-full text-left font-black" onClick={() => onSelect(index)} type="button">
+              #{item.index}
+            </button>
+            {editingSegmentId === item._id ? (
+              <TranscriptEditForm
+                item={item}
+                onCancel={() => setEditingSegmentId("")}
+                onSave={(data) => onUpdate(item, data)}
+              />
+            ) : (
+              <DictationPrompt difficulty={difficulty} text={item.text} />
+            )}
+            {isAdmin ? (
+              <div className="mt-3 flex justify-end gap-2">
+                <button className="rounded-md border border-coal/15 px-2 py-1 text-xs font-bold" onClick={() => onEdit(item._id)} type="button">
+                  <Pencil size={13} /> Edit
+                </button>
+                <button
+                  className="rounded-md border border-coal/15 px-2 py-1 text-xs font-bold"
+                  disabled={mergeSegmentMutation.isPending}
+                  onClick={() => {
+                    if (window.confirm("Bạn có chắc muốn ghép segment này với segment tiếp theo không?")) {
+                      mergeSegmentMutation.mutate(item._id);
+                    }
+                  }}
+                  type="button"
+                >
+                  <Merge size={13} /> Merge
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
