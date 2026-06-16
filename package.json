@@ -1,7 +1,7 @@
 {
   "name": "meomeo",
   "version": "0.1.0",
-  "description": "MERN monorepo for a TOEIC English learning app with separate React frontend and Express backend.",
+  "description": "MERN monorepo for YouTube Shadowing and Dictation learning.",
   "private": true,
   "scripts": {
     "dev": "concurrently -n client,server -c cyan,green \"npm run dev --prefix client\" \"npm run dev --prefix server\"",

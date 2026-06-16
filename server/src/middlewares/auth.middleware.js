@@ -35,3 +35,31 @@ export async function requireAuth(req, res, next) {
     return next(createHttpError(401, "Unauthorized"));
   }
 }
+
+export async function optionalAuth(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization || "";
+    const [scheme, token] = authHeader.split(" ");
+
+    if (scheme !== "Bearer" || !token) {
+      return next();
+    }
+
+    const payload = jwt.verify(token, config.jwt.secret);
+    const user = await User.findById(payload.userId);
+
+    if (user?.isActive) {
+      req.user = {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+      };
+    }
+
+    return next();
+  } catch {
+    return next();
+  }
+}

@@ -1,0 +1,173 @@
+import { Topic } from "../topics/topic.model.js";
+import { TranscriptSegment } from "../transcripts/transcriptSegment.model.js";
+import { analyzeYoutubeUrl, normalizeTranscriptSegments } from "../youtube/youtube.service.js";
+import { VideoLesson } from "./video.model.js";
+import { createHttpError } from "../../utils/createHttpError.js";
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function normalizeText(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s']/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildSegment(videoId, segment, index) {
+  const text = segment.text.trim();
+  const normalizedText = normalizeText(text);
+  const startTime = Number(segment.startTime);
+  const endTime = Number(segment.endTime);
+
+  return {
+    videoId,
+    index: index + 1,
+    startTime,
+    endTime,
+    duration: Math.max(0, endTime - startTime),
+    text,
+    normalizedText,
+    wordCount: normalizedText ? normalizedText.split(" ").length : 0,
+    source: "youtube",
+    isPublished: true,
+  };
+}
+
+async function assertTopic(topicId, options = {}) {
+  const filter = { _id: topicId };
+  if (!options.admin) filter.isPublished = true;
+  const topic = await Topic.findOne(filter);
+  if (!topic) throw createHttpError(404, "Topic not found");
+  return topic;
+}
+
+export async function createTranscriptSegments(videoId, segments = []) {
+  const normalizedSegments = normalizeTranscriptSegments(segments);
+  await TranscriptSegment.deleteMany({ videoId });
+
+  if (!normalizedSegments.length) return [];
+  return TranscriptSegment.insertMany(
+    normalizedSegments.map((segment, index) => buildSegment(videoId, segment, index)),
+  );
+}
+
+export async function getVideos(query = {}, options = {}) {
+  const filter = {};
+
+  if (!options.admin || !query.includeUnpublished) {
+    filter.isPublished = true;
+  }
+  if (query.topicId) filter.topicId = query.topicId;
+  if (query.level) filter.level = query.level;
+  if (query.search) {
+    const search = { $regex: escapeRegExp(query.search), $options: "i" };
+    filter.$or = [{ title: search }, { description: search }];
+  }
+
+  return VideoLesson.find(filter).populate("topicId").sort({ createdAt: -1 });
+}
+
+export async function getVideosByTopicSlug(slug, options = {}) {
+  const topic = await Topic.findOne({ slug, ...(!options.admin ? { isPublished: true } : {}) });
+  if (!topic) throw createHttpError(404, "Topic not found");
+  return getVideos({ topicId: topic._id, includeUnpublished: options.admin }, options);
+}
+
+export async function getVideoById(id, options = {}) {
+  const filter = { _id: id };
+  if (!options.admin) filter.isPublished = true;
+  const video = await VideoLesson.findOne(filter).populate("topicId");
+  if (!video) throw createHttpError(404, "Video not found");
+  return video;
+}
+
+export async function getVideoTranscripts(id, options = {}) {
+  await getVideoById(id, options);
+  const filter = { videoId: id };
+  if (!options.admin) filter.isPublished = true;
+  return TranscriptSegment.find(filter).sort({ index: 1 });
+}
+
+export async function createVideo(data, adminUser) {
+  await assertTopic(data.topicId, { admin: true });
+  const analyzed = await analyzeYoutubeUrl(data.youtubeUrl);
+  const existingVideo = await VideoLesson.findOne({ youtubeVideoId: analyzed.video.youtubeVideoId });
+
+  if (existingVideo) {
+    throw createHttpError(409, "Video already exists");
+  }
+
+  const transcriptInputs = data.transcripts || analyzed.transcripts || [];
+  const video = await VideoLesson.create({
+    topicId: data.topicId,
+    youtubeUrl: analyzed.video.youtubeUrl,
+    youtubeVideoId: analyzed.video.youtubeVideoId,
+    title: data.title || analyzed.video.title,
+    description: data.description || "",
+    thumbnailUrl: analyzed.video.thumbnailUrl,
+    duration: analyzed.video.duration,
+    level: data.level || "A2",
+    transcriptStatus: transcriptInputs.length ? "completed" : "pending",
+    transcriptLanguage: analyzed.transcriptLanguage || "en",
+    isPublished: data.isPublished ?? false,
+    createdBy: adminUser.id,
+  });
+
+  const segments = await createTranscriptSegments(video._id, transcriptInputs);
+  return { video, segments, analysisWarning: analyzed.warning };
+}
+
+export async function updateVideo(id, data) {
+  const video = await getVideoById(id, { admin: true });
+
+  if (data.topicId !== undefined) {
+    await assertTopic(data.topicId, { admin: true });
+    video.topicId = data.topicId;
+  }
+  if (data.youtubeUrl !== undefined) {
+    const analyzed = await analyzeYoutubeUrl(data.youtubeUrl);
+    video.youtubeUrl = analyzed.video.youtubeUrl;
+    video.youtubeVideoId = analyzed.video.youtubeVideoId;
+    if (!data.title) video.title = analyzed.video.title;
+    video.thumbnailUrl = analyzed.video.thumbnailUrl;
+    video.duration = analyzed.video.duration;
+  }
+  if (data.title !== undefined) video.title = data.title;
+  if (data.description !== undefined) video.description = data.description;
+  if (data.level !== undefined) video.level = data.level;
+  if (data.isPublished !== undefined) video.isPublished = data.isPublished;
+
+  await video.save();
+  return video;
+}
+
+export async function deleteVideo(id) {
+  const video = await getVideoById(id, { admin: true });
+  await TranscriptSegment.deleteMany({ videoId: video._id });
+  await video.deleteOne();
+  return { id };
+}
+
+export async function publishVideo(id, isPublished) {
+  const video = await getVideoById(id, { admin: true });
+  video.isPublished = isPublished;
+  await video.save();
+  return video;
+}
+
+export async function analyzeVideoTranscript(id) {
+  const video = await getVideoById(id, { admin: true });
+  video.transcriptStatus = "processing";
+  await video.save();
+
+  const analyzed = await analyzeYoutubeUrl(video.youtubeUrl);
+  const segments = await createTranscriptSegments(video._id, analyzed.transcripts || []);
+  video.transcriptStatus = segments.length ? "completed" : "pending";
+  video.transcriptLanguage = analyzed.transcriptLanguage || video.transcriptLanguage;
+  await video.save();
+
+  return { video, segments, analysisWarning: analyzed.warning };
+}

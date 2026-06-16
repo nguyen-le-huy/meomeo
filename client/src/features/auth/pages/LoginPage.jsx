@@ -44,11 +44,11 @@ export default function LoginPage() {
       setAuth({ user, token });
 
       if (user.role === "admin") {
-        navigate("/admin", { replace: true });
+        navigate("/", { replace: true });
         return;
       }
 
-      navigate("/dashboard", { replace: true });
+      navigate("/", { replace: true });
     } catch (error) {
       setLoginError(error.response?.data?.message || "Đăng nhập thất bại");
     }
@@ -67,9 +67,11 @@ export default function LoginPage() {
           <div className="w-full max-w-[520px] sm:ml-2 sm:mr-20">
             <div className="mb-9">
               <h1 className="text-[28px] font-bold leading-tight tracking-normal text-coal sm:text-[38px]">
-                Vào học nhanh
+                Admin login
               </h1>
-              <p className="mt-3 text-sm font-normal text-coal/55">Đăng nhập đi</p>
+              <p className="mt-3 text-sm font-normal text-coal/55">
+                Đăng nhập để thêm video và chỉnh transcript.
+              </p>
             </div>
 
             <form autoComplete="off" className="space-y-6" onSubmit={handleSubmit(onSubmit)}>

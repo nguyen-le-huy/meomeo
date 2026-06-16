@@ -13,12 +13,17 @@ function buildUserResponse(user) {
     id: user._id.toString(),
     name: user.name,
     email: user.email,
+    username: user.username,
     role: user.role,
   };
 }
 
 export async function login({ email, password }) {
-  const user = await User.findOne({ email: email.trim().toLowerCase() });
+  const loginValue = email.trim().toLowerCase();
+  const user = await User.findOne({
+    $or: [{ email: loginValue }, { username: loginValue }],
+    role: "admin",
+  });
 
   if (!user) {
     throw createHttpError(401, "Invalid credentials");

@@ -8,6 +8,12 @@ import exerciseRoutes from "../modules/exercises/exercise.routes.js";
 import progressRoutes from "../modules/progress/progress.routes.js";
 import speechRoutes from "../modules/speech/speech.routes.js";
 import mediaRoutes from "../modules/media/media.routes.js";
+import topicRoutes from "../modules/topics/topic.routes.js";
+import videoRoutes from "../modules/videos/video.routes.js";
+import transcriptRoutes from "../modules/transcripts/transcript.routes.js";
+import dictationRoutes from "../modules/dictation/dictation.routes.js";
+import shadowingRoutes from "../modules/shadowing/shadowing.routes.js";
+import youtubeRoutes from "../modules/youtube/youtube.routes.js";
 
 const router = Router();
 
@@ -20,5 +26,11 @@ router.use("/exercises", exerciseRoutes);
 router.use("/progress", progressRoutes);
 router.use("/speech", speechRoutes);
 router.use("/media", mediaRoutes);
+router.use("/topics", topicRoutes);
+router.use("/videos", videoRoutes);
+router.use("/transcripts", transcriptRoutes);
+router.use("/dictation", dictationRoutes);
+router.use("/shadowing", shadowingRoutes);
+router.use("/youtube", youtubeRoutes);
 
 export default router;

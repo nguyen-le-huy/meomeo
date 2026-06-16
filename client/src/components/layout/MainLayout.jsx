@@ -1,27 +1,25 @@
 import { useState } from "react";
 import {
   Bell,
-  BookOpen,
-  ClipboardList,
+  Captions,
   Headphones,
   Home,
+  LogIn,
   LogOut,
   Menu,
   Mic,
-  NotebookText,
   Search,
-  Settings,
+  Video,
 } from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../features/auth/stores/authStore.js";
 
 const links = [
-  { to: "/dashboard", Icon: Home, label: "Trang chủ" },
-  { adminTo: "/admin/vocabulary-courses", to: "/vocabulary", Icon: BookOpen, label: "Từ vựng" },
-  { to: "/grammar", Icon: NotebookText, label: "Ngữ pháp" },
-  { to: "/speech", Icon: Mic, label: "Shadowing và dictation với Youtube" },
-  { to: "/exercises", Icon: ClipboardList, label: "Luyện thi TOEIC" },
-  { to: "/toeic-dictation", Icon: Headphones, label: "Dictation với TOEIC" },
+  { to: "/", Icon: Home, label: "Trang chủ" },
+  { to: "/?mode=videos", Icon: Video, label: "Video YouTube" },
+  { to: "/?mode=dictation", Icon: Captions, label: "Dictation" },
+  { to: "/?mode=shadowing", Icon: Mic, label: "Shadowing" },
+  { to: "/?mode=listen", Icon: Headphones, label: "Luyện nghe" },
 ];
 
 function SidebarContent({ onLogout, onNavigate, user }) {
@@ -30,7 +28,7 @@ function SidebarContent({ onLogout, onNavigate, user }) {
       <NavLink
         className="mb-5 flex items-center gap-2 px-1 text-lg font-bold"
         onClick={onNavigate}
-        to="/dashboard"
+        to="/"
       >
         Meomeo
       </NavLink>
@@ -38,8 +36,6 @@ function SidebarContent({ onLogout, onNavigate, user }) {
       <nav className="space-y-1.5">
         {links.map((link, index) => {
           const Icon = link.Icon;
-          const to = user?.role === "admin" && link.adminTo ? link.adminTo : link.to;
-
           return (
             <NavLink
               className={({ isActive }) =>
@@ -52,7 +48,7 @@ function SidebarContent({ onLogout, onNavigate, user }) {
               }
               key={`${link.to}-${index}`}
               onClick={onNavigate}
-              to={to}
+              to={link.to}
             >
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-matcha/70">
                 <Icon aria-hidden="true" size={16} strokeWidth={2.4} />
@@ -61,38 +57,30 @@ function SidebarContent({ onLogout, onNavigate, user }) {
             </NavLink>
           );
         })}
-        {user?.role === "admin" ? (
-          <NavLink
-            className={({ isActive }) =>
-              [
-                "flex min-h-10 items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-semibold transition",
-                isActive
-                  ? "border border-coal/15 bg-matcha text-coal shadow-sm"
-                  : "text-coal/70 hover:bg-matcha/50 hover:text-coal",
-              ].join(" ")
-            }
-            onClick={onNavigate}
-            to="/admin"
-          >
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-matcha/70">
-              <Settings aria-hidden="true" size={16} strokeWidth={2.4} />
-            </span>
-            <span>Quản trị</span>
-          </NavLink>
-        ) : null}
       </nav>
 
       <div className="mt-auto border-t border-coal/10 pt-4">
-        <button
-          className="w-full rounded-xl px-3 py-2 text-left text-[13px] font-bold text-red-500 transition hover:bg-red-50"
-          onClick={onLogout}
-          type="button"
-        >
-          <span className="inline-flex items-center gap-2">
-            <LogOut aria-hidden="true" size={16} strokeWidth={2.4} />
-            Đăng xuất
-          </span>
-        </button>
+        {user?.role === "admin" ? (
+          <button
+            className="w-full rounded-xl px-3 py-2 text-left text-[13px] font-bold text-red-500 transition hover:bg-red-50"
+            onClick={onLogout}
+            type="button"
+          >
+            <span className="inline-flex items-center gap-2">
+              <LogOut aria-hidden="true" size={16} strokeWidth={2.4} />
+              Đăng xuất admin
+            </span>
+          </button>
+        ) : (
+          <NavLink
+            className="flex min-h-10 items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-bold text-coal transition hover:bg-matcha/50"
+            onClick={onNavigate}
+            to="/login"
+          >
+            <LogIn aria-hidden="true" size={16} strokeWidth={2.4} />
+            Admin login
+          </NavLink>
+        )}
       </div>
     </>
   );
@@ -106,7 +94,7 @@ export default function MainLayout() {
   function handleLogout() {
     logout();
     setIsMobileMenuOpen(false);
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
   }
 
   return (
@@ -126,7 +114,7 @@ export default function MainLayout() {
             <Menu aria-hidden="true" size={22} strokeWidth={2.4} />
           </button>
 
-          <NavLink className="flex items-center gap-2 text-lg font-bold" to="/dashboard">
+          <NavLink className="flex items-center gap-2 text-lg font-bold" to="/">
             Meomeo
           </NavLink>
 
