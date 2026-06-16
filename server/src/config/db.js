@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
-import { env } from "./env.js";
+import { config } from "./env.js";
 
 export async function connectDB() {
-  if (!env.mongoUri) {
-    console.warn("MONGO_URI is not set. Skipping MongoDB connection.");
-    return null;
+  try {
+    const connection = await mongoose.connect(config.mongoUri);
+    console.log(`MongoDB Atlas connected: ${connection.connection.host}`);
+    return connection;
+  } catch (error) {
+    console.error(`MongoDB connection failed: ${error.message}`);
+    process.exit(1);
   }
-
-  const connection = await mongoose.connect(env.mongoUri);
-  console.log(`MongoDB connected: ${connection.connection.host}`);
-  return connection;
 }

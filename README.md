@@ -28,3 +28,9 @@ Backend health check:
 ```txt
 GET http://localhost:5000/api/health
 ```
+
+Service setup instructions:
+
+```txt
+docs/setup-services.md
+```
