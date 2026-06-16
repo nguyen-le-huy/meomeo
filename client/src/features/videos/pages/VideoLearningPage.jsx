@@ -114,10 +114,10 @@ export default function VideoLearningPage() {
   }
 
   return (
-    <section className="h-full overflow-auto bg-[#eef4ee] p-2 md:p-4">
-      <div className="mx-auto grid max-w-[1500px] gap-2 xl:grid-cols-[minmax(360px,0.9fr)_minmax(420px,0.78fr)_minmax(300px,0.56fr)]">
-        <section className="min-h-[calc(100vh-2rem)] rounded-2xl border border-[#d9e2ec] bg-white p-4 shadow-sm">
-          <div className="mb-4 flex items-center justify-between gap-3">
+    <section className="h-full overflow-auto bg-white pb-24 md:bg-[#eef4ee] md:p-4 md:pb-4">
+      <div className="mx-auto grid max-w-[1500px] gap-0 xl:grid-cols-[minmax(360px,0.9fr)_minmax(420px,0.78fr)_minmax(300px,0.56fr)] xl:gap-2">
+        <section className="bg-white md:rounded-2xl md:border md:border-[#d9e2ec] md:p-4 md:shadow-sm xl:min-h-[calc(100vh-2rem)]">
+          <div className="mb-4 hidden items-center justify-between gap-3 xl:flex">
             <h2 className="text-sm font-black uppercase tracking-wide text-coal">Video</h2>
             {video.duration ? (
               <span className="inline-flex items-center gap-2 rounded-xl bg-[#f3f6fb] px-3 py-1.5 text-sm font-black text-coal/75">
@@ -128,7 +128,7 @@ export default function VideoLearningPage() {
           </div>
           <div className="space-y-4">
             <SegmentYoutubePlayer ref={playerRef} segment={segment} title={video.title} youtubeVideoId={video.youtubeVideoId} />
-            <div>
+            <div className="hidden xl:block">
               <p className="mb-2 text-xs font-black uppercase tracking-wide text-coal/65">Điều khiển</p>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -149,7 +149,7 @@ export default function VideoLearningPage() {
                 </button>
               </div>
             </div>
-            <div className="border-t border-coal/10 pt-4">
+            <div className="hidden border-t border-coal/10 pt-4 xl:block">
               <p className="text-sm font-black leading-tight text-coal">{video.title}</p>
               <p className="mt-1 text-sm font-bold text-coal/55">YouTube - {video.level}</p>
               {isAdmin ? (
@@ -172,22 +172,36 @@ export default function VideoLearningPage() {
           </div>
         </section>
 
-        <section className="min-h-[calc(100vh-2rem)] rounded-2xl border border-[#d9e2ec] bg-white p-4 shadow-sm">
+        <section className="bg-white p-2 md:rounded-2xl md:border md:border-[#d9e2ec] md:p-4 md:shadow-sm xl:min-h-[calc(100vh-2rem)]">
           {mode === "dictation" ? (
             <form className="space-y-3" onSubmit={submitDictation}>
-              <div className="flex justify-center gap-2">
-                {difficulties.map((item) => (
-                  <button
-                    className={difficulty === item ? compactActiveButtonClass : compactButtonClass}
-                    key={item}
-                    onClick={() => setDifficulty(item)}
-                    type="button"
-                  >
-                    {item}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex gap-1.5">
+                  {difficulties.map((item) => (
+                    <button
+                      className={difficulty === item ? compactActiveButtonClass : compactButtonClass}
+                      key={item}
+                      onClick={() => setDifficulty(item)}
+                      type="button"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button className={toolbarButtonClass} type="button">
+                    <Settings size={17} />
                   </button>
-                ))}
+                  <span className="inline-flex items-center gap-1 text-sm font-black text-coal">
+                    <Zap size={16} /> 1x
+                  </span>
+                  <span className="rounded-lg border border-[#dbe4ee] bg-[#f9fbff] px-3 py-1.5 text-sm font-black text-coal">{progressPercent}%</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between rounded-2xl border border-[#dbe4ee] bg-[#f9fbff] px-4 py-3">
+              <div className="h-3 overflow-hidden rounded-full border border-[#dbe4ee] bg-[#eef3fb]">
+                <div className="h-full rounded-full bg-[#292f68]" style={{ width: `${progressPercent}%` }} />
+              </div>
+              <div className="hidden items-center justify-between rounded-2xl border border-[#dbe4ee] bg-[#f9fbff] px-4 py-3 xl:flex">
                 <div className="flex items-center gap-3">
                   <button className={toolbarButtonClass} disabled={currentIndex === 0} onClick={() => move(-1)} type="button">
                     <ChevronLeft size={17} />
@@ -214,7 +228,7 @@ export default function VideoLearningPage() {
                   </button>
                 </div>
               </div>
-              <div className="lg:hidden">
+              <div className="xl:hidden">
                 <TranscriptScroller
                   currentIndex={currentIndex}
                   difficulty={difficulty}
@@ -231,10 +245,11 @@ export default function VideoLearningPage() {
                   setEditingSegmentId={setEditingSegmentId}
                 />
               </div>
+              <p className="text-sm font-semibold text-coal/70 xl:hidden">Gợi ý: Bạn có thể nhấp vào khối từ để hiển thị từ đó</p>
               <div className="relative rounded-2xl border border-[#dbe4ee] bg-white p-4 shadow-sm">
-                <label className="mb-3 block text-sm font-black uppercase tracking-wide text-coal/65">Gõ những gì bạn nghe được:</label>
+                <label className="mb-3 hidden text-sm font-black uppercase tracking-wide text-coal/65 xl:block">Gõ những gì bạn nghe được:</label>
                 <textarea
-                  className="min-h-32 w-full resize-none rounded-xl border-0 bg-transparent text-lg font-semibold text-coal outline-none placeholder:text-coal/55"
+                  className="min-h-36 w-full resize-none rounded-xl border-0 bg-transparent text-base font-semibold text-coal outline-none placeholder:text-coal/55 xl:min-h-32 xl:text-lg"
                   onChange={(event) => setAnswer(event.target.value)}
                   placeholder="Gõ câu trả lời của bạn ở đây..."
                   value={answer}
@@ -247,13 +262,13 @@ export default function VideoLearningPage() {
                 </button>
               </div>
               {segment ? (
-                <div className="space-y-2">
+                <div className="hidden space-y-2 xl:block">
                   <MaskedWordChips difficulty={difficulty} text={segment.text} />
                   <p className="text-sm font-semibold text-coal/65">Các từ được tiết lộ sẽ bị tính là lỗi và ảnh hưởng đến điểm số của bạn.</p>
                 </div>
               ) : null}
               <button
-                className="h-12 w-full rounded-2xl border-2 border-[#ffc72c] bg-[#fffaf0] text-sm font-black uppercase text-[#bf5700]"
+                className="hidden h-12 w-full rounded-2xl border-2 border-[#ffc72c] bg-[#fffaf0] text-sm font-black uppercase text-[#bf5700] xl:block"
                 onClick={() => setShowTranscript((value) => !value)}
                 type="button"
               >
@@ -262,7 +277,7 @@ export default function VideoLearningPage() {
               </button>
               {showTranscript && segment ? <p className="rounded-xl bg-matcha/70 p-3 text-lg font-black">{segment.text}</p> : null}
               <button
-                className="h-14 w-full rounded-2xl bg-[#292f68] text-base font-black uppercase text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="hidden h-14 w-full rounded-2xl bg-[#292f68] text-base font-black uppercase text-white disabled:cursor-not-allowed disabled:opacity-50 xl:block"
                 disabled={!segment || currentIndex >= segments.length - 1}
                 onClick={() => move(1)}
                 type="button"
@@ -272,6 +287,16 @@ export default function VideoLearningPage() {
               <button className="sr-only" disabled={!segment || checkMutation.isPending} type="submit">
                 {checkMutation.isPending ? "Đang kiểm tra..." : "Kiểm tra"}
               </button>
+              <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#dbe4ee] bg-white p-3 xl:hidden">
+                <button
+                  className="h-14 w-full rounded-2xl bg-[#292f68] text-base font-black uppercase text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={!segment}
+                  onClick={startFirstSegment}
+                  type="button"
+                >
+                  <Play className="mr-2 inline" size={17} /> Bắt đầu
+                </button>
+              </div>
               {checkMutation.data?.data?.data ? <DictationResult result={checkMutation.data.data.data} /> : null}
             </form>
           ) : (
@@ -403,7 +428,7 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer({ segment,
   useImperativeHandle(ref, () => ({ pauseVideo, playSegment }), [pauseVideo, playSegment]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border-8 border-[#2ea8e5] bg-black shadow-sm">
+    <div className="overflow-hidden rounded-none border-b-[5px] border-[#2ea8e5] bg-black shadow-sm md:rounded-2xl md:border-8">
       <div className="aspect-video w-full" ref={hostRef} title={title} />
       <span className="sr-only">{isPlayerReady ? "Player ready" : "Player loading"} {isPlaying ? "playing" : "paused"}</span>
     </div>
@@ -503,13 +528,13 @@ function TranscriptScroller({
   }
 
   return (
-    <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-transcript-scroller>
+    <div className="-mx-2 overflow-x-auto px-2 pb-2 [scrollbar-width:none] md:-mx-4 md:px-4 [&::-webkit-scrollbar]:hidden" data-transcript-scroller>
       <div className="flex min-w-full snap-x snap-mandatory gap-3" data-transcript-track>
         {segments.map((item, index) => (
           <div
             className={[
-              "min-h-32 w-[78%] shrink-0 snap-start rounded-xl border p-3 text-sm shadow-sm sm:w-[48%] lg:w-[42%]",
-              index === currentIndex ? "border-coal bg-[#eef2ff]" : "border-coal/10 bg-white/80",
+              "flex min-h-36 w-[78%] shrink-0 snap-start flex-col rounded-2xl border p-3 text-sm shadow-sm sm:w-[48%] xl:w-[42%]",
+              index === currentIndex ? "border-[#292f68] bg-[#eef2ff]" : "border-[#dbe4ee] bg-white",
             ].join(" ")}
             data-transcript-card
             key={item._id}
@@ -524,12 +549,14 @@ function TranscriptScroller({
                 onSave={(data) => onUpdate(item, data)}
               />
             ) : (
-              <DictationPrompt difficulty={difficulty} text={item.text} />
+              <MaskedTranscriptText difficulty={difficulty} text={item.text} />
             )}
-            {isAdmin ? (
-              <div className="mt-3 flex justify-end gap-2">
+            <div className="mt-auto flex justify-end gap-2 pt-3 text-coal/70">
+              <Play size={15} />
+              {isAdmin ? (
+                <>
                 <button className="rounded-md border border-coal/15 px-2 py-1 text-xs font-bold" onClick={() => onEdit(item._id)} type="button">
-                  <Pencil size={13} /> Edit
+                  <Pencil size={13} />
                 </button>
                 <button
                   className="rounded-md border border-coal/15 px-2 py-1 text-xs font-bold"
@@ -541,10 +568,12 @@ function TranscriptScroller({
                   }}
                   type="button"
                 >
-                  <Merge size={13} /> Merge
+                  <Merge size={13} />
                 </button>
-              </div>
-            ) : null}
+                </>
+              ) : null}
+              <AlertTriangle size={15} />
+            </div>
           </div>
         ))}
       </div>

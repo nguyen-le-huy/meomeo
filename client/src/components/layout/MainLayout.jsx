@@ -11,7 +11,7 @@ import {
   Search,
   Video,
 } from "lucide-react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../features/auth/stores/authStore.js";
 
 const links = [
@@ -88,8 +88,10 @@ function SidebarContent({ onLogout, onNavigate, user }) {
 
 export default function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuthStore();
+  const isLearningPage = location.pathname.startsWith("/videos/");
 
   function handleLogout() {
     logout();
@@ -104,7 +106,7 @@ export default function MainLayout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-coal/10 bg-white/90 px-4 md:hidden">
+        <header className={["h-14 shrink-0 items-center justify-between border-b border-coal/10 bg-white/90 px-4 md:hidden", isLearningPage ? "hidden" : "flex"].join(" ")}>
           <button
             aria-label="Open menu"
             className="flex h-10 w-10 items-center justify-center rounded-full text-xl font-bold text-coal hover:bg-matcha/60"
