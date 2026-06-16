@@ -1,14 +1,27 @@
 import { useState } from "react";
+import {
+  Bell,
+  BookOpen,
+  ClipboardList,
+  Headphones,
+  Home,
+  LogOut,
+  Menu,
+  Mic,
+  NotebookText,
+  Search,
+  Settings,
+} from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../features/auth/stores/authStore.js";
 
 const links = [
-  { to: "/dashboard", icon: "H", label: "Trang chủ" },
-  { to: "/vocabulary", icon: "V", label: "Từ vựng" },
-  { to: "/grammar", icon: "G", label: "Ngữ pháp" },
-  { to: "/speech", icon: "S", label: "Shadowing và dictation với Youtube" },
-  { to: "/exercises", icon: "T", label: "Luyện thi TOEIC" },
-  { to: "/exercises", icon: "D", label: "Dictation với TOEIC" },
+  { to: "/dashboard", Icon: Home, label: "Trang chủ" },
+  { to: "/vocabulary", Icon: BookOpen, label: "Từ vựng" },
+  { to: "/grammar", Icon: NotebookText, label: "Ngữ pháp" },
+  { to: "/speech", Icon: Mic, label: "Shadowing và dictation với Youtube" },
+  { to: "/exercises", Icon: ClipboardList, label: "Luyện thi TOEIC" },
+  { to: "/exercises", Icon: Headphones, label: "Dictation với TOEIC" },
 ];
 
 function SidebarContent({ onLogout, onNavigate, user }) {
@@ -26,26 +39,30 @@ function SidebarContent({ onLogout, onNavigate, user }) {
       </NavLink>
 
       <nav className="space-y-1.5">
-        {links.map((link, index) => (
-          <NavLink
-            className={({ isActive }) =>
-              [
-                "flex min-h-10 items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-semibold transition",
-                isActive
-                  ? "border border-coal/15 bg-matcha text-coal shadow-sm"
-                  : "text-coal/70 hover:bg-matcha/50 hover:text-coal",
-              ].join(" ")
-            }
-            key={`${link.to}-${index}`}
-            onClick={onNavigate}
-            to={link.to}
-          >
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-matcha/70 text-xs font-black">
-              {link.icon}
-            </span>
-            <span className="leading-snug">{link.label}</span>
-          </NavLink>
-        ))}
+        {links.map((link, index) => {
+          const Icon = link.Icon;
+
+          return (
+            <NavLink
+              className={({ isActive }) =>
+                [
+                  "flex min-h-10 items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-semibold transition",
+                  isActive
+                    ? "border border-coal/15 bg-matcha text-coal shadow-sm"
+                    : "text-coal/70 hover:bg-matcha/50 hover:text-coal",
+                ].join(" ")
+              }
+              key={`${link.to}-${index}`}
+              onClick={onNavigate}
+              to={link.to}
+            >
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-matcha/70">
+                <Icon aria-hidden="true" size={16} strokeWidth={2.4} />
+              </span>
+              <span className="leading-snug">{link.label}</span>
+            </NavLink>
+          );
+        })}
         {user?.role === "admin" ? (
           <NavLink
             className={({ isActive }) =>
@@ -59,8 +76,8 @@ function SidebarContent({ onLogout, onNavigate, user }) {
             onClick={onNavigate}
             to="/admin"
           >
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-matcha/70 text-xs font-black">
-              A
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-matcha/70">
+              <Settings aria-hidden="true" size={16} strokeWidth={2.4} />
             </span>
             <span>Quản trị</span>
           </NavLink>
@@ -82,7 +99,10 @@ function SidebarContent({ onLogout, onNavigate, user }) {
           onClick={onLogout}
           type="button"
         >
-          Dang xuat
+          <span className="inline-flex items-center gap-2">
+            <LogOut aria-hidden="true" size={16} strokeWidth={2.4} />
+            Dang xuat
+          </span>
         </button>
       </div>
     </>
@@ -114,7 +134,7 @@ export default function MainLayout() {
             onClick={() => setIsMobileMenuOpen(true)}
             type="button"
           >
-            ☰
+            <Menu aria-hidden="true" size={22} strokeWidth={2.4} />
           </button>
 
           <NavLink className="flex items-center gap-2 text-sm font-bold" to="/dashboard">
@@ -130,14 +150,14 @@ export default function MainLayout() {
               className="flex h-10 w-10 items-center justify-center rounded-full border border-coal/10 bg-matcha/35 text-sm font-bold text-coal"
               type="button"
             >
-              S
+              <Search aria-hidden="true" size={18} strokeWidth={2.2} />
             </button>
             <button
               aria-label="Notifications"
               className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-coal"
               type="button"
             >
-              N
+              <Bell aria-hidden="true" size={18} strokeWidth={2.2} />
             </button>
           </div>
         </header>
