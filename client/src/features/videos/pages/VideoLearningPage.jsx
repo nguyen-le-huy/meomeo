@@ -86,6 +86,14 @@ export default function VideoLearningPage() {
     selectSegment(next);
   }
 
+  function startFirstSegment() {
+    const firstSegment = segments[0];
+    if (!firstSegment) return;
+
+    selectSegment(0);
+    playerRef.current?.playSegment(firstSegment);
+  }
+
   async function submitDictation(event) {
     event.preventDefault();
     if (!segment) return;
@@ -126,7 +134,7 @@ export default function VideoLearningPage() {
                 <button
                   className="inline-flex h-14 items-center justify-center gap-3 rounded-xl bg-[#292f68] px-4 text-base font-black uppercase text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={!segment}
-                  onClick={() => playerRef.current?.playSegment()}
+                  onClick={startFirstSegment}
                   type="button"
                 >
                   <Play size={18} /> Bắt đầu
@@ -320,12 +328,12 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer({ segment,
     setIsPlaying(false);
   }, [stopBoundaryTimer]);
 
-  const playSegment = useCallback(() => {
+  const playSegment = useCallback((targetSegment = segment) => {
     const player = playerRef.current;
-    if (!player || !segment) return;
+    if (!player || !targetSegment) return;
 
-    const startTime = Number(segment.startTime || 0);
-    const endTime = Number(segment.endTime || startTime);
+    const startTime = Number(targetSegment.startTime || 0);
+    const endTime = Number(targetSegment.endTime || startTime);
 
     stopBoundaryTimer();
     player.seekTo(startTime, true);
