@@ -44,6 +44,20 @@ async function assertTopic(topicId, options = {}) {
   return topic;
 }
 
+async function getDefaultTopic() {
+  const topic = await Topic.findOne({ slug: "all-videos" });
+
+  if (topic) return topic;
+
+  return Topic.create({
+    name: "All videos",
+    slug: "all-videos",
+    description: "Internal default topic for videos without categories.",
+    order: 0,
+    isPublished: false,
+  });
+}
+
 export async function createTranscriptSegments(videoId, segments = []) {
   const normalizedSegments = normalizeTranscriptSegments(segments);
   await TranscriptSegment.deleteMany({ videoId });
@@ -92,7 +106,7 @@ export async function getVideoTranscripts(id, options = {}) {
 }
 
 export async function createVideo(data, adminUser) {
-  await assertTopic(data.topicId, { admin: true });
+  const topic = data.topicId ? await assertTopic(data.topicId, { admin: true }) : await getDefaultTopic();
   const analyzed = await analyzeYoutubeUrl(data.youtubeUrl);
   const existingVideo = await VideoLesson.findOne({ youtubeVideoId: analyzed.video.youtubeVideoId });
 
@@ -109,7 +123,7 @@ export async function createVideo(data, adminUser) {
   }
 
   const video = await VideoLesson.create({
-    topicId: data.topicId,
+    topicId: topic._id,
     youtubeUrl: analyzed.video.youtubeUrl,
     youtubeVideoId: analyzed.video.youtubeVideoId,
     title: data.title || analyzed.video.title,

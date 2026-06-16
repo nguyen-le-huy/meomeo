@@ -17,7 +17,7 @@ const transcriptInputSchema = z.object({
 
 const videoBodySchema = z
   .object({
-    topicId: z.string().regex(objectIdRegex, "Invalid topic id"),
+    topicId: z.string().regex(objectIdRegex, "Invalid topic id").optional(),
     youtubeUrl: z.string().trim().min(1),
     title: z.string().trim().optional(),
     description: z.string().optional(),
