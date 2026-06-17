@@ -108,13 +108,13 @@ export default function VideoLearningPage() {
     selectSegment(next);
   }
 
-  function playSegmentAt(index) {
+  function playSegmentAt(index, options = {}) {
     const targetSegment = segments[index];
     if (!targetSegment) return;
 
     setHasStarted(true);
     selectSegment(index);
-    playerRef.current?.playSegment(targetSegment);
+    playerRef.current?.playSegment(targetSegment, options);
   }
 
   function startFirstSegment() {
@@ -147,7 +147,12 @@ export default function VideoLearningPage() {
 
   function moveAndPlay(delta) {
     const next = Math.min(Math.max(currentIndex + delta, 0), Math.max(segments.length - 1, 0));
-    playSegmentAt(next);
+    const nextOptions =
+      delta > 0 && segment
+        ? { startTime: Math.min(Math.floor(Number(segment.endTime || 0)) + 1, Number(segments[next]?.endTime || 0)) }
+        : {};
+
+    playSegmentAt(next, nextOptions);
   }
 
   function revealAllWords() {
