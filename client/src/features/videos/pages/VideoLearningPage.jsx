@@ -3,7 +3,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  EyeOff,
   Keyboard,
   Merge,
   Mic,
@@ -61,7 +60,7 @@ export default function VideoLearningPage() {
   const [mode, setMode] = useState(initialMode);
   const [difficulty, setDifficulty] = useState("normal");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showTranscript, setShowTranscript] = useState(false);
+  const [revealedWordIndexes, setRevealedWordIndexes] = useState([]);
   const [answer, setAnswer] = useState("");
   const [editingSegmentId, setEditingSegmentId] = useState("");
   const [hasStarted, setHasStarted] = useState(false);
@@ -82,6 +81,7 @@ export default function VideoLearningPage() {
   function selectSegment(index) {
     setCurrentIndex(index);
     setAnswer("");
+    setRevealedWordIndexes([]);
     checkMutation.reset();
   }
 
@@ -130,6 +130,16 @@ export default function VideoLearningPage() {
   function moveAndPlay(delta) {
     const next = Math.min(Math.max(currentIndex + delta, 0), Math.max(segments.length - 1, 0));
     playSegmentAt(next);
+  }
+
+  function revealAllWords() {
+    if (!segment?.text) return;
+    const wordIndexes = segment.text.split(/\s+/).filter(Boolean).map((_, index) => index);
+    setRevealedWordIndexes(wordIndexes);
+  }
+
+  function revealWord(index) {
+    setRevealedWordIndexes((current) => (current.includes(index) ? current : [...current, index]));
   }
 
   async function submitDictation(event) {
@@ -226,7 +236,10 @@ export default function VideoLearningPage() {
                     <button
                       className={difficulty === item ? compactActiveButtonClass : compactButtonClass}
                       key={item}
-                      onClick={() => setDifficulty(item)}
+                      onClick={() => {
+                        setDifficulty(item);
+                        setRevealedWordIndexes([]);
+                      }}
                       type="button"
                     >
                       {item}
@@ -308,19 +321,23 @@ export default function VideoLearningPage() {
               </div>
               {segment ? (
                 <div className="hidden space-y-2 xl:block">
-                  <MaskedWordChips difficulty={difficulty} text={segment.text} />
+                  <MaskedWordChips
+                    difficulty={difficulty}
+                    onRevealWord={revealWord}
+                    revealedWordIndexes={revealedWordIndexes}
+                    text={segment.text}
+                  />
                   <p className="text-sm font-semibold text-coal/65">Các từ được tiết lộ sẽ bị tính là lỗi và ảnh hưởng đến điểm số của bạn.</p>
                 </div>
               ) : null}
               <button
                 className="hidden h-12 w-full rounded-2xl border-2 border-[#ffc72c] bg-[#fffaf0] text-sm font-black uppercase text-[#bf5700] xl:block"
-                onClick={() => setShowTranscript((value) => !value)}
+                onClick={revealAllWords}
                 type="button"
               >
-                {showTranscript ? <EyeOff className="mr-2 inline" size={17} /> : <Eye className="mr-2 inline" size={17} />}
-                {showTranscript ? "Ẩn tất cả từ" : "Hiện tất cả từ"}
+                <Eye className="mr-2 inline" size={17} />
+                Hiện tất cả từ
               </button>
-              {showTranscript && segment ? <p className="rounded-xl bg-matcha/70 p-3 text-lg font-black">{segment.text}</p> : null}
               <button
                 className="hidden h-14 w-full rounded-2xl bg-[#292f68] text-base font-black uppercase text-white disabled:cursor-not-allowed disabled:opacity-50 xl:block"
                 disabled={!segment || currentIndex >= segments.length - 1 || !isYoutubeReady}
@@ -674,31 +691,47 @@ function getMaskedWords(difficulty, text) {
   const words = text.split(/\s+/).filter(Boolean);
 
   if (difficulty === "hard") {
-    return words.map((word) => ({ value: "*".repeat(Math.max(word.length, 3)), revealed: false }));
+    return words.map((word) => ({ original: word, value: "*".repeat(Math.max(word.length, 3)), revealed: false }));
   }
 
   return words.map((word, index) => {
     if (difficulty === "easy") {
       return index % 4 === 1
-        ? { value: "*".repeat(Math.max(word.length, 3)), revealed: false }
-        : { value: word, revealed: true };
+        ? { original: word, value: "*".repeat(Math.max(word.length, 3)), revealed: false }
+        : { original: word, value: word, revealed: true };
     }
 
     return index % 2 === 0
-      ? { value: "*".repeat(Math.max(word.length, 3)), revealed: false }
-      : { value: word.replace(/[A-Za-zÀ-ỹ]/g, "*"), revealed: false };
+      ? { original: word, value: "*".repeat(Math.max(word.length, 3)), revealed: false }
+      : { original: word, value: word.replace(/[A-Za-zÀ-ỹ]/g, "*"), revealed: false };
   });
 }
 
-function MaskedWordChips({ difficulty, text }) {
+function MaskedWordChips({ difficulty, onRevealWord, revealedWordIndexes, text }) {
   const maskedWords = getMaskedWords(difficulty, text).slice(0, 8);
 
   return (
     <div className="flex flex-wrap gap-2">
       {maskedWords.map((word, index) => (
-        <span className="inline-flex flex-col items-center gap-1" key={`${word.value}-${index}`}>
-          <Eye size={14} />
-          <span className="rounded-md border border-[#dbe4ee] bg-[#f9fbff] px-3 py-2 text-sm font-black text-coal">{word.value}</span>
+        <span className="inline-flex flex-col items-center gap-1" key={`${word.original}-${index}`}>
+          <button
+            aria-label={`Hiện từ ${index + 1}`}
+            className="inline-flex h-5 w-5 items-center justify-center rounded-full text-coal hover:bg-[#eef3fb]"
+            onClick={() => onRevealWord(index)}
+            type="button"
+          >
+            <Eye size={14} />
+          </button>
+          <span
+            className={[
+              "rounded-md border px-3 py-2 text-sm font-black",
+              word.revealed || revealedWordIndexes.includes(index)
+                ? "border-[#bfe9c9] bg-[#d7f8df] text-[#0e7a3d]"
+                : "border-[#dbe4ee] bg-[#f9fbff] text-coal",
+            ].join(" ")}
+          >
+            {word.revealed || revealedWordIndexes.includes(index) ? word.original : word.value}
+          </span>
         </span>
       ))}
     </div>
