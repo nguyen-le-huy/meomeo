@@ -289,9 +289,6 @@ export default function VideoLearningPage() {
                   <span className="rounded-lg border border-[#dbe4ee] bg-[#f9fbff] px-3 py-1.5 text-sm font-black text-coal">{progressPercent}%</span>
                 </div>
               </div>
-              <div className="h-3 overflow-hidden rounded-full border border-[#dbe4ee] bg-[#eef3fb]">
-                <div className="h-full rounded-full bg-[#292f68]" style={{ width: `${progressPercent}%` }} />
-              </div>
               <div className="hidden items-center justify-between rounded-2xl border border-[#dbe4ee] bg-[#f9fbff] px-4 py-3 xl:flex">
                 <div className="flex items-center gap-3">
                   <button className={toolbarButtonClass} disabled={currentIndex === 0} onClick={() => move(-1)} type="button">
