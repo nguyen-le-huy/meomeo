@@ -72,6 +72,20 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
     [onPlayingChange, pauseVideo, segment, stopBoundaryTimer],
   );
 
+  const playFrom = useCallback(
+    (startTime = 0) => {
+      const player = playerRef.current;
+      if (!player) return;
+
+      stopBoundaryTimer();
+      player.seekTo(Number(startTime || 0), true);
+      player.playVideo();
+      setIsPlaying(true);
+      onPlayingChange?.(true);
+    },
+    [onPlayingChange, stopBoundaryTimer],
+  );
+
   useEffect(() => {
     let isMounted = true;
     setIsPlayerReady(false);
@@ -124,7 +138,7 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
     };
   }, [onPlayingChange, onReadyChange, stopBoundaryTimer, youtubeVideoId]);
 
-  useImperativeHandle(ref, () => ({ pauseVideo, playSegment }), [pauseVideo, playSegment]);
+  useImperativeHandle(ref, () => ({ pauseVideo, playFrom, playSegment }), [pauseVideo, playFrom, playSegment]);
 
   return (
     <div className="w-full max-w-full min-w-0 overflow-hidden rounded-none border-b-[5px] border-[#2ea8e5] bg-black shadow-sm md:rounded-2xl md:border-8">

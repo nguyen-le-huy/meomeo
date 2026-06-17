@@ -128,6 +128,18 @@ export default function VideoLearningPage() {
     playSegmentAt(next, nextOptions);
   }
 
+  function playNextOrContinueToEnd() {
+    if (!segment) return;
+
+    if (currentIndex >= segments.length - 1) {
+      setHasStarted(true);
+      playerRef.current?.playFrom(Number(segment.endTime || segment.startTime || 0));
+      return;
+    }
+
+    moveAndPlay(1);
+  }
+
   function revealAllWords() {
     if (!segment?.text) return;
     const wordIndexes = segment.text.split(/\s+/).filter(Boolean).map((_, index) => index);
@@ -268,6 +280,7 @@ export default function VideoLearningPage() {
               onChangeDifficulty={handleDifficultyChange}
               onChangeInlineWord={updateInlineWordAnswer}
               onMoveAndPlay={moveAndPlay}
+              onNext={playNextOrContinueToEnd}
               onRevealAllWords={revealAllWords}
               onRevealInlineWord={revealInlineWord}
               onRevealWord={revealWord}

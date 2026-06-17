@@ -24,6 +24,7 @@ export default function DictationPractice({
   onChangeDifficulty,
   onChangeInlineWord,
   onMoveAndPlay,
+  onNext,
   onRevealAllWords,
   onRevealInlineWord,
   onRevealWord,
@@ -77,8 +78,8 @@ export default function DictationPractice({
           </button>
           <button
             className={toolbarButtonClass}
-            disabled={currentIndex >= segmentsCount - 1 || !isYoutubeReady}
-            onClick={() => onMoveAndPlay(1)}
+            disabled={!segment || !isYoutubeReady}
+            onClick={onNext}
             type="button"
           >
             <ChevronRight size={17} />
@@ -158,8 +159,8 @@ export default function DictationPractice({
       </button>
       <button
         className="hidden h-14 w-full rounded-2xl bg-[#292f68] text-base font-black uppercase text-white disabled:cursor-not-allowed disabled:opacity-50 xl:block"
-        disabled={!segment || currentIndex >= segmentsCount - 1 || !isYoutubeReady}
-        onClick={() => onMoveAndPlay(1)}
+        disabled={!segment || !isYoutubeReady}
+        onClick={onNext}
         type="button"
       >
         Tiếp theo <ChevronRight className="inline" size={18} />
@@ -197,8 +198,8 @@ export default function DictationPractice({
             </button>
             <button
               className="inline-flex h-14 items-center justify-center rounded-2xl border border-[#dbe4ee] bg-white text-coal shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
-              disabled={currentIndex >= segmentsCount - 1 || !isYoutubeReady}
-              onClick={() => onMoveAndPlay(1)}
+              disabled={!segment || !isYoutubeReady}
+              onClick={onNext}
               type="button"
             >
               <ChevronRight size={19} />
