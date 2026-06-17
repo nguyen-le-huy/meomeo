@@ -16,7 +16,7 @@ import {
   Settings,
   Zap,
 } from "lucide-react";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
@@ -30,6 +30,16 @@ import {
 } from "../hooks/useVideoLearning.js";
 
 const difficulties = ["easy", "normal"];
+const praiseMessages = [
+  "Ôi giỏi thế!",
+  "Kinh nhỉ!",
+  "Ghê gớm đấy!",
+  "Đỉnh thật sự!",
+  "Chuẩn không cần chỉnh!",
+  "Nghe tốt đấy!",
+  "Quá bén!",
+  "Xuất sắc luôn!",
+];
 let youtubeApiPromise;
 
 function loadYouTubeIframeApi() {
@@ -66,6 +76,7 @@ export default function VideoLearningPage() {
   const [hasStarted, setHasStarted] = useState(false);
   const [isPlayerPlaying, setIsPlayerPlaying] = useState(false);
   const [isYoutubeReady, setIsYoutubeReady] = useState(false);
+  const [correctPraise, setCorrectPraise] = useState("");
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
   const { data: video, isLoading: isVideoLoading } = useVideo(id);
@@ -76,11 +87,18 @@ export default function VideoLearningPage() {
   const mergeSegmentMutation = useMergeTranscriptSegment(id);
   const segment = segments[currentIndex];
   const playerRef = useRef(null);
+  const lastCorrectKeyRef = useRef("");
   const progressPercent = segments.length ? Math.round((currentIndex / segments.length) * 100) : 0;
+  const isAnswerCorrect = useMemo(() => {
+    if (!segment?.text || !answer.trim()) return false;
+    return normalizeDictationAnswer(answer) === normalizeDictationAnswer(segment.text);
+  }, [answer, segment?.text]);
 
   function selectSegment(index) {
     setCurrentIndex(index);
     setAnswer("");
+    setCorrectPraise("");
+    lastCorrectKeyRef.current = "";
     setRevealedWordIndexes([]);
     checkMutation.reset();
   }
@@ -152,6 +170,16 @@ export default function VideoLearningPage() {
       userAnswer: answer,
     });
   }
+
+  useEffect(() => {
+    if (!isAnswerCorrect || !segment?._id) return;
+
+    const correctKey = `${segment._id}:${normalizeDictationAnswer(answer)}`;
+    if (lastCorrectKeyRef.current === correctKey) return;
+
+    lastCorrectKeyRef.current = correctKey;
+    setCorrectPraise(praiseMessages[Math.floor(Math.random() * praiseMessages.length)]);
+  }, [answer, isAnswerCorrect, segment?._id]);
 
   if (isVideoLoading || isSegmentsLoading) {
     return <section className="h-full overflow-auto bg-matcha p-6 font-bold">Đang tải bài học...</section>;
@@ -308,7 +336,13 @@ export default function VideoLearningPage() {
                 <label className="mb-3 hidden text-sm font-black uppercase tracking-wide text-coal/65 xl:block">Gõ những gì bạn nghe được:</label>
                 <textarea
                   className="min-h-36 w-full resize-none rounded-xl border-0 bg-transparent text-base font-semibold text-coal outline-none placeholder:text-coal/55 xl:min-h-32 xl:text-lg"
-                  onChange={(event) => setAnswer(event.target.value)}
+                  onChange={(event) => {
+                    setAnswer(event.target.value);
+                    if (!event.target.value.trim()) {
+                      setCorrectPraise("");
+                      lastCorrectKeyRef.current = "";
+                    }
+                  }}
                   placeholder="Gõ câu trả lời của bạn ở đây..."
                   value={answer}
                 />
@@ -319,6 +353,11 @@ export default function VideoLearningPage() {
                   <Mic size={16} />
                 </button>
               </div>
+              {correctPraise ? (
+                <div className="rounded-2xl border border-[#bfe9c9] bg-[#d7f8df] px-4 py-3 text-sm font-black text-[#0e7a3d]">
+                  Chính xác. {correctPraise}
+                </div>
+              ) : null}
               {segment ? (
                 <div className="hidden space-y-2 xl:block">
                   <MaskedWordChips
@@ -705,6 +744,14 @@ function getMaskedWords(difficulty, text) {
 
 function maskWordKeepPunctuation(word) {
   return String(word || "").replace(/[\p{L}\p{N}]/gu, "*");
+}
+
+function normalizeDictationAnswer(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s']/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function MaskedWordChips({ difficulty, onRevealWord, revealedWordIndexes, text }) {
