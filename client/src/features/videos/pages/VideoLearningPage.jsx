@@ -195,9 +195,9 @@ export default function VideoLearningPage() {
   }
 
   return (
-    <section className="h-full overflow-auto bg-white pb-24 md:bg-[#eef4ee] md:p-4 md:pb-4">
-      <div className="mx-auto grid max-w-[1500px] gap-0 xl:grid-cols-[minmax(360px,0.9fr)_minmax(420px,0.78fr)_minmax(300px,0.56fr)] xl:gap-2">
-        <section className="bg-white md:rounded-2xl md:border md:border-[#d9e2ec] md:p-4 md:shadow-sm xl:min-h-[calc(100vh-2rem)]">
+    <section className="h-full w-full max-w-full overflow-x-hidden overflow-y-auto bg-white pb-24 md:bg-[#eef4ee] md:p-4 md:pb-4">
+      <div className="mx-auto grid w-full max-w-full min-w-0 gap-0 xl:max-w-[1500px] xl:grid-cols-[minmax(360px,0.9fr)_minmax(420px,0.78fr)_minmax(300px,0.56fr)] xl:gap-2">
+        <section className="min-w-0 max-w-full overflow-hidden bg-white md:rounded-2xl md:border md:border-[#d9e2ec] md:p-4 md:shadow-sm xl:min-h-[calc(100vh-2rem)]">
           <div className="mb-4 hidden items-center justify-between gap-3 xl:flex">
             <h2 className="text-sm font-black uppercase tracking-wide text-coal">Video</h2>
             {video.duration ? (
@@ -260,7 +260,7 @@ export default function VideoLearningPage() {
           </div>
         </section>
 
-        <section className="bg-white p-2 md:rounded-2xl md:border md:border-[#d9e2ec] md:p-4 md:shadow-sm xl:min-h-[calc(100vh-2rem)]">
+        <section className="min-w-0 max-w-full overflow-hidden bg-white p-2 md:rounded-2xl md:border md:border-[#d9e2ec] md:p-4 md:shadow-sm xl:min-h-[calc(100vh-2rem)]">
           {mode === "dictation" ? (
             <form className="space-y-3" onSubmit={submitDictation}>
               <div className="flex items-center justify-between gap-2">
@@ -574,9 +574,9 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer({ onPlayin
   useImperativeHandle(ref, () => ({ pauseVideo, playSegment }), [pauseVideo, playSegment]);
 
   return (
-    <div className="overflow-hidden rounded-none border-b-[5px] border-[#2ea8e5] bg-black shadow-sm md:rounded-2xl md:border-8">
+    <div className="w-full max-w-full min-w-0 overflow-hidden rounded-none border-b-[5px] border-[#2ea8e5] bg-black shadow-sm md:rounded-2xl md:border-8">
       <div
-        className="h-[210px] w-full [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:object-contain md:aspect-video md:h-auto"
+        className="h-[210px] w-full max-w-full min-w-0 [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:max-w-full [&>iframe]:object-contain md:aspect-video md:h-auto"
         ref={hostRef}
         title={title}
       />
@@ -678,12 +678,12 @@ function TranscriptScroller({
   }
 
   return (
-    <div className="-mx-2 overflow-x-auto px-2 pb-2 [scrollbar-width:none] md:-mx-4 md:px-4 [&::-webkit-scrollbar]:hidden" data-transcript-scroller>
-      <div className="flex min-w-full snap-x snap-mandatory gap-3" data-transcript-track>
+    <div className="w-full max-w-full overflow-x-auto pb-2 [scrollbar-width:none] md:-mx-4 md:px-4 [&::-webkit-scrollbar]:hidden" data-transcript-scroller>
+      <div className="flex w-full min-w-0 snap-x snap-mandatory gap-3" data-transcript-track>
         {segments.map((item, index) => (
           <div
             className={[
-              "flex min-h-36 w-[78%] shrink-0 snap-start flex-col rounded-2xl border p-3 text-sm shadow-sm sm:w-[48%] xl:w-[42%]",
+              "flex min-h-36 w-full max-w-full shrink-0 snap-start flex-col rounded-2xl border p-3 text-sm shadow-sm sm:w-[48%] xl:w-[42%]",
               index === currentIndex ? "border-[#292f68] bg-[#eef2ff]" : "border-[#dbe4ee] bg-white",
             ].join(" ")}
             data-transcript-card
