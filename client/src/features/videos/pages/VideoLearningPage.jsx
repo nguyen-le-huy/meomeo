@@ -29,7 +29,7 @@ import {
   useVideoTranscripts,
 } from "../hooks/useVideoLearning.js";
 
-const difficulties = ["easy", "normal", "hard"];
+const difficulties = ["easy", "normal"];
 let youtubeApiPromise;
 
 function loadYouTubeIframeApi() {
@@ -690,21 +690,21 @@ function TranscriptScroller({
 function getMaskedWords(difficulty, text) {
   const words = text.split(/\s+/).filter(Boolean);
 
-  if (difficulty === "hard") {
-    return words.map((word) => ({ original: word, value: "*".repeat(Math.max(word.length, 3)), revealed: false }));
-  }
-
   return words.map((word, index) => {
     if (difficulty === "easy") {
       return index % 4 === 1
-        ? { original: word, value: "*".repeat(Math.max(word.length, 3)), revealed: false }
+        ? { original: word, value: maskWordKeepPunctuation(word), revealed: false }
         : { original: word, value: word, revealed: true };
     }
 
     return index % 2 === 0
-      ? { original: word, value: "*".repeat(Math.max(word.length, 3)), revealed: false }
-      : { original: word, value: word.replace(/[A-Za-zÀ-ỹ]/g, "*"), revealed: false };
+      ? { original: word, value: maskWordKeepPunctuation(word), revealed: false }
+      : { original: word, value: maskWordKeepPunctuation(word), revealed: false };
   });
+}
+
+function maskWordKeepPunctuation(word) {
+  return String(word || "").replace(/[\p{L}\p{N}]/gu, "*");
 }
 
 function MaskedWordChips({ difficulty, onRevealWord, revealedWordIndexes, text }) {
@@ -751,13 +751,9 @@ function MaskedTranscriptText({ difficulty, text }) {
 function DictationPrompt({ difficulty, text }) {
   const words = text.split(/\s+/).filter(Boolean);
 
-  if (difficulty === "hard") {
-    return <p className="rounded-lg bg-matcha/70 p-3 text-lg font-black">Gõ toàn bộ câu nghe được.</p>;
-  }
-
   const masked = words.map((word, index) => {
-    if (difficulty === "easy") return index % 4 === 1 ? "____" : word;
-    return index % 2 === 0 ? "____" : word.replace(/[A-Za-zÀ-ỹ]/g, "_");
+    if (difficulty === "easy") return index % 4 === 1 ? maskWordKeepPunctuation(word) : word;
+    return maskWordKeepPunctuation(word);
   });
 
   return <p className="rounded-lg bg-matcha/70 p-3 text-lg font-black">{masked.join(" ")}</p>;
