@@ -8,7 +8,6 @@ import {
   LogOut,
   Menu,
   Mic,
-  Search,
   Video,
 } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
@@ -21,16 +20,18 @@ const links = [
   { to: "/?mode=shadowing", Icon: Mic, label: "Shadowing" },
   { to: "/?mode=listen", Icon: Headphones, label: "Luyện nghe" },
 ];
+const mobileLogoUrl = "https://res.cloudinary.com/dknin0hhf/image/upload/v1781682627/Black_Cat_Sticker_psynzk.gif";
 
 function SidebarContent({ onLogout, onNavigate, user }) {
   return (
     <>
       <NavLink
-        className="mb-5 flex items-center gap-2 px-1 text-lg font-bold"
+        aria-label="Meomeo home"
+        className="mb-5 flex items-center px-1"
         onClick={onNavigate}
         to="/"
       >
-        Meomeo
+        <img alt="Meomeo" className="h-14 w-14 object-contain" src={mobileLogoUrl} />
       </NavLink>
 
       <nav className="space-y-1.5">
@@ -116,18 +117,11 @@ export default function MainLayout() {
             <Menu aria-hidden="true" size={22} strokeWidth={2.4} />
           </button>
 
-          <NavLink className="flex items-center gap-2 text-lg font-bold" to="/">
-            Meomeo
+          <NavLink aria-label="Meomeo home" className="flex items-center justify-center" to="/">
+            <img alt="Meomeo" className="h-11 w-11 object-contain" src={mobileLogoUrl} />
           </NavLink>
 
           <div className="flex items-center gap-2">
-            <button
-              aria-label="Search"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-coal/10 bg-matcha/35 text-sm font-bold text-coal"
-              type="button"
-            >
-              <Search aria-hidden="true" size={18} strokeWidth={2.2} />
-            </button>
             <button
               aria-label="Notifications"
               className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-coal"
