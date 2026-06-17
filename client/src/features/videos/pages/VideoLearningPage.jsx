@@ -100,7 +100,12 @@ export default function VideoLearningPage() {
   }
 
   function startFirstSegment() {
-    playSegmentAt(0);
+    const firstSegment = segments[0];
+    if (!firstSegment) return;
+
+    setHasStarted(true);
+    selectSegment(0);
+    playerRef.current?.playSegment(firstSegment, { startTime: 0 });
   }
 
   function replayCurrentSegment() {
@@ -252,7 +257,7 @@ export default function VideoLearningPage() {
                   <button className={toolbarButtonClass} disabled={!segment || !isYoutubeReady} onClick={toggleCurrentSegmentPlayback} type="button">
                     {isPlayerPlaying ? <Pause size={17} /> : <Play size={17} />}
                   </button>
-                  <button className={toolbarButtonClass} disabled={currentIndex >= segments.length - 1} onClick={() => move(1)} type="button">
+                  <button className={toolbarButtonClass} disabled={currentIndex >= segments.length - 1 || !isYoutubeReady} onClick={() => moveAndPlay(1)} type="button">
                     <ChevronRight size={17} />
                   </button>
                 </div>
@@ -318,8 +323,8 @@ export default function VideoLearningPage() {
               {showTranscript && segment ? <p className="rounded-xl bg-matcha/70 p-3 text-lg font-black">{segment.text}</p> : null}
               <button
                 className="hidden h-14 w-full rounded-2xl bg-[#292f68] text-base font-black uppercase text-white disabled:cursor-not-allowed disabled:opacity-50 xl:block"
-                disabled={!segment || currentIndex >= segments.length - 1}
-                onClick={() => move(1)}
+                disabled={!segment || currentIndex >= segments.length - 1 || !isYoutubeReady}
+                onClick={() => moveAndPlay(1)}
                 type="button"
               >
                 Tiếp theo <ChevronRight className="inline" size={18} />
@@ -431,11 +436,11 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer({ onPlayin
     onPlayingChange?.(false);
   }, [onPlayingChange, stopBoundaryTimer]);
 
-  const playSegment = useCallback((targetSegment = segment) => {
+  const playSegment = useCallback((targetSegment = segment, options = {}) => {
     const player = playerRef.current;
     if (!player || !targetSegment) return;
 
-    const startTime = Number(targetSegment.startTime || 0);
+    const startTime = Number(options.startTime ?? targetSegment.startTime ?? 0);
     const endTime = Number(targetSegment.endTime || startTime);
 
     stopBoundaryTimer();
