@@ -71,6 +71,7 @@ export default function VideoLearningPage() {
   const [difficulty, setDifficulty] = useState("normal");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [revealedWordIndexes, setRevealedWordIndexes] = useState([]);
+  const [inlineWordAnswers, setInlineWordAnswers] = useState({});
   const [answer, setAnswer] = useState("");
   const [editingSegmentId, setEditingSegmentId] = useState("");
   const [hasStarted, setHasStarted] = useState(false);
@@ -96,6 +97,7 @@ export default function VideoLearningPage() {
 
   function selectSegment(index) {
     setCurrentIndex(index);
+    setInlineWordAnswers({});
     setAnswer("");
     setCorrectPraise("");
     lastCorrectKeyRef.current = "";
@@ -162,7 +164,30 @@ export default function VideoLearningPage() {
   }
 
   function revealWord(index) {
-    setRevealedWordIndexes((current) => (current.includes(index) ? current : [...current, index]));
+    setRevealedWordIndexes((current) => {
+      const next = current.includes(index) ? current : [...current, index];
+      return next;
+    });
+  }
+
+  function revealInlineWord(index) {
+    setRevealedWordIndexes((current) => {
+      const next = current.includes(index) ? current : [...current, index];
+      if (segment?.text) {
+        setAnswer(buildInlineAnswer(segment.text, difficulty, inlineWordAnswers, next));
+      }
+      return next;
+    });
+  }
+
+  function updateInlineWordAnswer(index, value) {
+    if (!segment?.text) return;
+
+    setInlineWordAnswers((current) => {
+      const next = { ...current, [index]: value };
+      setAnswer(buildInlineAnswer(segment.text, difficulty, next, revealedWordIndexes));
+      return next;
+    });
   }
 
   async function submitDictation(event) {
@@ -185,6 +210,12 @@ export default function VideoLearningPage() {
     lastCorrectKeyRef.current = correctKey;
     setCorrectPraise(praiseMessages[Math.floor(Math.random() * praiseMessages.length)]);
   }, [answer, isAnswerCorrect, segment?._id]);
+
+  useEffect(() => {
+    if (!isAnswerCorrect) {
+      setCorrectPraise("");
+    }
+  }, [isAnswerCorrect]);
 
   if (isVideoLoading || isSegmentsLoading) {
     return <section className="h-full overflow-auto bg-matcha p-6 font-bold">Đang tải bài học...</section>;
@@ -271,6 +302,10 @@ export default function VideoLearningPage() {
                       key={item}
                       onClick={() => {
                         setDifficulty(item);
+                        setInlineWordAnswers({});
+                        setAnswer("");
+                        setCorrectPraise("");
+                        lastCorrectKeyRef.current = "";
                         setRevealedWordIndexes([]);
                       }}
                       type="button"
@@ -333,8 +368,20 @@ export default function VideoLearningPage() {
                   setEditingSegmentId={setEditingSegmentId}
                 />
               </div>
-              <p className="text-sm font-semibold text-coal/70 xl:hidden">Gợi ý: Bạn có thể nhấp vào khối từ để hiển thị từ đó</p>
-              <div className="relative rounded-2xl border border-[#dbe4ee] bg-white p-4 shadow-sm">
+              <p className="text-sm font-semibold text-coal/70 xl:hidden">Điền trực tiếp vào các ô trống. Bấm mắt để hiện từ đó.</p>
+              {segment ? (
+                <div className="xl:hidden">
+                  <InlineDictationInputs
+                    difficulty={difficulty}
+                    inlineWordAnswers={inlineWordAnswers}
+                    onChangeWord={updateInlineWordAnswer}
+                    onRevealWord={revealInlineWord}
+                    revealedWordIndexes={revealedWordIndexes}
+                    text={segment.text}
+                  />
+                </div>
+              ) : null}
+              <div className="relative hidden rounded-2xl border border-[#dbe4ee] bg-white p-4 shadow-sm xl:block">
                 <label className="mb-3 hidden text-sm font-black uppercase tracking-wide text-coal/65 xl:block">Gõ những gì bạn nghe được:</label>
                 <textarea
                   className="min-h-36 w-full resize-none rounded-xl border-0 bg-transparent text-base font-semibold text-coal outline-none placeholder:text-coal/55 xl:min-h-32 xl:text-lg"
@@ -749,6 +796,89 @@ function normalizeDictationAnswer(value) {
     .replace(/[^\p{L}\p{N}\s']/gu, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function buildInlineAnswer(text, difficulty, inlineWordAnswers, revealedWordIndexes) {
+  return getMaskedWords(difficulty, text)
+    .map((word, index) => {
+      const shouldUseOriginal = word.revealed || revealedWordIndexes.includes(index);
+      if (shouldUseOriginal) return word.original;
+
+      const { leading, trailing } = splitWordPunctuation(word.original);
+      const answerPart = String(inlineWordAnswers[index] || "").trim();
+
+      return answerPart ? `${leading}${answerPart}${trailing}` : "";
+    })
+    .filter(Boolean)
+    .join(" ");
+}
+
+function splitWordPunctuation(word) {
+  const chars = Array.from(String(word || ""));
+  const isWordChar = (char) => /[\p{L}\p{N}']/u.test(char);
+  const firstWordIndex = chars.findIndex(isWordChar);
+
+  if (firstWordIndex === -1) {
+    return { core: word, leading: "", trailing: "" };
+  }
+
+  let lastWordIndex = chars.length - 1;
+  while (lastWordIndex >= firstWordIndex && !isWordChar(chars[lastWordIndex])) {
+    lastWordIndex -= 1;
+  }
+
+  return {
+    leading: chars.slice(0, firstWordIndex).join(""),
+    core: chars.slice(firstWordIndex, lastWordIndex + 1).join(""),
+    trailing: chars.slice(lastWordIndex + 1).join(""),
+  };
+}
+
+function InlineDictationInputs({ difficulty, inlineWordAnswers, onChangeWord, onRevealWord, revealedWordIndexes, text }) {
+  const maskedWords = getMaskedWords(difficulty, text);
+
+  return (
+    <div className="flex flex-wrap gap-2 rounded-2xl border border-[#dbe4ee] bg-white p-3 shadow-sm">
+      {maskedWords.map((word, index) => {
+        const isRevealed = word.revealed || revealedWordIndexes.includes(index);
+        const { core, leading, trailing } = splitWordPunctuation(word.original);
+        const inputSize = Math.max(core.length, 2);
+
+        return (
+          <span className="inline-flex flex-col items-center gap-1" key={`${word.original}-${index}`}>
+            <button
+              aria-label={`Hiện từ ${index + 1}`}
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-coal hover:bg-[#eef3fb] disabled:opacity-70"
+              disabled={isRevealed}
+              onClick={() => onRevealWord(index)}
+              type="button"
+            >
+              <Eye size={14} />
+            </button>
+            {isRevealed ? (
+              <span className="rounded-md border border-[#bfe9c9] bg-[#d7f8df] px-3 py-2 text-sm font-black text-[#0e7a3d]">
+                {word.original}
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded-md border border-[#dbe4ee] bg-[#f9fbff] px-2 py-1.5 text-sm font-black text-coal">
+                {leading ? <span>{leading}</span> : null}
+                <input
+                  aria-label={`Điền từ ${index + 1}`}
+                  autoCapitalize="none"
+                  className="min-w-8 bg-transparent text-center font-black outline-none placeholder:text-coal/40"
+                  onChange={(event) => onChangeWord(index, event.target.value)}
+                  placeholder={maskWordKeepPunctuation(core)}
+                  size={inputSize}
+                  value={inlineWordAnswers[index] || ""}
+                />
+                {trailing ? <span>{trailing}</span> : null}
+              </span>
+            )}
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 function MaskedWordChips({ difficulty, onRevealWord, revealedWordIndexes, text }) {
