@@ -207,6 +207,8 @@ function LessonCard({ deleteVideoMutation, isAdmin, publishVideoMutation, video,
 
 function AddVideoDialog({ createVideoMutation, onVideoCreated }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [transcriptText, setTranscriptText] = useState("");
+  const [transcriptError, setTranscriptError] = useState("");
   const [videoForm, setVideoForm] = useState({
     youtubeUrl: "",
     title: "",
@@ -217,13 +219,24 @@ function AddVideoDialog({ createVideoMutation, onVideoCreated }) {
 
   async function handleCreateVideo(event) {
     event.preventDefault();
+    setTranscriptError("");
+
+    const manualTranscripts = parseManualTranscript(transcriptText);
+
+    if (manualTranscripts.error) {
+      setTranscriptError(manualTranscripts.error);
+      return;
+    }
+
     const response = await createVideoMutation.mutateAsync({
       ...videoForm,
       title: videoForm.title || undefined,
       description: videoForm.description || undefined,
+      transcripts: manualTranscripts.segments.length ? manualTranscripts.segments : undefined,
     });
     const video = response.data.data.video;
     setVideoForm({ youtubeUrl: "", title: "", description: "", level: "A2", isPublished: false });
+    setTranscriptText("");
     setIsOpen(false);
     onVideoCreated(video);
   }
@@ -235,11 +248,11 @@ function AddVideoDialog({ createVideoMutation, onVideoCreated }) {
           <Plus size={16} /> Thêm video
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Thêm video YouTube</DialogTitle>
           <DialogDescription>
-            Video mới mặc định chưa publish. Kiểm tra transcript xong rồi publish.
+            Có thể để trống transcript để hệ thống tự lấy, hoặc dán transcript thủ công theo từng dòng.
           </DialogDescription>
         </DialogHeader>
 
@@ -277,6 +290,42 @@ function AddVideoDialog({ createVideoMutation, onVideoCreated }) {
             placeholder="Mô tả ngắn"
             value={videoForm.description}
           />
+          <div className="space-y-2 rounded-2xl border border-[#d8e1ed] bg-[#f7f9fb] p-3">
+            <div>
+              <p className="text-sm font-black text-[#202235]">Transcript thủ công</p>
+              <p className="mt-1 text-xs font-semibold text-[#62697b]">
+                Mỗi dòng gồm thời gian bắt đầu, thời gian kết thúc và nội dung. Ví dụ:
+                <br />
+                <span className="font-mono">00:01 - 00:04 Hello everyone</span>
+                <br />
+                <span className="font-mono">4.5 | 7.2 | This is a sentence</span>
+              </p>
+            </div>
+            <Textarea
+              className="min-h-40 bg-white font-mono text-sm"
+              onChange={(event) => {
+                setTranscriptText(event.target.value);
+                setTranscriptError("");
+              }}
+              placeholder={`00:01 - 00:04 Hello everyone\n00:04 - 00:07 Welcome back to class`}
+              value={transcriptText}
+            />
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-[#62697b]">
+              <span>{parseManualTranscript(transcriptText).segments.length || 0} segment thủ công</span>
+              <Button
+                onClick={() => {
+                  setTranscriptText("");
+                  setTranscriptError("");
+                }}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                Xóa transcript
+              </Button>
+            </div>
+            {transcriptError ? <p className="text-sm font-bold text-red-600">{transcriptError}</p> : null}
+          </div>
           {createVideoMutation.error ? (
             <p className="text-sm font-bold text-red-600">
               {createVideoMutation.error.response?.data?.message || "Không thêm được video."}
@@ -289,6 +338,70 @@ function AddVideoDialog({ createVideoMutation, onVideoCreated }) {
       </DialogContent>
     </Dialog>
   );
+}
+
+function parseTimeToSeconds(value) {
+  const raw = String(value || "").trim().replace(",", ".");
+  if (!raw) return Number.NaN;
+
+  if (!raw.includes(":")) return Number(raw);
+
+  const parts = raw.split(":").map((part) => Number(part));
+  if (parts.some((part) => Number.isNaN(part))) return Number.NaN;
+
+  if (parts.length === 2) {
+    return parts[0] * 60 + parts[1];
+  }
+
+  if (parts.length === 3) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+
+  return Number.NaN;
+}
+
+function parseManualTranscript(value) {
+  const lines = String(value || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (!lines.length) return { segments: [], error: "" };
+
+  const segments = [];
+
+  for (const [lineIndex, line] of lines.entries()) {
+    const pipeMatch = line.match(/^(.+?)\s*\|\s*(.+?)\s*\|\s*(.+)$/);
+    const dashMatch = line.match(/^(\S+)\s*(?:-->|-|–|—)\s*(\S+)\s+(.+)$/);
+    const match = pipeMatch || dashMatch;
+
+    if (!match) {
+      return {
+        segments: [],
+        error: `Dòng ${lineIndex + 1} chưa đúng định dạng. Dùng "00:01 - 00:04 Nội dung" hoặc "1 | 4 | Nội dung".`,
+      };
+    }
+
+    const startTime = parseTimeToSeconds(match[1]);
+    const endTime = parseTimeToSeconds(match[2]);
+    const text = match[3].trim();
+
+    if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) {
+      return { segments: [], error: `Dòng ${lineIndex + 1} có thời gian không hợp lệ.` };
+    }
+
+    if (endTime <= startTime) {
+      return { segments: [], error: `Dòng ${lineIndex + 1} cần thời gian kết thúc lớn hơn thời gian bắt đầu.` };
+    }
+
+    if (!text) {
+      return { segments: [], error: `Dòng ${lineIndex + 1} chưa có nội dung transcript.` };
+    }
+
+    segments.push({ startTime, endTime, text });
+  }
+
+  return { segments, error: "" };
 }
 
 function formatNumber(value) {

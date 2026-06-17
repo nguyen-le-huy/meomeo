@@ -16,7 +16,7 @@ function normalizeText(text) {
     .trim();
 }
 
-function buildSegment(videoId, segment, index) {
+function buildSegment(videoId, segment, index, source = "youtube") {
   const text = segment.text.trim();
   const normalizedText = normalizeText(text);
   const startTime = Number(segment.startTime);
@@ -31,7 +31,7 @@ function buildSegment(videoId, segment, index) {
     text,
     normalizedText,
     wordCount: normalizedText ? normalizedText.split(" ").length : 0,
-    source: "youtube",
+    source,
     isPublished: true,
   };
 }
@@ -58,13 +58,22 @@ async function getDefaultTopic() {
   });
 }
 
-export async function createTranscriptSegments(videoId, segments = []) {
-  const normalizedSegments = normalizeTranscriptSegments(segments);
+export async function createTranscriptSegments(videoId, segments = [], source = "youtube") {
+  const normalizedSegments =
+    source === "manual"
+      ? segments
+          .map((segment) => ({
+            startTime: Number(segment.startTime),
+            endTime: Number(segment.endTime),
+            text: String(segment.text || "").trim(),
+          }))
+          .filter((segment) => segment.text && Number.isFinite(segment.startTime) && Number.isFinite(segment.endTime) && segment.endTime > segment.startTime)
+      : normalizeTranscriptSegments(segments);
   await TranscriptSegment.deleteMany({ videoId });
 
   if (!normalizedSegments.length) return [];
   return TranscriptSegment.insertMany(
-    normalizedSegments.map((segment, index) => buildSegment(videoId, segment, index)),
+    normalizedSegments.map((segment, index) => buildSegment(videoId, segment, index, source)),
   );
 }
 
@@ -114,6 +123,7 @@ export async function createVideo(data, adminUser) {
     throw createHttpError(409, "Video already exists");
   }
 
+  const hasManualTranscripts = Boolean(data.transcripts?.length);
   const transcriptInputs = data.transcripts || analyzed.transcripts || [];
   const transcriptStatus = transcriptInputs.length ? "completed" : "failed";
   const requestedPublish = data.isPublished ?? false;
@@ -138,7 +148,7 @@ export async function createVideo(data, adminUser) {
     createdBy: adminUser.id,
   });
 
-  const segments = await createTranscriptSegments(video._id, transcriptInputs);
+  const segments = await createTranscriptSegments(video._id, transcriptInputs, hasManualTranscripts ? "manual" : "youtube");
   return {
     video,
     segments,
