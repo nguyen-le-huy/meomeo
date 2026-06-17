@@ -760,7 +760,7 @@ function normalizeDictationAnswer(value) {
 }
 
 function MaskedWordChips({ difficulty, onRevealWord, revealedWordIndexes, text }) {
-  const maskedWords = getMaskedWords(difficulty, text).slice(0, 8);
+  const maskedWords = getMaskedWords(difficulty, text);
 
   return (
     <div className="flex flex-wrap gap-2">
