@@ -677,55 +677,50 @@ function TranscriptScroller({
     );
   }
 
+  const item = segments[currentIndex] || segments[0];
+
   return (
-    <div className="w-full max-w-full overflow-x-auto pb-2 [scrollbar-width:none] md:-mx-4 md:px-4 [&::-webkit-scrollbar]:hidden" data-transcript-scroller>
-      <div className="flex w-full min-w-0 snap-x snap-mandatory gap-3" data-transcript-track>
-        {segments.map((item, index) => (
-          <div
-            className={[
-              "flex min-h-36 w-full max-w-full shrink-0 snap-start flex-col rounded-2xl border p-3 text-sm shadow-sm sm:w-[48%] xl:w-[42%]",
-              index === currentIndex ? "border-[#292f68] bg-[#eef2ff]" : "border-[#dbe4ee] bg-white",
-            ].join(" ")}
-            data-transcript-card
-            key={item._id}
-          >
-            <button className="block w-full text-left font-black" onClick={() => onSelect(index)} type="button">
-              #{item.index}
-            </button>
-            {editingSegmentId === item._id ? (
-              <TranscriptEditForm
-                item={item}
-                onCancel={() => setEditingSegmentId("")}
-                onSave={(data) => onUpdate(item, data)}
-              />
-            ) : (
-              <MaskedTranscriptText difficulty={difficulty} text={item.text} />
-            )}
-            <div className="mt-auto flex justify-end gap-2 pt-3 text-coal/70">
-              <Play size={15} />
-              {isAdmin ? (
-                <>
-                <button className="rounded-md border border-coal/15 px-2 py-1 text-xs font-bold" onClick={() => onEdit(item._id)} type="button">
-                  <Pencil size={13} />
-                </button>
-                <button
-                  className="rounded-md border border-coal/15 px-2 py-1 text-xs font-bold"
-                  disabled={mergeSegmentMutation.isPending}
-                  onClick={() => {
-                    if (window.confirm("Bạn có chắc muốn ghép segment này với segment tiếp theo không?")) {
-                      mergeSegmentMutation.mutate(item._id);
-                    }
-                  }}
-                  type="button"
-                >
-                  <Merge size={13} />
-                </button>
-                </>
-              ) : null}
-              <AlertTriangle size={15} />
-            </div>
-          </div>
-        ))}
+    <div className="w-full max-w-full pb-2" data-transcript-scroller>
+      <div
+        className="flex min-h-36 w-full max-w-full flex-col rounded-2xl border border-[#dbe4ee] bg-white p-3 text-sm shadow-sm"
+        data-transcript-card
+        key={item._id}
+      >
+        <button className="block w-full text-left font-black" onClick={() => onSelect(currentIndex)} type="button">
+          #{item.index}
+        </button>
+        {editingSegmentId === item._id ? (
+          <TranscriptEditForm
+            item={item}
+            onCancel={() => setEditingSegmentId("")}
+            onSave={(data) => onUpdate(item, data)}
+          />
+        ) : (
+          <MaskedTranscriptText difficulty={difficulty} text={item.text} />
+        )}
+        <div className="mt-auto flex justify-end gap-2 pt-3 text-coal/70">
+          <Play size={15} />
+          {isAdmin ? (
+            <>
+              <button className="rounded-md border border-coal/15 px-2 py-1 text-xs font-bold" onClick={() => onEdit(item._id)} type="button">
+                <Pencil size={13} />
+              </button>
+              <button
+                className="rounded-md border border-coal/15 px-2 py-1 text-xs font-bold"
+                disabled={mergeSegmentMutation.isPending}
+                onClick={() => {
+                  if (window.confirm("Bạn có chắc muốn ghép segment này với segment tiếp theo không?")) {
+                    mergeSegmentMutation.mutate(item._id);
+                  }
+                }}
+                type="button"
+              >
+                <Merge size={13} />
+              </button>
+            </>
+          ) : null}
+          <AlertTriangle size={15} />
+        </div>
       </div>
     </div>
   );
