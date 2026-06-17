@@ -1,4 +1,5 @@
 import { TranscriptSegment } from "./transcriptSegment.model.js";
+import { VideoLesson } from "../videos/video.model.js";
 import { createHttpError } from "../../utils/createHttpError.js";
 
 function normalizeText(text) {
@@ -17,6 +18,37 @@ function getWordCount(text) {
 async function getSegment(segmentId) {
   const segment = await TranscriptSegment.findById(segmentId);
   if (!segment) throw createHttpError(404, "Transcript segment not found");
+  return segment;
+}
+
+export async function createSegment(data) {
+  const video = await VideoLesson.findById(data.videoId);
+  if (!video) throw createHttpError(404, "Video not found");
+
+  if (data.endTime < data.startTime) {
+    throw createHttpError(400, "End time must be greater than or equal to start time");
+  }
+
+  const lastSegment = await TranscriptSegment.findOne({ videoId: video._id }).sort({ index: -1 });
+  const normalizedText = normalizeText(data.text);
+  const segment = await TranscriptSegment.create({
+    videoId: video._id,
+    index: lastSegment ? lastSegment.index + 1 : 1,
+    startTime: data.startTime,
+    endTime: data.endTime,
+    duration: Math.max(0, data.endTime - data.startTime),
+    text: data.text,
+    normalizedText,
+    wordCount: getWordCount(data.text),
+    source: "manual",
+    isPublished: data.isPublished ?? true,
+  });
+
+  video.transcriptStatus = "completed";
+  video.transcriptError = "";
+  if (!video.transcriptLanguage) video.transcriptLanguage = "en";
+  await video.save();
+
   return segment;
 }
 

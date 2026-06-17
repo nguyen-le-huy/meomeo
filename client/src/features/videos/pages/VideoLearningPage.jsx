@@ -10,6 +10,7 @@ import {
   Pause,
   Pencil,
   Play,
+  Plus,
   RefreshCw,
   RotateCcw,
   Save,
@@ -23,6 +24,7 @@ import { getGuestSessionId } from "../../../utils/sessionId.js";
 import {
   useAnalyzeVideoTranscript,
   useCheckDictation,
+  useCreateTranscriptSegment,
   useMergeTranscriptSegment,
   useUpdateTranscriptSegment,
   useVideo,
@@ -78,12 +80,14 @@ export default function VideoLearningPage() {
   const [isPlayerPlaying, setIsPlayerPlaying] = useState(false);
   const [isYoutubeReady, setIsYoutubeReady] = useState(false);
   const [correctPraise, setCorrectPraise] = useState("");
+  const [showAddTranscriptForm, setShowAddTranscriptForm] = useState(false);
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
   const { data: video, isLoading: isVideoLoading } = useVideo(id);
   const { data: segments = [], isLoading: isSegmentsLoading } = useVideoTranscripts(id);
   const checkMutation = useCheckDictation();
   const analyzeMutation = useAnalyzeVideoTranscript(id);
+  const createSegmentMutation = useCreateTranscriptSegment(id);
   const updateSegmentMutation = useUpdateTranscriptSegment(id);
   const mergeSegmentMutation = useMergeTranscriptSegment(id);
   const segment = segments[currentIndex];
@@ -357,7 +361,16 @@ export default function VideoLearningPage() {
                   difficulty={difficulty}
                   editingSegmentId={editingSegmentId}
                   isAdmin={isAdmin}
+                  isCreating={createSegmentMutation.isPending}
                   mergeSegmentMutation={mergeSegmentMutation}
+                  onCreate={async (data) => {
+                    const response = await createSegmentMutation.mutateAsync({ ...data, videoId: id });
+                    const createdSegment = response.data?.data?.segment;
+                    setShowAddTranscriptForm(false);
+                    if (createdSegment) {
+                      selectSegment(segments.length);
+                    }
+                  }}
                   onEdit={setEditingSegmentId}
                   onSelect={selectSegment}
                   onUpdate={async (item, data) => {
@@ -366,6 +379,8 @@ export default function VideoLearningPage() {
                   }}
                   segments={segments}
                   setEditingSegmentId={setEditingSegmentId}
+                  setShowAddTranscriptForm={setShowAddTranscriptForm}
+                  showAddTranscriptForm={showAddTranscriptForm}
                 />
               </div>
               <p className="text-sm font-semibold text-coal/70 xl:hidden">Điền trực tiếp vào các ô trống. Bấm mắt để hiện từ đó.</p>
@@ -504,7 +519,16 @@ export default function VideoLearningPage() {
           difficulty={difficulty}
           editingSegmentId={editingSegmentId}
           isAdmin={isAdmin}
+          isCreating={createSegmentMutation.isPending}
           mergeSegmentMutation={mergeSegmentMutation}
+          onCreate={async (data) => {
+            const response = await createSegmentMutation.mutateAsync({ ...data, videoId: id });
+            const createdSegment = response.data?.data?.segment;
+            setShowAddTranscriptForm(false);
+            if (createdSegment) {
+              selectSegment(segments.length);
+            }
+          }}
           onEdit={setEditingSegmentId}
           onSelect={selectSegment}
           onUpdate={async (item, data) => {
@@ -514,6 +538,8 @@ export default function VideoLearningPage() {
           progressPercent={progressPercent}
           segments={segments}
           setEditingSegmentId={setEditingSegmentId}
+          setShowAddTranscriptForm={setShowAddTranscriptForm}
+          showAddTranscriptForm={showAddTranscriptForm}
         />
       </div>
     </section>
@@ -634,23 +660,49 @@ function TranscriptPanel({
   difficulty,
   editingSegmentId,
   isAdmin,
+  isCreating,
   mergeSegmentMutation,
+  onCreate,
   onEdit,
   onSelect,
   onUpdate,
   progressPercent,
   segments,
   setEditingSegmentId,
+  setShowAddTranscriptForm,
+  showAddTranscriptForm,
 }) {
+  const lastSegment = segments[segments.length - 1];
+
   return (
     <aside className="hidden max-h-[calc(100vh-2rem)] min-h-[calc(100vh-2rem)] flex-col rounded-2xl border border-[#d9e2ec] bg-white p-4 shadow-sm xl:flex">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-sm font-black uppercase tracking-wide text-coal">Bản chép</h2>
-        <span className="rounded-lg border border-[#dbe4ee] bg-[#f9fbff] px-3 py-1 text-sm font-black text-coal">{progressPercent}%</span>
+        <div className="flex items-center gap-2">
+          {isAdmin ? (
+            <button
+              className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#dbe4ee] bg-white px-3 text-xs font-black text-coal shadow-sm"
+              onClick={() => setShowAddTranscriptForm((current) => !current)}
+              type="button"
+            >
+              <Plus size={14} /> Thêm card
+            </button>
+          ) : null}
+          <span className="rounded-lg border border-[#dbe4ee] bg-[#f9fbff] px-3 py-1 text-sm font-black text-coal">{progressPercent}%</span>
+        </div>
       </div>
       <div className="mb-4 h-3 overflow-hidden rounded-full border border-[#dbe4ee] bg-[#eef3fb]">
         <div className="h-full rounded-full bg-[#292f68]" style={{ width: `${progressPercent}%` }} />
       </div>
+      {isAdmin && showAddTranscriptForm ? (
+        <TranscriptCreateForm
+          className="mb-3"
+          isSaving={isCreating}
+          lastEndTime={lastSegment?.endTime || 0}
+          onCancel={() => setShowAddTranscriptForm(false)}
+          onSave={onCreate}
+        />
+      ) : null}
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
         {segments.length ? (
           segments.map((item, index) => (
@@ -692,8 +744,17 @@ function TranscriptPanel({
             </div>
           ))
         ) : (
-          <div className="rounded-2xl border border-dashed border-[#dbe4ee] bg-[#f9fbff] p-4 text-sm font-bold text-coal/60">
-            Chưa có transcript. Admin bấm “Phân tích transcript” để lấy subtitle từ YouTube.
+          <div className="space-y-3 rounded-2xl border border-dashed border-[#dbe4ee] bg-[#f9fbff] p-4 text-sm font-bold text-coal/60">
+            <p>Chưa có transcript. Admin bấm “Phân tích transcript” để lấy subtitle từ YouTube hoặc thêm thủ công.</p>
+            {isAdmin && !showAddTranscriptForm ? (
+              <button
+                className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#292f68] px-3 text-sm font-black text-white"
+                onClick={() => setShowAddTranscriptForm(true)}
+                type="button"
+              >
+                <Plus size={16} /> Thêm transcript card
+              </button>
+            ) : null}
           </div>
         )}
       </div>
@@ -706,25 +767,67 @@ function TranscriptScroller({
   difficulty,
   editingSegmentId,
   isAdmin,
+  isCreating,
   mergeSegmentMutation,
+  onCreate,
   onEdit,
   onSelect,
   onUpdate,
   segments,
   setEditingSegmentId,
+  setShowAddTranscriptForm,
+  showAddTranscriptForm,
 }) {
   if (!segments.length) {
     return (
-      <div className="rounded-xl border border-dashed border-coal/20 bg-white/75 p-4 text-sm font-bold text-coal/65">
-        Chưa có transcript. Admin bấm “Phân tích transcript” để lấy subtitle từ YouTube.
+      <div className="space-y-3 rounded-xl border border-dashed border-coal/20 bg-white/75 p-4 text-sm font-bold text-coal/65">
+        <p>Chưa có transcript. Admin bấm “Phân tích transcript” để lấy subtitle từ YouTube hoặc thêm thủ công.</p>
+        {isAdmin ? (
+          showAddTranscriptForm ? (
+            <TranscriptCreateForm
+              isSaving={isCreating}
+              lastEndTime={0}
+              onCancel={() => setShowAddTranscriptForm(false)}
+              onSave={onCreate}
+            />
+          ) : (
+            <button
+              className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#292f68] px-3 text-sm font-black text-white"
+              onClick={() => setShowAddTranscriptForm(true)}
+              type="button"
+            >
+              <Plus size={16} /> Thêm transcript card
+            </button>
+          )
+        ) : null}
       </div>
     );
   }
 
   const item = segments[currentIndex] || segments[0];
+  const lastSegment = segments[segments.length - 1];
 
   return (
-    <div className="w-full max-w-full pb-2" data-transcript-scroller>
+    <div className="w-full max-w-full space-y-3 pb-2" data-transcript-scroller>
+      {isAdmin ? (
+        <div className="flex justify-end">
+          <button
+            className="inline-flex h-9 items-center gap-1 rounded-lg border border-[#dbe4ee] bg-white px-3 text-xs font-black text-coal shadow-sm"
+            onClick={() => setShowAddTranscriptForm((current) => !current)}
+            type="button"
+          >
+            <Plus size={14} /> Thêm card
+          </button>
+        </div>
+      ) : null}
+      {isAdmin && showAddTranscriptForm ? (
+        <TranscriptCreateForm
+          isSaving={isCreating}
+          lastEndTime={lastSegment?.endTime || 0}
+          onCancel={() => setShowAddTranscriptForm(false)}
+          onSave={onCreate}
+        />
+      ) : null}
       <div
         className="flex min-h-36 w-full max-w-full flex-col rounded-2xl border border-[#dbe4ee] bg-white p-3 text-sm shadow-sm"
         data-transcript-card
@@ -948,6 +1051,79 @@ function DictationResult({ result }) {
       <p>Correct: {result.correctText}</p>
       {result.mistakes?.length ? <p>Mistakes: {result.mistakes.length}</p> : null}
     </div>
+  );
+}
+
+function TranscriptCreateForm({ className = "", isSaving, lastEndTime = 0, onCancel, onSave }) {
+  const defaultStartTime = Number(lastEndTime || 0);
+  const [form, setForm] = useState({
+    text: "",
+    startTime: defaultStartTime,
+    endTime: defaultStartTime + 3,
+    isPublished: true,
+  });
+
+  return (
+    <form
+      className={`${className} space-y-2 rounded-2xl border border-[#dbe4ee] bg-[#f9fbff] p-3 text-sm shadow-sm`}
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSave(form);
+      }}
+    >
+      <p className="text-xs font-black uppercase tracking-wide text-coal/65">Thêm transcript card</p>
+      <textarea
+        className="min-h-20 w-full resize-none rounded-lg border border-[#dbe4ee] bg-white p-2 text-sm font-semibold outline-none"
+        onChange={(event) => setForm((current) => ({ ...current, text: event.target.value }))}
+        placeholder="Nhập nội dung transcript..."
+        required
+        value={form.text}
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <label className="space-y-1 text-xs font-bold text-coal/65">
+          Bắt đầu
+          <input
+            className="h-9 w-full rounded-lg border border-[#dbe4ee] bg-white px-2 text-sm font-bold text-coal outline-none"
+            min="0"
+            onChange={(event) => setForm((current) => ({ ...current, startTime: Number(event.target.value) }))}
+            step="0.1"
+            type="number"
+            value={form.startTime}
+          />
+        </label>
+        <label className="space-y-1 text-xs font-bold text-coal/65">
+          Kết thúc
+          <input
+            className="h-9 w-full rounded-lg border border-[#dbe4ee] bg-white px-2 text-sm font-bold text-coal outline-none"
+            min="0"
+            onChange={(event) => setForm((current) => ({ ...current, endTime: Number(event.target.value) }))}
+            step="0.1"
+            type="number"
+            value={form.endTime}
+          />
+        </label>
+      </div>
+      <label className="flex items-center gap-2 text-xs font-bold text-coal/70">
+        <input
+          checked={form.isPublished}
+          onChange={(event) => setForm((current) => ({ ...current, isPublished: event.target.checked }))}
+          type="checkbox"
+        />
+        Hiển thị cho người học
+      </label>
+      <div className="flex gap-2">
+        <button
+          className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-[#292f68] text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={isSaving}
+          type="submit"
+        >
+          <Save size={15} /> {isSaving ? "Đang lưu..." : "Lưu card"}
+        </button>
+        <button className="h-10 rounded-lg border border-[#dbe4ee] bg-white px-3 text-sm font-black text-coal" onClick={onCancel} type="button">
+          Hủy
+        </button>
+      </div>
+    </form>
   );
 }
 

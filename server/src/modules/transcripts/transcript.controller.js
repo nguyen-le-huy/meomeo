@@ -1,4 +1,5 @@
 import {
+  createSegment,
   deleteSegment,
   mergeWithNextSegment,
   reorderSegments,
@@ -6,6 +7,11 @@ import {
 } from "./transcript.service.js";
 import { successResponse } from "../../utils/apiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
+
+export const createSegmentController = asyncHandler(async (req, res) => {
+  const segment = await createSegment(req.validated.body);
+  return successResponse(res, "Transcript segment created successfully", { segment }, 201);
+});
 
 export const updateSegmentController = asyncHandler(async (req, res) => {
   const segment = await updateSegment(req.validated.params.segmentId, req.validated.body);

@@ -36,6 +36,10 @@ export function checkDictation(data) {
   return apiClient.post("/dictation/check", data);
 }
 
+export function createTranscriptSegment(data) {
+  return apiClient.post("/transcripts", data);
+}
+
 export function updateTranscriptSegment(segmentId, data) {
   return apiClient.patch(`/transcripts/${segmentId}`, data);
 }

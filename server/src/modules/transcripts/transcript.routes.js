@@ -1,11 +1,13 @@
 import { Router } from "express";
 import {
+  createSegmentController,
   deleteSegmentController,
   mergeSegmentController,
   reorderSegmentsController,
   updateSegmentController,
 } from "./transcript.controller.js";
 import {
+  createSegmentSchema,
   reorderSegmentsSchema,
   segmentIdParamSchema,
   updateSegmentSchema,
@@ -16,6 +18,7 @@ import { validate } from "../../middlewares/validate.middleware.js";
 
 const router = Router();
 
+router.post("/", requireAuth, requireRole("admin"), validate(createSegmentSchema), createSegmentController);
 router.patch("/:segmentId", requireAuth, requireRole("admin"), validate(updateSegmentSchema), updateSegmentController);
 router.post(
   "/:segmentId/merge-next",

@@ -3,6 +3,7 @@ import { createTopic } from "../../topics/services/topicApi.js";
 import {
   analyzeVideoTranscript,
   checkDictation,
+  createTranscriptSegment,
   createVideo,
   deleteVideo,
   getVideo,
@@ -122,6 +123,18 @@ export function useAnalyzeVideoTranscript(videoId) {
 
 export function useCheckDictation() {
   return useMutation({ mutationFn: checkDictation });
+}
+
+export function useCreateTranscriptSegment(videoId) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => createTranscriptSegment(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["video", videoId] });
+      queryClient.invalidateQueries({ queryKey: ["video-transcripts", videoId] });
+      queryClient.invalidateQueries({ queryKey: ["videos"] });
+    },
+  });
 }
 
 export function useUpdateTranscriptSegment(videoId) {

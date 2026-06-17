@@ -13,6 +13,22 @@ export const segmentIdParamSchema = z.object({
   params: z.object({ segmentId: z.string().regex(objectIdRegex, "Invalid segment id") }),
 });
 
+export const createSegmentSchema = z.object({
+  body: z
+    .object({
+      videoId: z.string().regex(objectIdRegex, "Invalid video id"),
+      text: z.string().trim().min(1),
+      startTime: z.coerce.number().min(0),
+      endTime: z.coerce.number().min(0),
+      isPublished: z.preprocess(optionalBoolean, z.boolean().optional()),
+    })
+    .strict()
+    .refine((value) => value.endTime >= value.startTime, {
+      message: "End time must be greater than or equal to start time",
+      path: ["endTime"],
+    }),
+});
+
 export const updateSegmentSchema = z.object({
   params: z.object({ segmentId: z.string().regex(objectIdRegex, "Invalid segment id") }),
   body: z
