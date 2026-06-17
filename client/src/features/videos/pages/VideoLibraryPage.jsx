@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Headphones, Plus, Trash2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Headphones, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "../../../components/ui/badge.jsx";
@@ -164,19 +164,6 @@ function LessonCard({ deleteVideoMutation, isAdmin, publishVideoMutation, video,
         >
           {video.title}
         </Link>
-
-        <div className="grid grid-cols-2 gap-2 text-[12px] font-semibold text-[#202235] md:text-sm">
-          <Button asChild className="h-auto justify-start gap-1 p-0 text-[12px] md:text-sm" variant="ghost">
-            <Link to={`/videos/${video._id}/dictation`}>
-              Dictation <X className="text-slate-400" size={13} />
-            </Link>
-          </Button>
-          <Button asChild className="h-auto justify-end gap-1 p-0 text-[12px] md:text-sm" variant="ghost">
-            <Link to={`/videos/${video._id}?mode=shadowing`}>
-              Shadowing <X className="text-slate-400" size={13} />
-            </Link>
-          </Button>
-        </div>
 
         {isAdmin ? (
           <div className="flex gap-2 border-t border-[#d8e1ed] pt-3">
