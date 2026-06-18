@@ -7,7 +7,7 @@ import ShadowingPlaceholder from "../components/ShadowingPlaceholder.jsx";
 import TranscriptPanel from "../components/TranscriptPanel.jsx";
 import VideoColumn from "../components/VideoColumn.jsx";
 import {
-  correctSoundUrl,
+  correctSoundUrls,
   correctStickerUrls,
   praiseMessages,
 } from "../constants/videoLearning.constants.js";
@@ -62,7 +62,15 @@ export default function VideoLearningPage() {
     return normalizeDictationAnswer(answer) === normalizeDictationAnswer(segment.text);
   }, [answer, segment?.text]);
 
+  function stopCorrectSound() {
+    if (!correctSoundRef.current) return;
+
+    correctSoundRef.current.pause();
+    correctSoundRef.current.currentTime = 0;
+  }
+
   function resetDictationFeedback() {
+    stopCorrectSound();
     setCorrectPraise("");
     setCorrectStickerUrl("");
     lastCorrectKeyRef.current = "";
@@ -85,6 +93,7 @@ export default function VideoLearningPage() {
     const targetSegment = segments[index];
     if (!targetSegment) return;
 
+    stopCorrectSound();
     setHasStarted(true);
     selectSegment(index);
     playerRef.current?.playSegment(targetSegment, options);
@@ -94,6 +103,7 @@ export default function VideoLearningPage() {
     const firstSegment = segments[0];
     if (!firstSegment) return;
 
+    stopCorrectSound();
     setHasStarted(true);
     selectSegment(0);
     playerRef.current?.playSegment(firstSegment, { startTime: 0 });
@@ -102,6 +112,7 @@ export default function VideoLearningPage() {
   function replayCurrentSegment() {
     if (!segment) return;
 
+    stopCorrectSound();
     setHasStarted(true);
     playerRef.current?.playSegment(segment);
   }
@@ -119,6 +130,7 @@ export default function VideoLearningPage() {
   }
 
   function moveAndPlay(delta) {
+    stopCorrectSound();
     const next = Math.min(Math.max(currentIndex + delta, 0), Math.max(segments.length - 1, 0));
     const nextOptions =
       delta > 0 && segment
@@ -131,6 +143,7 @@ export default function VideoLearningPage() {
   function playNextOrContinueToEnd() {
     if (!segment) return;
 
+    stopCorrectSound();
     if (currentIndex >= segments.length - 1) {
       setHasStarted(true);
       playerRef.current?.playFrom(Number(segment.endTime || segment.startTime || 0));
@@ -214,17 +227,20 @@ export default function VideoLearningPage() {
     if (lastCorrectKeyRef.current === correctKey) return;
 
     lastCorrectKeyRef.current = correctKey;
-    if (correctSoundRef.current) {
-      correctSoundRef.current.currentTime = 0;
-      correctSoundRef.current.play().catch(() => {});
-    }
+    stopCorrectSound();
+    const randomSoundUrl = correctSoundUrls[Math.floor(Math.random() * correctSoundUrls.length)];
+    correctSoundRef.current = new Audio(randomSoundUrl);
+    correctSoundRef.current.preload = "auto";
+    correctSoundRef.current.play().catch(() => {});
     setCorrectPraise(praiseMessages[Math.floor(Math.random() * praiseMessages.length)]);
     setCorrectStickerUrl(correctStickerUrls[Math.floor(Math.random() * correctStickerUrls.length)]);
   }, [answer, isAnswerCorrect, segment?._id]);
 
   useEffect(() => {
-    correctSoundRef.current = new Audio(correctSoundUrl);
-    correctSoundRef.current.preload = "auto";
+    correctSoundUrls.forEach((url) => {
+      const audio = new Audio(url);
+      audio.preload = "auto";
+    });
 
     return () => {
       correctSoundRef.current?.pause();

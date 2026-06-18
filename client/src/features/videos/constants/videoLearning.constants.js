@@ -8,7 +8,11 @@ export const praiseMessages = [
   "Con bé này thông minh phết",
 ];
 
-export const correctSoundUrl = "https://res.cloudinary.com/dknin0hhf/video/upload/v1781681924/shocked-boom_mpdv2o.mp3";
+export const correctSoundUrls = [
+  "https://res.cloudinary.com/dknin0hhf/video/upload/v1781681924/shocked-boom_mpdv2o.mp3",
+  "https://res.cloudinary.com/dknin0hhf/video/upload/v1781759666/AQNe5hr92fFAZE6s-IyCOmoJfEoOve1MB9UyqA8uhVyIlkMW3X_cPd4SkuLuiJFS_XBr6zTZHjt8leJNaYLsMmKMcFLFi8i5m9tXp3lz-w_n2fjhy.mp3",
+  "https://res.cloudinary.com/dknin0hhf/video/upload/v1781759667/AQPfKEx_JIZpEGqlAXamnKsWG5P5rLz2hNJa4zAOQbByUSCredhzU45t95u4NBnZY6WSvcBXq9oiS5Xe9FClmdBcgzeDpg7duIfTIxTILQ_ki5row.mp3",
+];
 
 export const correctStickerUrls = [
   "https://res.cloudinary.com/dknin0hhf/image/upload/v1781683014/Well_Done_Wow_Sticker_by_Pudgy_Penguins_y28nzj.gif",
