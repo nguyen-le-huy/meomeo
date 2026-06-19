@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import DictationPractice from "../components/DictationPractice.jsx";
-import ShadowingPlaceholder from "../components/ShadowingPlaceholder.jsx";
+import ShadowingPractice from "../components/ShadowingPractice.jsx";
 import TranscriptPanel from "../components/TranscriptPanel.jsx";
 import VideoColumn from "../components/VideoColumn.jsx";
 import {
@@ -27,8 +27,7 @@ import {
 export default function VideoLearningPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
-  const initialMode = searchParams.get("mode") === "shadowing" ? "shadowing" : "dictation";
-  const [mode] = useState(initialMode);
+  const mode = searchParams.get("mode") === "shadowing" ? "shadowing" : "dictation";
   const [difficulty, setDifficulty] = useState("normal");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [revealedWordIndexes, setRevealedWordIndexes] = useState([]);
@@ -263,6 +262,30 @@ export default function VideoLearningPage() {
     return <section className="h-full overflow-auto bg-matcha p-6 font-bold text-red-600">Không tìm thấy video.</section>;
   }
 
+  if (mode === "shadowing") {
+    return (
+      <ShadowingPractice
+        currentIndex={currentIndex}
+        hasStarted={hasStarted}
+        isPlayerPlaying={isPlayerPlaying}
+        isYoutubeReady={isYoutubeReady}
+        onMoveAndPlay={moveAndPlay}
+        onNext={playNextOrContinueToEnd}
+        onPlayingChange={setIsPlayerPlaying}
+        onReadyChange={setIsYoutubeReady}
+        onReplayCurrentSegment={replayCurrentSegment}
+        onSelectSegment={selectSegment}
+        onStartFirstSegment={startFirstSegment}
+        onToggleCurrentSegmentPlayback={toggleCurrentSegmentPlayback}
+        playerRef={playerRef}
+        progressPercent={progressPercent}
+        segment={segment}
+        segments={segments}
+        video={video}
+      />
+    );
+  }
+
   return (
     <section className="h-full w-full max-w-full overflow-x-hidden overflow-y-auto bg-white pb-24 md:bg-[#eef4ee] md:p-4 md:pb-4">
       <div className="mx-auto grid w-full max-w-full min-w-0 gap-0 xl:max-w-[1500px] xl:grid-cols-[minmax(360px,0.9fr)_minmax(420px,0.78fr)_minmax(300px,0.56fr)] xl:gap-2">
@@ -280,38 +303,34 @@ export default function VideoLearningPage() {
         />
 
         <section className="min-w-0 max-w-full overflow-hidden bg-white p-2 md:rounded-2xl md:border md:border-[#d9e2ec] md:p-4 md:shadow-sm xl:min-h-[calc(100vh-2rem)]">
-          {mode === "dictation" ? (
-            <DictationPractice
-              answer={answer}
-              checkMutation={checkMutation}
-              correctPraise={correctPraise}
-              correctStickerUrl={correctStickerUrl}
-              currentIndex={currentIndex}
-              difficulty={difficulty}
-              hasStarted={hasStarted}
-              inlineWordAnswers={inlineWordAnswers}
-              isPlayerPlaying={isPlayerPlaying}
-              isYoutubeReady={isYoutubeReady}
-              onChangeAnswer={handleAnswerChange}
-              onChangeDifficulty={handleDifficultyChange}
-              onChangeInlineWord={updateInlineWordAnswer}
-              onMoveAndPlay={moveAndPlay}
-              onNext={playNextOrContinueToEnd}
-              onRevealAllWords={revealAllWords}
-              onRevealInlineWord={revealInlineWord}
-              onRevealWord={revealWord}
-              onReplayCurrentSegment={replayCurrentSegment}
-              onStartFirstSegment={startFirstSegment}
-              onSubmit={submitDictation}
-              onToggleCurrentSegmentPlayback={toggleCurrentSegmentPlayback}
-              progressPercent={progressPercent}
-              revealedWordIndexes={revealedWordIndexes}
-              segment={segment}
-              segmentsCount={segments.length}
-            />
-          ) : (
-            <ShadowingPlaceholder />
-          )}
+          <DictationPractice
+            answer={answer}
+            checkMutation={checkMutation}
+            correctPraise={correctPraise}
+            correctStickerUrl={correctStickerUrl}
+            currentIndex={currentIndex}
+            difficulty={difficulty}
+            hasStarted={hasStarted}
+            inlineWordAnswers={inlineWordAnswers}
+            isPlayerPlaying={isPlayerPlaying}
+            isYoutubeReady={isYoutubeReady}
+            onChangeAnswer={handleAnswerChange}
+            onChangeDifficulty={handleDifficultyChange}
+            onChangeInlineWord={updateInlineWordAnswer}
+            onMoveAndPlay={moveAndPlay}
+            onNext={playNextOrContinueToEnd}
+            onRevealAllWords={revealAllWords}
+            onRevealInlineWord={revealInlineWord}
+            onRevealWord={revealWord}
+            onReplayCurrentSegment={replayCurrentSegment}
+            onStartFirstSegment={startFirstSegment}
+            onSubmit={submitDictation}
+            onToggleCurrentSegmentPlayback={toggleCurrentSegmentPlayback}
+            progressPercent={progressPercent}
+            revealedWordIndexes={revealedWordIndexes}
+            segment={segment}
+            segmentsCount={segments.length}
+          />
         </section>
 
         <TranscriptPanel

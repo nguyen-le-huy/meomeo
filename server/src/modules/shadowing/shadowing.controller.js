@@ -5,7 +5,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 export const assessShadowingController = asyncHandler(async (req, res) => {
   const data = await assessShadowing({
     ...req.validated.body,
-    audioUrl: req.file?.path || "",
+    audioFile: req.file,
   });
   return successResponse(res, "Shadowing pronunciation assessed successfully", data);
 });

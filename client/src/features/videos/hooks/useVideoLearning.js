@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createTopic } from "../../topics/services/topicApi.js";
 import {
   analyzeVideoTranscript,
+  assessShadowing,
   checkDictation,
   createTranscriptSegment,
   createVideo,
@@ -123,6 +124,10 @@ export function useAnalyzeVideoTranscript(videoId) {
 
 export function useCheckDictation() {
   return useMutation({ mutationFn: checkDictation });
+}
+
+export function useAssessShadowing() {
+  return useMutation({ mutationFn: assessShadowing });
 }
 
 export function useCreateTranscriptSegment(videoId) {

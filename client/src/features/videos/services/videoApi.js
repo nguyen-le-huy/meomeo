@@ -36,6 +36,12 @@ export function checkDictation(data) {
   return apiClient.post("/dictation/check", data);
 }
 
+export function assessShadowing(data) {
+  return apiClient.post("/shadowing/assess", data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+}
+
 export function createTranscriptSegment(data) {
   return apiClient.post("/transcripts", data);
 }

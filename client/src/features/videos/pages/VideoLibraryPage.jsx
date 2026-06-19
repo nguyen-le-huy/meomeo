@@ -1,6 +1,6 @@
-import { ChevronLeft, ChevronRight, Headphones, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Headphones, Mic, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "../../../components/ui/badge.jsx";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
@@ -32,6 +32,10 @@ import {
 
 const levels = ["A1", "A2", "B1", "B2", "C1"];
 const pageSize = 8;
+const dictationStickerUrl =
+  "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3YjhtdDg4Y25ocWtjemR1MnJma3dzODdrYzE2dW9vc2hzMzN0bm02dCZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/BOHvk845AYKAVlETl4/giphy.gif";
+const shadowingStickerUrl =
+  "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3aHJuZzM2eGFxcTRobnVoN2tyNDVpZ2E3cGc0dHpheHVuM3BoY3ljMiZlcD12MV9zdGlja2Vyc19yZWxhdGVkJmN0PXM/ZrDBGncV67i6UUGnj4/giphy.gif";
 
 export default function VideoLibraryPage() {
   const { user } = useAuthStore();
@@ -42,9 +46,16 @@ export default function VideoLibraryPage() {
   const createVideoMutation = useCreateVideo();
   const publishVideoMutation = usePublishVideo();
   const deleteVideoMutation = useDeleteVideo();
+  const [modePickerVideo, setModePickerVideo] = useState(null);
   const totalPages = Math.max(1, Math.ceil(videos.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const pagedVideos = videos.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  function startLearning(mode) {
+    if (!modePickerVideo?._id) return;
+    setModePickerVideo(null);
+    navigate(`/videos/${modePickerVideo._id}?mode=${mode}`);
+  }
 
   return (
     <section className="h-full overflow-auto bg-[#f7f9fb] px-0 py-3 text-[#202235] md:px-6">
@@ -82,6 +93,7 @@ export default function VideoLibraryPage() {
                 deleteVideoMutation={deleteVideoMutation}
                 isAdmin={isAdmin}
                 key={video._id}
+                onSelect={() => setModePickerVideo(video)}
                 publishVideoMutation={publishVideoMutation}
                 video={video}
                 variant={index % 3 === 0 ? "featured" : "default"}
@@ -115,60 +127,76 @@ export default function VideoLibraryPage() {
             </Button>
           </div>
         ) : null}
+
+        <LearningModeDialog
+          onOpenChange={(isOpen) => {
+            if (!isOpen) setModePickerVideo(null);
+          }}
+          onSelectMode={startLearning}
+          open={Boolean(modePickerVideo)}
+        />
       </div>
     </section>
   );
 }
 
-function LessonCard({ deleteVideoMutation, isAdmin, publishVideoMutation, video, variant }) {
+function LessonCard({ deleteVideoMutation, isAdmin, onSelect, publishVideoMutation, video, variant }) {
   const isFeatured = variant === "featured";
-  const detailPath = `/videos/${video._id}`;
 
   return (
     <Card
       className={cn(
-        "group overflow-hidden rounded-[16px] border-[#d8e1ed] bg-white shadow-[0_4px_0_#cbd5e1]",
+        "group cursor-pointer overflow-hidden rounded-[16px] border-[#d8e1ed] bg-white shadow-[0_4px_0_#cbd5e1] outline-none transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-coal/25",
         isFeatured && "border-2 border-[#f5bc00] bg-[#fff8e8] shadow-[0_4px_0_#9b7200]",
       )}
       data-lesson-card
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect();
+        }
+      }}
+      role="button"
+      tabIndex={0}
     >
-      <Link className="block" to={detailPath}>
-        <div className="relative aspect-[16/8.2] overflow-hidden bg-[#d9e2ec]">
-          <img
-            alt={video.title}
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-            src={video.thumbnailUrl}
-          />
-          <Badge className="absolute left-2 top-2 gap-1 rounded-md bg-[#272852]/95 text-white">
-            <Headphones size={12} /> {formatNumber(video.viewCount || 0)}
-          </Badge>
-          <Badge className="absolute right-2 top-2 rounded-md bg-[#d7f8df] text-[#0e5f33] md:text-lg">
-            {video.level || "A2"}
-          </Badge>
-          <Badge className="absolute bottom-2 left-2 gap-1 rounded-md bg-red-50 text-red-700" variant="youtube">
-            <span className="text-[10px]">▶</span> Youtube
-          </Badge>
-          <Badge className="absolute bottom-2 right-2 gap-1 rounded-md bg-[#272852]/95 text-white">
-            ◷ {formatDuration(video.duration || 0)}
-          </Badge>
-        </div>
-      </Link>
+      <div className="relative aspect-[16/8.2] overflow-hidden bg-[#d9e2ec]">
+        <img
+          alt={video.title}
+          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+          src={video.thumbnailUrl}
+        />
+        <Badge className="absolute left-2 top-2 gap-1 rounded-md bg-[#272852]/95 text-white">
+          <Headphones size={12} /> {formatNumber(video.viewCount || 0)}
+        </Badge>
+        <Badge className="absolute right-2 top-2 rounded-md bg-[#d7f8df] text-[#0e5f33] md:text-lg">
+          {video.level || "A2"}
+        </Badge>
+        <Badge className="absolute bottom-2 left-2 gap-1 rounded-md bg-red-50 text-red-700" variant="youtube">
+          <span className="text-[10px]">▶</span> Youtube
+        </Badge>
+        <Badge className="absolute bottom-2 right-2 gap-1 rounded-md bg-[#272852]/95 text-white">
+          ◷ {formatDuration(video.duration || 0)}
+        </Badge>
+      </div>
 
       <CardContent className="space-y-3 p-3 md:p-4">
-        <Link
+        <p
           className={cn(
-            "line-clamp-2 block min-h-[36px] text-[13px] font-black leading-snug text-[#202235] hover:underline md:text-base",
+            "line-clamp-2 min-h-[36px] text-[13px] font-black leading-snug text-[#202235] md:text-base",
             isFeatured && "text-[#eb7100]",
           )}
-          to={detailPath}
         >
           {video.title}
-        </Link>
+        </p>
 
         {isAdmin ? (
-          <div className="flex gap-2 border-t border-[#d8e1ed] pt-3">
+          <div className="flex gap-2 border-t border-[#d8e1ed] pt-3" onClick={(event) => event.stopPropagation()}>
             <Button
-              onClick={() => publishVideoMutation.mutate({ id: video._id, isPublished: !video.isPublished })}
+              onClick={(event) => {
+                event.stopPropagation();
+                publishVideoMutation.mutate({ id: video._id, isPublished: !video.isPublished });
+              }}
               size="sm"
               type="button"
               variant="outline"
@@ -176,7 +204,8 @@ function LessonCard({ deleteVideoMutation, isAdmin, publishVideoMutation, video,
               {video.isPublished ? "Unpublish" : "Publish"}
             </Button>
             <Button
-              onClick={() => {
+              onClick={(event) => {
+                event.stopPropagation();
                 if (window.confirm("Xóa video này?")) deleteVideoMutation.mutate(video._id);
               }}
               size="sm"
@@ -188,6 +217,61 @@ function LessonCard({ deleteVideoMutation, isAdmin, publishVideoMutation, video,
           </div>
         ) : null}
       </CardContent>
+    </Card>
+  );
+}
+
+function LearningModeDialog({ onOpenChange, onSelectMode, open }) {
+  return (
+    <Dialog onOpenChange={onOpenChange} open={open}>
+      <DialogContent className="bottom-0 top-auto max-h-[92vh] w-full max-w-none translate-y-0 gap-5 rounded-b-none rounded-t-[24px] border-[#d8e1ed] p-3 pb-4 shadow-2xl sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[calc(100%-2rem)] sm:max-w-xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-6">
+        <div className="mx-auto h-1.5 w-20 rounded-full bg-[#e8edf5] sm:hidden" />
+        <DialogHeader className="px-0 text-left sm:text-center">
+          <DialogTitle className="text-lg font-black text-[#202235] sm:text-2xl">Chọn chế độ học</DialogTitle>
+          <DialogDescription className="text-sm font-semibold text-[#647084] sm:text-base">
+            Chọn chế độ học phù hợp với bạn nhất
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+          <LearningModeCard
+            imageAlt="Nghe viết chính tả"
+            imageUrl={dictationStickerUrl}
+            mode="dictation"
+            onSelectMode={onSelectMode}
+            title="Nghe - viết chính tả"
+          />
+          <LearningModeCard
+            Icon={Mic}
+            imageAlt="Bắt chước phát âm"
+            imageUrl={shadowingStickerUrl}
+            mode="shadowing"
+            onSelectMode={onSelectMode}
+            title="Bắt chước phát âm"
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function LearningModeCard({ Icon = Pencil, imageAlt, imageUrl, mode, onSelectMode, title }) {
+  return (
+    <Card
+      className="min-h-[168px] overflow-hidden rounded-2xl border-[#dbe4ee] bg-white shadow-[0_4px_0_#d5e0eb] transition hover:-translate-y-0.5 hover:border-[#bac8d8] hover:shadow-[0_5px_0_#c5d2df] sm:min-h-[224px]"
+    >
+      <Button
+        className="flex h-full min-h-[168px] w-full flex-col gap-4 rounded-2xl bg-transparent px-4 py-6 text-[#202235] hover:bg-[#f8fafc] sm:min-h-[224px] sm:gap-5 sm:px-5"
+        onClick={() => onSelectMode(mode)}
+        type="button"
+        variant="ghost"
+      >
+        <img alt={imageAlt} className="h-20 w-20 shrink-0 object-contain sm:h-24 sm:w-24" src={imageUrl} />
+        <span className="flex whitespace-normal items-center justify-center gap-2 text-center text-sm font-black uppercase leading-snug tracking-normal sm:text-base">
+          <Icon className="h-4 w-4 shrink-0" />
+          {title}
+        </span>
+      </Button>
     </Card>
   );
 }
