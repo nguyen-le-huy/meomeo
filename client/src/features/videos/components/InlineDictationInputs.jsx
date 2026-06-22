@@ -10,7 +10,7 @@ export default function InlineDictationInputs({ difficulty, inlineWordAnswers, o
   const maskedWords = getMaskedWords(difficulty, text);
 
   return (
-    <div className="flex flex-wrap gap-2 rounded-2xl border border-[#dbe4ee] bg-white p-3 shadow-sm">
+    <div className="flex flex-wrap gap-2 rounded-2xl border border-[#e6dfd8] bg-white p-3 shadow-sm">
       {maskedWords.map((word, index) => {
         const isRevealed = word.revealed || revealedWordIndexes.includes(index);
         const { core, leading, trailing } = splitWordPunctuation(word.original);
@@ -26,7 +26,7 @@ export default function InlineDictationInputs({ difficulty, inlineWordAnswers, o
           <span className="inline-flex flex-col items-center gap-1" key={`${word.original}-${index}`}>
             <button
               aria-label={`Hiện từ ${index + 1}`}
-              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-coal hover:bg-[#eef3fb] disabled:opacity-70"
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-coal hover:bg-cream disabled:opacity-70"
               disabled={isRevealed}
               onClick={() => onRevealWord(index)}
               type="button"
@@ -45,7 +45,7 @@ export default function InlineDictationInputs({ difficulty, inlineWordAnswers, o
                     ? "border-red-300 bg-red-50 text-red-700"
                     : isCorrectAttempt
                       ? "border-[#bfe9c9] bg-[#d7f8df] text-[#0e7a3d]"
-                      : "border-[#dbe4ee] bg-[#f9fbff] text-coal",
+                      : "border-[#e6dfd8] bg-cream-soft text-coal",
                 ].join(" ")}
               >
                 {leading ? <span>{leading}</span> : null}

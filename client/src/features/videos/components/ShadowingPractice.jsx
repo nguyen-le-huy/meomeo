@@ -180,13 +180,13 @@ export default function ShadowingPractice({
   useEffect(() => () => stopRecording({ skipSubmit: true }), []);
 
   return (
-    <section className="h-full w-full max-w-full overflow-hidden bg-white pb-20 text-[#202235] md:overflow-y-auto md:bg-[#eef4ee] md:p-4 md:pb-4">
+    <section className="h-full w-full max-w-full overflow-hidden bg-cream-soft pb-20 text-coal md:overflow-y-auto md:p-4 md:pb-4">
       <div className="mx-auto grid w-full max-w-[1500px] gap-3 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <main className="min-w-0 overflow-hidden bg-white md:rounded-2xl md:border md:border-[#d9e2ec] md:p-4 md:shadow-sm">
+        <main className="min-w-0 overflow-hidden bg-canvas md:rounded-xl md:border md:border-[#e6dfd8] md:p-4">
           <div className="hidden items-center gap-3 pb-4 xl:flex">
-            <div className="h-1.5 w-36 rounded-full bg-coal" />
-            <p className="min-w-0 flex-1 truncate text-sm font-black text-[#4c566b]">{video.title}</p>
-            <Badge className="rounded-lg bg-[#dce8ff] text-[#315cc8]">{video.level || "A2"}</Badge>
+            <div className="h-1.5 w-36 rounded-full bg-coral" />
+            <p className="min-w-0 flex-1 truncate text-sm font-black text-ink-body">{video.title}</p>
+            <Badge className="bg-coral text-white">{video.level || "A2"}</Badge>
           </div>
 
           <SegmentYoutubePlayer
@@ -201,7 +201,7 @@ export default function ShadowingPractice({
           <div className="space-y-3 px-3 py-4 md:px-0 xl:overflow-visible">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Button
-                className="h-8 gap-2 px-0 text-sm font-bold text-[#202235] hover:bg-transparent"
+                className="h-8 gap-2 px-0 text-sm font-bold text-coal hover:bg-transparent"
                 onClick={() => setIsAutoPauseEnabled((current) => !current)}
                 type="button"
                 variant="ghost"
@@ -209,7 +209,7 @@ export default function ShadowingPractice({
                 <span
                   className={cn(
                     "relative h-4 w-9 rounded-full transition",
-                    isAutoPauseEnabled ? "bg-[#292f68]" : "bg-[#dbe4ee]",
+                    isAutoPauseEnabled ? "bg-coral" : "bg-[#e6dfd8]",
                   )}
                 >
                   <span
@@ -226,7 +226,7 @@ export default function ShadowingPractice({
                 <Button size="icon" type="button" variant="ghost">
                   <Settings size={17} />
                 </Button>
-                <span className="inline-flex items-center gap-1 text-sm font-black text-[#202235]">
+                <span className="inline-flex items-center gap-1 text-sm font-black text-coal">
                   <Zap size={16} /> 1x
                 </span>
               </div>
@@ -236,7 +236,7 @@ export default function ShadowingPractice({
               <div aria-hidden="true" />
               <div className="flex items-center justify-center gap-2">
                 <Button
-                  className="h-10 w-10 rounded-full border-[#dbe4ee] bg-white shadow-sm"
+                  className="h-10 w-10 rounded-full border-[#e6dfd8] bg-white shadow-sm"
                   disabled={currentIndex === 0 || !isYoutubeReady}
                   onClick={() => onMoveAndPlay(-1)}
                   size="icon"
@@ -246,7 +246,7 @@ export default function ShadowingPractice({
                   <ChevronLeft size={18} />
                 </Button>
                 <Button
-                  className="h-10 w-10 rounded-full border-[#dbe4ee] bg-white shadow-sm"
+                  className="h-10 w-10 rounded-full border-[#e6dfd8] bg-white shadow-sm"
                   disabled={!canUseSegment}
                   onClick={onReplayCurrentSegment}
                   size="icon"
@@ -256,7 +256,7 @@ export default function ShadowingPractice({
                   <RotateCcw size={18} />
                 </Button>
                 <Button
-                  className="h-10 w-10 rounded-full border-[#dbe4ee] bg-white shadow-sm"
+                  className="h-10 w-10 rounded-full border-[#e6dfd8] bg-white shadow-sm"
                   disabled={!canUseSegment}
                   onClick={onToggleCurrentSegmentPlayback}
                   size="icon"
@@ -266,7 +266,7 @@ export default function ShadowingPractice({
                   {isPlayerPlaying ? <Pause size={18} /> : <Play size={18} />}
                 </Button>
                 <Button
-                  className="h-10 w-10 rounded-full border-[#dbe4ee] bg-white shadow-sm"
+                  className="h-10 w-10 rounded-full border-[#e6dfd8] bg-white shadow-sm"
                   disabled={!canUseSegment}
                   onClick={onNext}
                   size="icon"
@@ -279,7 +279,7 @@ export default function ShadowingPractice({
               <Button
                 className={cn(
                   "justify-self-end gap-2 text-sm font-bold xl:hidden",
-                  isTranscriptVisible ? "text-[#202235]" : "text-[#9aa3b4]",
+                  isTranscriptVisible ? "text-coal" : "text-ink-muted",
                 )}
                 onClick={() => setIsTranscriptVisible((current) => !current)}
                 size="sm"
@@ -293,7 +293,7 @@ export default function ShadowingPractice({
             {!hasStarted ? (
               <div className="hidden justify-center xl:flex">
                 <Button
-                  className="h-12 min-w-52 rounded-2xl bg-[#292f68] text-base font-black uppercase text-white shadow-sm hover:bg-[#202658]"
+                  className="h-12 min-w-52 bg-coral text-base text-white hover:bg-coral-dark"
                   disabled={!canUseSegment}
                   onClick={onStartFirstSegment}
                   type="button"
@@ -323,7 +323,7 @@ export default function ShadowingPractice({
 
             <div className="hidden items-center justify-center gap-3 xl:flex">
               <Button
-                className="h-12 min-w-44 rounded-2xl border-[#dbe4ee] bg-white text-sm font-black uppercase text-[#9aa3b4] shadow-sm"
+                className="h-12 min-w-44 rounded-2xl border-[#e6dfd8] bg-white text-sm font-black uppercase text-ink-muted shadow-sm"
                 disabled={!hasStarted}
                 onClick={onReplayCurrentSegment}
                 type="button"
@@ -332,7 +332,7 @@ export default function ShadowingPractice({
                 <Play size={16} /> Phát lại ghi âm
               </Button>
               <Button
-                className="h-12 min-w-48 rounded-2xl bg-[#292f68] text-sm font-black uppercase text-white shadow-sm hover:bg-[#202658]"
+                className="h-12 min-w-48 bg-coral text-sm text-white hover:bg-coral-dark"
                 disabled={!canUseSegment || !hasStarted || assessMutation.isPending}
                 onClick={isRecording ? stopRecording : startRecording}
                 type="button"
@@ -351,9 +351,9 @@ export default function ShadowingPractice({
         />
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#dbe4ee] bg-white p-3 xl:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#e6dfd8] bg-canvas p-3 xl:hidden">
         <Button
-          className="h-14 w-full rounded-2xl bg-[#292f68] text-base font-black uppercase text-white shadow-lg hover:bg-[#202658]"
+          className="h-14 w-full bg-coral text-base text-white shadow-lg hover:bg-coral-dark"
           disabled={!activeSegment || !isYoutubeReady || assessMutation.isPending}
           onClick={handlePrimaryAction}
           type="button"
@@ -377,21 +377,21 @@ function CurrentTurnCard({
 }) {
   if (!segment) {
     return (
-      <Card className="rounded-2xl border-dashed border-[#dbe4ee] bg-[#f9fbff] shadow-sm">
-        <CardContent className="p-5 text-sm font-bold text-[#647084]">Chưa có transcript để luyện shadowing.</CardContent>
+      <Card className="rounded-2xl border-dashed border-[#e6dfd8] bg-cream-soft shadow-sm">
+        <CardContent className="p-5 text-sm font-bold text-ink-muted">Chưa có transcript để luyện shadowing.</CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="rounded-2xl border-2 border-[#292f68] bg-[#f7f8ff] shadow-[0_3px_0_#d9e2ec]">
+    <Card className="rounded-2xl border-2 border-coral bg-cream-soft shadow-[0_3px_0_#d9e2ec]">
       <CardContent className="space-y-3 p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-[#e8edf5] px-2 text-xs font-black text-[#647084]">
+            <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-cream px-2 text-xs font-black text-ink-muted">
               {segment.index || currentIndex + 1}
             </span>
-            <span className="text-xs font-black uppercase tracking-wide text-[#647084]">Lượt của bạn</span>
+            <span className="text-xs font-black uppercase tracking-wide text-ink-muted">Lượt của bạn</span>
           </div>
           <div className="flex items-center gap-2">
             {assessmentResult ? (
@@ -399,19 +399,19 @@ function CurrentTurnCard({
                 {assessmentResult.pronunciationScore}
               </Badge>
             ) : isAssessing ? (
-              <Badge className="rounded-full bg-[#e8edf5] text-[#647084]">Đang chấm</Badge>
+              <Badge className="rounded-full bg-cream text-ink-muted">Đang chấm</Badge>
             ) : isRecording ? (
               <Badge className="rounded-full bg-[#ffe2e2] text-[#e9414f]">Đang ghi</Badge>
             ) : null}
-            <FilePenLine className="text-[#202235]/65" size={16} />
-            <AlertTriangle className="text-[#202235]/65" size={16} />
+            <FilePenLine className="text-coal/65" size={16} />
+            <AlertTriangle className="text-coal/65" size={16} />
           </div>
         </div>
 
         {isTranscriptVisible ? (
           <WordLine assessmentWords={assessmentResult?.words} text={segment.text} />
         ) : (
-          <p className="rounded-xl border border-dashed border-[#dbe4ee] bg-white/55 px-3 py-4 text-center text-sm font-bold text-[#9aa3b4]">
+          <p className="rounded-xl border border-dashed border-[#e6dfd8] bg-white/55 px-3 py-4 text-center text-sm font-bold text-ink-muted">
             Transcript đang ẩn
           </p>
         )}
@@ -423,15 +423,15 @@ function CurrentTurnCard({
 
 function ShadowingTranscriptList({ currentIndex, onSelectSegment, progressPercent, segments }) {
   return (
-    <aside className="hidden max-h-[calc(100vh-2rem)] min-h-[calc(100vh-2rem)] flex-col rounded-2xl border border-[#d9e2ec] bg-white p-4 shadow-sm xl:flex">
+    <aside className="hidden max-h-[calc(100vh-6rem)] min-h-[calc(100vh-6rem)] flex-col rounded-xl border border-[#e6dfd8] bg-canvas p-4 xl:flex">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-black uppercase tracking-wide text-[#202235]">Bản chép</h2>
-        <span className="rounded-lg border border-[#dbe4ee] bg-[#f9fbff] px-3 py-1 text-sm font-black text-[#202235]">
+        <h2 className="eyebrow">Bản chép</h2>
+        <span className="rounded-lg border border-[#e6dfd8] bg-cream-soft px-3 py-1 text-sm font-black text-coal">
           {progressPercent}%
         </span>
       </div>
-      <div className="mb-4 h-3 overflow-hidden rounded-full border border-[#dbe4ee] bg-[#eef3fb]">
-        <div className="h-full rounded-full bg-[#292f68]" style={{ width: `${progressPercent}%` }} />
+      <div className="mb-4 h-2 overflow-hidden rounded-full bg-cream">
+        <div className="h-full rounded-full bg-coral" style={{ width: `${progressPercent}%` }} />
       </div>
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
         {segments.length ? (
@@ -445,8 +445,8 @@ function ShadowingTranscriptList({ currentIndex, onSelectSegment, progressPercen
             />
           ))
         ) : (
-          <Card className="rounded-2xl border-dashed border-[#dbe4ee] bg-[#f9fbff]">
-            <CardContent className="p-4 text-sm font-bold text-[#647084]">Chưa có bản chép cho video này.</CardContent>
+          <Card className="rounded-2xl border-dashed border-[#e6dfd8] bg-cream-soft">
+            <CardContent className="p-4 text-sm font-bold text-ink-muted">Chưa có bản chép cho video này.</CardContent>
           </Card>
         )}
       </div>
@@ -459,7 +459,7 @@ function TranscriptCard({ index, isActive, item, onSelectSegment }) {
     <Card
       className={cn(
         "rounded-2xl border bg-white shadow-sm transition",
-        isActive ? "border-2 border-[#292f68] bg-[#eef2ff]" : "border-[#dbe4ee]",
+        isActive ? "border-2 border-coral bg-cream" : "border-[#e6dfd8]",
       )}
     >
       <CardContent className="p-3">
@@ -471,12 +471,12 @@ function TranscriptCard({ index, isActive, item, onSelectSegment }) {
         >
           <div className="w-full space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-[#dbe4ee] bg-[#f9fbff] px-2 text-xs font-black text-[#4c566b]">
+              <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-[#e6dfd8] bg-cream-soft px-2 text-xs font-black text-ink-body">
                 #{item.index || index + 1}
               </span>
-              <span className="text-xs font-black text-[#647084]">{formatDuration(Number(item.endTime || 0))}</span>
+              <span className="text-xs font-black text-ink-muted">{formatDuration(Number(item.endTime || 0))}</span>
             </div>
-            <p className="whitespace-normal text-sm font-black leading-6 text-[#202235]">{item.text}</p>
+            <p className="whitespace-normal text-sm font-black leading-6 text-coal">{item.text}</p>
           </div>
         </Button>
       </CardContent>
@@ -495,19 +495,19 @@ function MobileTranscriptFeed({ currentIndex, isTranscriptVisible, onSelectSegme
 
         return (
         <Card
-          className="rounded-2xl border border-[#dbe4ee] bg-white opacity-70 shadow-sm"
+          className="rounded-2xl border border-[#e6dfd8] bg-white opacity-70 shadow-sm"
           key={item._id}
         >
           <CardContent className="space-y-2 p-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-[#e8edf5] px-2 text-xs font-black text-[#647084]">
+                <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-cream px-2 text-xs font-black text-ink-muted">
                   {item.index || index + 1}
                 </span>
                 <span className="text-xs font-black uppercase tracking-wide text-[#a3acba]">Tiếp theo</span>
               </div>
               <Button
-                className="h-8 px-2 text-[#647084]"
+                className="h-8 px-2 text-ink-muted"
                 onClick={() => onSelectSegment(index)}
                 type="button"
                 variant="ghost"
@@ -518,7 +518,7 @@ function MobileTranscriptFeed({ currentIndex, isTranscriptVisible, onSelectSegme
             {isTranscriptVisible ? (
               <WordLine isMuted={index !== currentIndex} text={item.text} />
             ) : (
-              <p className="rounded-xl border border-dashed border-[#dbe4ee] bg-[#f9fbff] px-3 py-4 text-center text-sm font-bold text-[#a3acba]">
+              <p className="rounded-xl border border-dashed border-[#e6dfd8] bg-cream-soft px-3 py-4 text-center text-sm font-bold text-[#a3acba]">
                 Transcript đang ẩn
               </p>
             )}
@@ -547,7 +547,7 @@ function WordLine({ assessmentWords, isMuted = false, text }) {
   const words = String(text || "").split(/\s+/).filter(Boolean);
 
   return (
-    <div className={cn("flex flex-wrap gap-x-3 gap-y-2 text-base font-black leading-7", isMuted ? "text-[#687386]" : "text-[#202235]")}>
+    <div className={cn("flex flex-wrap gap-x-3 gap-y-2 text-base font-black leading-7", isMuted ? "text-[#687386]" : "text-coal")}>
       {words.map((word, index) => (
         <span
           className={cn(

@@ -1,13 +1,14 @@
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, Eye, EyeOff, LockKeyhole } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
+import { Button } from "../../../components/ui/button.jsx";
+import { Card, CardContent } from "../../../components/ui/card.jsx";
+import { Input } from "../../../components/ui/input.jsx";
 import { loginApi } from "../services/authApi.js";
 import { useAuthStore } from "../stores/authStore.js";
-
-const catImageUrl =
-  "https://res.cloudinary.com/dknin0hhf/image/upload/v1781600479/Cat_Smile_Sticker_by_CHERRISK_l4h8vh.gif";
 
 const loginSchema = z.object({
   username: z.string().trim().min(1, "Vui lòng nhập tài khoản"),
@@ -19,35 +20,17 @@ export default function LoginPage() {
   const [loginError, setLoginError] = useState("");
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
-  const {
-    formState: { errors, isSubmitting },
-    handleSubmit,
-    register,
-  } = useForm({
-    defaultValues: {
-      username: "",
-      password: "",
-    },
+  const { formState: { errors, isSubmitting }, handleSubmit, register } = useForm({
+    defaultValues: { username: "", password: "" },
     resolver: zodResolver(loginSchema),
   });
 
   async function onSubmit(values) {
     setLoginError("");
-
     try {
-      const response = await loginApi({
-        email: values.username,
-        password: values.password,
-      });
+      const response = await loginApi({ email: values.username, password: values.password });
       const { user, token } = response.data.data;
-
       setAuth({ user, token });
-
-      if (user.role === "admin") {
-        navigate("/", { replace: true });
-        return;
-      }
-
       navigate("/", { replace: true });
     } catch (error) {
       setLoginError(error.response?.data?.message || "Đăng nhập thất bại");
@@ -55,92 +38,70 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="h-screen overflow-hidden bg-matcha px-4 py-4 text-coal sm:px-6 sm:py-7">
-      <section className="relative mx-auto h-full max-w-[900px] overflow-hidden rounded-[18px] border border-coal/10 bg-matcha/55 shadow-[0_1px_0_#222222]">
-        <img
-          alt="Smiling cat"
-          className="pointer-events-none absolute right-[-6px] top-[86px] z-0 h-[250px] w-[180px] object-contain sm:right-[-4px] sm:top-[112px] sm:h-[226px] sm:w-[190px]"
-          src={catImageUrl}
-        />
+    <main className="min-h-screen bg-canvas px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
+      <div className="mx-auto flex max-w-[1180px] items-center justify-between">
+        <Link className="inline-flex items-center gap-2 font-display text-2xl tracking-tight" to="/">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-coal text-sm text-canvas">m</span>
+          meomeo
+        </Link>
+        <Button asChild variant="ghost">
+          <Link to="/"><ArrowLeft size={16} /> Về thư viện</Link>
+        </Button>
+      </div>
 
-        <div className="relative z-10 flex h-full items-center justify-center px-5 py-16 sm:px-10 sm:py-20">
-          <div className="w-full max-w-[520px] sm:ml-2 sm:mr-20">
-            <div className="mb-9">
-              <h1 className="text-[28px] font-bold leading-tight tracking-normal text-coal sm:text-[38px]">
-                Admin login
-              </h1>
-              <p className="mt-3 text-sm font-normal text-coal/55">
-                Đăng nhập để thêm video và chỉnh transcript.
-              </p>
-            </div>
-
-            <form autoComplete="off" className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-              <div>
-                <label
-                  className="mb-2.5 block text-sm font-semibold text-coal"
-                  htmlFor="login-username"
-                >
-                  Tài khoản
-                </label>
-                <input
-                  autoComplete="off"
-                  className="h-14 w-full rounded-md border border-coal/50 bg-matcha/25 px-7 text-base font-semibold text-coal outline-none transition placeholder:text-coal/35 focus:border-coal focus:bg-matcha/35 focus:ring-2 focus:ring-coal/15"
-                  id="login-username"
-                  type="text"
-                  {...register("username")}
-                />
-                {errors.username ? (
-                  <p className="mt-2 text-sm font-medium text-red-600">
-                    {errors.username.message}
-                  </p>
-                ) : null}
-              </div>
-
-              <div>
-                <label className="mb-2.5 block text-sm font-medium text-coal/55" htmlFor="password">
-                  Mật khẩu
-                </label>
-                <div className="relative">
-                  <input
-                    autoComplete="new-password"
-                    className="h-14 w-full rounded-md border border-coal/30 bg-matcha/25 px-7 pr-14 text-base font-semibold text-coal outline-none transition placeholder:text-coal/35 focus:border-coal focus:bg-matcha/35 focus:ring-2 focus:ring-coal/15"
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    {...register("password")}
-                  />
-                  <button
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    className="absolute right-5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-coal/55"
-                    onClick={() => setShowPassword((value) => !value)}
-                    type="button"
-                  >
-                    <span className="relative block h-[14px] w-[20px] rounded-full border-2 border-current">
-                      <span className="absolute left-1/2 top-1/2 h-[5px] w-[5px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-current" />
-                    </span>
-                  </button>
-                </div>
-                {errors.password ? (
-                  <p className="mt-2 text-sm font-medium text-red-600">
-                    {errors.password.message}
-                  </p>
-                ) : null}
-              </div>
-
-              {loginError ? (
-                <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-                  {loginError}
-                </div>
-              ) : null}
-
-              <button
-                className="h-14 w-full rounded-md bg-black text-base font-semibold text-white shadow-sm transition hover:bg-coal disabled:cursor-not-allowed disabled:opacity-70"
-                disabled={isSubmitting}
-                type="submit"
-              >
-                {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
-              </button>
-            </form>
+      <section className="mx-auto mt-10 grid max-w-[1180px] overflow-hidden rounded-2xl border border-[#e6dfd8] bg-cream lg:min-h-[650px] lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="relative hidden overflow-hidden bg-[#181715] p-12 text-canvas lg:flex lg:flex-col lg:justify-between">
+          <div>
+            <p className="eyebrow !text-[#a09d96]">Admin workspace</p>
+            <h1 className="mt-8 max-w-lg font-display text-6xl leading-[1.05] tracking-tight">
+              Nội dung tốt bắt đầu từ từng câu chữ.
+            </h1>
           </div>
+          <div className="relative">
+            <div className="absolute -bottom-32 -right-28 h-80 w-80 rounded-full border-[55px] border-coral/90" />
+            <p className="relative max-w-sm text-sm leading-6 text-[#a09d96]">
+              Thêm video, chỉnh transcript và xuất bản bài học ngay trong giao diện công khai.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center p-6 sm:p-10 lg:p-14">
+          <Card className="w-full border-0 bg-transparent">
+            <CardContent className="p-0">
+              <div className="mb-10">
+                <span className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-full bg-coral text-white">
+                  <LockKeyhole size={20} />
+                </span>
+                <h2 className="font-display text-4xl font-normal tracking-tight">Đăng nhập admin</h2>
+                <p className="mt-3 text-sm leading-6 text-ink-muted">Khu vực này chỉ dành cho người quản trị nội dung.</p>
+              </div>
+
+              <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold" htmlFor="login-username">Tài khoản</label>
+                  <Input autoComplete="username" className="h-12" id="login-username" placeholder="admin@example.com" {...register("username")} />
+                  {errors.username ? <p className="mt-2 text-sm text-red-600">{errors.username.message}</p> : null}
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold" htmlFor="password">Mật khẩu</label>
+                  <div className="relative">
+                    <Input autoComplete="current-password" className="h-12 pr-12" id="password" type={showPassword ? "text" : "password"} {...register("password")} />
+                    <Button aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} className="absolute right-1.5 top-1.5" onClick={() => setShowPassword((value) => !value)} size="icon" type="button" variant="ghost">
+                      {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                    </Button>
+                  </div>
+                  {errors.password ? <p className="mt-2 text-sm text-red-600">{errors.password.message}</p> : null}
+                </div>
+
+                {loginError ? <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loginError}</div> : null}
+
+                <Button className="h-12 w-full" disabled={isSubmitting} type="submit">
+                  {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </section>
     </main>

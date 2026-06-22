@@ -141,7 +141,7 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
   useImperativeHandle(ref, () => ({ pauseVideo, playFrom, playSegment }), [pauseVideo, playFrom, playSegment]);
 
   return (
-    <div className="w-full max-w-full min-w-0 overflow-hidden rounded-none border-b-[5px] border-[#2ea8e5] bg-black shadow-sm md:rounded-2xl md:border-8">
+    <div className="w-full max-w-full min-w-0 overflow-hidden rounded-none border-b-4 border-coral bg-[#181715] md:rounded-xl md:border-4 md:border-[#181715]">
       <div
         className="h-[210px] w-full max-w-full min-w-0 [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:max-w-full [&>iframe]:object-contain md:aspect-video md:h-auto"
         ref={hostRef}

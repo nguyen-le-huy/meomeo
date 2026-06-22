@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Headphones, Mic, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowRight, Headphones, Mic, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "../../../components/ui/badge.jsx";
@@ -41,15 +41,14 @@ export default function VideoLibraryPage() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
-  const [page, setPage] = useState(1);
+  const [visibleCount, setVisibleCount] = useState(pageSize);
   const { data: videos = [], isLoading } = useVideos({ includeUnpublished: isAdmin || undefined });
   const createVideoMutation = useCreateVideo();
   const publishVideoMutation = usePublishVideo();
   const deleteVideoMutation = useDeleteVideo();
   const [modePickerVideo, setModePickerVideo] = useState(null);
-  const totalPages = Math.max(1, Math.ceil(videos.length / pageSize));
-  const currentPage = Math.min(page, totalPages);
-  const pagedVideos = videos.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const visibleVideos = videos.slice(0, visibleCount);
+  const hasMoreVideos = visibleCount < videos.length;
 
   function startLearning(mode) {
     if (!modePickerVideo?._id) return;
@@ -58,12 +57,33 @@ export default function VideoLibraryPage() {
   }
 
   return (
-    <section className="h-full overflow-auto bg-[#f7f9fb] px-0 py-3 text-[#202235] md:px-6">
-      <div className="mx-auto max-w-[1500px] space-y-5">
-        <div className="flex items-center justify-between px-3 md:px-0">
+    <section className="min-h-full overflow-auto bg-canvas text-coal">
+      <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-12 sm:px-6 lg:px-10 lg:pt-20">
+        <div className="grid items-end gap-10 border-b border-[#e6dfd8] pb-12 lg:grid-cols-[minmax(0,1fr)_360px] lg:pb-16">
+          <div className="max-w-3xl">
+            <p className="eyebrow mb-5">YouTube shadowing & dictation</p>
+            <h1 className="display-heading text-[44px] leading-[1.02] sm:text-6xl lg:text-[72px]">
+              Nghe rõ hơn.<br />Nói tự nhiên hơn.
+            </h1>
+            <p className="mt-6 max-w-xl text-base leading-7 text-ink-body sm:text-lg">
+              Luyện tiếng Anh từ những video bạn yêu thích, từng câu một — nghe, viết và bắt chước nhịp nói thật.
+            </p>
+          </div>
+          <Card className="overflow-hidden border-0 bg-[#181715] text-canvas">
+            <CardContent className="p-7">
+              <Sparkles className="mb-12 text-coral" size={24} />
+              <p className="font-display text-3xl leading-tight">Một video.<br />Hai cách luyện.</p>
+              <div className="mt-7 flex gap-2 text-sm text-[#a09d96]">
+                <span>Dictation</span><span>·</span><span>Shadowing</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="mb-8 mt-12 flex items-end justify-between gap-4">
           <div>
-            <h1 className="text-xl font-black md:text-3xl">Video Dictation</h1>
-            <p className="mt-1 text-sm font-bold text-[#62697b]">Chọn video để luyện nghe chép chính tả.</p>
+            <p className="eyebrow">Thư viện</p>
+            <h2 className="mt-2 font-display text-3xl font-normal tracking-tight sm:text-4xl">Chọn bài học hôm nay</h2>
           </div>
           {isAdmin ? (
             <AddVideoDialog
@@ -76,10 +96,10 @@ export default function VideoLibraryPage() {
         {isLoading ? <p className="px-3 text-sm font-bold md:px-0">Đang tải video...</p> : null}
 
         {!isLoading && videos.length === 0 ? (
-          <Card className="mx-3 border-dashed border-[#cfd8e6] bg-white md:mx-0">
+          <Card className="border-dashed bg-cream-soft">
             <CardContent className="p-8 text-center">
-              <p className="text-lg font-black">Chưa có video nào.</p>
-              <p className="mt-2 text-sm font-semibold text-[#62697b]">
+              <p className="font-display text-2xl">Chưa có video nào.</p>
+              <p className="mt-2 text-sm text-ink-muted">
                 Admin đăng nhập rồi bấm “Thêm video” để tạo bài học đầu tiên.
               </p>
             </CardContent>
@@ -87,8 +107,8 @@ export default function VideoLibraryPage() {
         ) : null}
 
         {videos.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 px-0 md:grid-cols-3 md:gap-5 xl:grid-cols-4" data-lesson-grid>
-            {pagedVideos.map((video, index) => (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" data-lesson-grid>
+            {visibleVideos.map((video, index) => (
               <LessonCard
                 deleteVideoMutation={deleteVideoMutation}
                 isAdmin={isAdmin}
@@ -102,29 +122,19 @@ export default function VideoLibraryPage() {
           </div>
         ) : null}
 
-        {videos.length > pageSize ? (
-          <div className="flex items-center justify-center gap-2 px-3 pb-5 md:px-0">
+        {hasMoreVideos ? (
+          <div className="mt-10 flex flex-col items-center gap-3">
             <Button
-              disabled={currentPage === 1}
-              onClick={() => setPage((value) => Math.max(1, value - 1))}
-              size="sm"
+              className="min-w-40"
+              onClick={() => setVisibleCount((count) => Math.min(count + pageSize, videos.length))}
               type="button"
               variant="outline"
             >
-              <ChevronLeft size={16} />
+              Xem thêm <ArrowDown size={16} />
             </Button>
-            <div className="rounded-full border border-[#cfd8e6] bg-white px-4 py-2 text-xs font-black text-[#25294f] shadow-sm">
-              {currentPage} / {totalPages}
-            </div>
-            <Button
-              disabled={currentPage === totalPages}
-              onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              <ChevronRight size={16} />
-            </Button>
+            <p className="text-xs text-ink-muted">
+              Đang hiển thị {visibleVideos.length} / {videos.length} video
+            </p>
           </div>
         ) : null}
 
@@ -146,8 +156,8 @@ function LessonCard({ deleteVideoMutation, isAdmin, onSelect, publishVideoMutati
   return (
     <Card
       className={cn(
-        "group cursor-pointer overflow-hidden rounded-[16px] border-[#d8e1ed] bg-white shadow-[0_4px_0_#cbd5e1] outline-none transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-coal/25",
-        isFeatured && "border-2 border-[#f5bc00] bg-[#fff8e8] shadow-[0_4px_0_#9b7200]",
+        "group cursor-pointer overflow-hidden border-[#e6dfd8] bg-canvas outline-none transition duration-300 hover:-translate-y-1 hover:border-[#cfc5b8] hover:shadow-[0_16px_38px_rgba(20,20,19,0.08)] focus-visible:ring-2 focus-visible:ring-coral/30",
+        isFeatured && "bg-cream",
       )}
       data-lesson-card
       onClick={onSelect}
@@ -160,38 +170,39 @@ function LessonCard({ deleteVideoMutation, isAdmin, onSelect, publishVideoMutati
       role="button"
       tabIndex={0}
     >
-      <div className="relative aspect-[16/8.2] overflow-hidden bg-[#d9e2ec]">
+      <div className="relative aspect-video overflow-hidden bg-cream-strong">
         <img
           alt={video.title}
           className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
           src={video.thumbnailUrl}
         />
-        <Badge className="absolute left-2 top-2 gap-1 rounded-md bg-[#272852]/95 text-white">
+        <Badge className="absolute left-3 top-3 gap-1 bg-coal/90 text-white">
           <Headphones size={12} /> {formatNumber(video.viewCount || 0)}
         </Badge>
-        <Badge className="absolute right-2 top-2 rounded-md bg-[#d7f8df] text-[#0e5f33] md:text-lg">
+        <Badge className="absolute right-3 top-3 bg-coral text-white">
           {video.level || "A2"}
         </Badge>
-        <Badge className="absolute bottom-2 left-2 gap-1 rounded-md bg-red-50 text-red-700" variant="youtube">
-          <span className="text-[10px]">▶</span> Youtube
-        </Badge>
-        <Badge className="absolute bottom-2 right-2 gap-1 rounded-md bg-[#272852]/95 text-white">
+        <Badge className="absolute bottom-3 right-3 gap-1 bg-coal/90 text-white">
           ◷ {formatDuration(video.duration || 0)}
         </Badge>
       </div>
 
-      <CardContent className="space-y-3 p-3 md:p-4">
+      <CardContent className="space-y-4 p-5">
         <p
           className={cn(
-            "line-clamp-2 min-h-[36px] text-[13px] font-black leading-snug text-[#202235] md:text-base",
-            isFeatured && "text-[#eb7100]",
+            "line-clamp-2 min-h-[48px] font-display text-xl font-normal leading-snug text-coal",
           )}
         >
           {video.title}
         </p>
 
+        <div className="flex items-center justify-between border-t border-[#e6dfd8] pt-4">
+          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">Bắt đầu học</span>
+          <ArrowRight className="text-coral transition group-hover:translate-x-1" size={18} />
+        </div>
+
         {isAdmin ? (
-          <div className="flex gap-2 border-t border-[#d8e1ed] pt-3" onClick={(event) => event.stopPropagation()}>
+          <div className="flex gap-2 border-t border-[#e6dfd8] pt-3" onClick={(event) => event.stopPropagation()}>
             <Button
               onClick={(event) => {
                 event.stopPropagation();
@@ -224,11 +235,11 @@ function LessonCard({ deleteVideoMutation, isAdmin, onSelect, publishVideoMutati
 function LearningModeDialog({ onOpenChange, onSelectMode, open }) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="bottom-0 top-auto max-h-[92vh] w-full max-w-none translate-y-0 gap-5 rounded-b-none rounded-t-[24px] border-[#d8e1ed] p-3 pb-4 shadow-2xl sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[calc(100%-2rem)] sm:max-w-xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-6">
-        <div className="mx-auto h-1.5 w-20 rounded-full bg-[#e8edf5] sm:hidden" />
+      <DialogContent className="bottom-0 top-auto max-h-[92vh] w-full max-w-none translate-y-0 gap-5 rounded-b-none rounded-t-2xl p-4 pb-5 sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[calc(100%-2rem)] sm:max-w-xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-7">
+        <div className="mx-auto h-1.5 w-20 rounded-full bg-cream sm:hidden" />
         <DialogHeader className="px-0 text-left sm:text-center">
-          <DialogTitle className="text-lg font-black text-[#202235] sm:text-2xl">Chọn chế độ học</DialogTitle>
-          <DialogDescription className="text-sm font-semibold text-[#647084] sm:text-base">
+          <DialogTitle>Chọn chế độ học</DialogTitle>
+          <DialogDescription className="sm:text-base">
             Chọn chế độ học phù hợp với bạn nhất
           </DialogDescription>
         </DialogHeader>
@@ -258,16 +269,16 @@ function LearningModeDialog({ onOpenChange, onSelectMode, open }) {
 function LearningModeCard({ Icon = Pencil, imageAlt, imageUrl, mode, onSelectMode, title }) {
   return (
     <Card
-      className="min-h-[168px] overflow-hidden rounded-2xl border-[#dbe4ee] bg-white shadow-[0_4px_0_#d5e0eb] transition hover:-translate-y-0.5 hover:border-[#bac8d8] hover:shadow-[0_5px_0_#c5d2df] sm:min-h-[224px]"
+      className="min-h-[168px] overflow-hidden bg-cream-soft transition hover:-translate-y-1 hover:border-coral/40 sm:min-h-[224px]"
     >
       <Button
-        className="flex h-full min-h-[168px] w-full flex-col gap-4 rounded-2xl bg-transparent px-4 py-6 text-[#202235] hover:bg-[#f8fafc] sm:min-h-[224px] sm:gap-5 sm:px-5"
+        className="flex h-full min-h-[168px] w-full flex-col gap-4 rounded-xl bg-transparent px-4 py-6 text-coal hover:bg-cream sm:min-h-[224px] sm:gap-5 sm:px-5"
         onClick={() => onSelectMode(mode)}
         type="button"
         variant="ghost"
       >
         <img alt={imageAlt} className="h-20 w-20 shrink-0 object-contain sm:h-24 sm:w-24" src={imageUrl} />
-        <span className="flex whitespace-normal items-center justify-center gap-2 text-center text-sm font-black uppercase leading-snug tracking-normal sm:text-base">
+        <span className="flex whitespace-normal items-center justify-center gap-2 text-center font-display text-xl font-normal leading-snug">
           <Icon className="h-4 w-4 shrink-0" />
           {title}
         </span>
@@ -361,10 +372,10 @@ function AddVideoDialog({ createVideoMutation, onVideoCreated }) {
             placeholder="Mô tả ngắn"
             value={videoForm.description}
           />
-          <div className="space-y-2 rounded-2xl border border-[#d8e1ed] bg-[#f7f9fb] p-3">
+          <div className="space-y-2 rounded-2xl border border-[#d8e1ed] bg-canvas p-3">
             <div>
-              <p className="text-sm font-black text-[#202235]">Transcript thủ công</p>
-              <p className="mt-1 text-xs font-semibold text-[#62697b]">
+              <p className="text-sm font-black text-coal">Transcript thủ công</p>
+              <p className="mt-1 text-xs font-semibold text-ink-muted">
                 Mỗi dòng gồm thời gian bắt đầu, thời gian kết thúc và nội dung. Ví dụ:
                 <br />
                 <span className="font-mono">00:01 - 00:04 Hello everyone</span>
@@ -381,7 +392,7 @@ function AddVideoDialog({ createVideoMutation, onVideoCreated }) {
               placeholder={`00:01 - 00:04 Hello everyone\n00:04 - 00:07 Welcome back to class`}
               value={transcriptText}
             />
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-[#62697b]">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-ink-muted">
               <span>{parseManualTranscript(transcriptText).segments.length || 0} segment thủ công</span>
               <Button
                 onClick={() => {

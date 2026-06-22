@@ -1,7 +1,7 @@
 import { cn } from "../../utils/cn.js";
 
 function Card({ className, ...props }) {
-  return <div className={cn("rounded-xl border border-coal/15 bg-white text-coal shadow-sm", className)} {...props} />;
+  return <div className={cn("rounded-xl border border-[#e6dfd8] bg-canvas text-coal", className)} {...props} />;
 }
 
 function CardHeader({ className, ...props }) {

@@ -38,7 +38,7 @@ export default function DictationPractice({
   segmentsCount,
 }) {
   return (
-    <form className="space-y-3" onSubmit={onSubmit}>
+    <form className="space-y-4" onSubmit={onSubmit}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex gap-1.5">
           {difficulties.map((item) => (
@@ -59,13 +59,13 @@ export default function DictationPractice({
           <span className="inline-flex items-center gap-1 text-sm font-black text-coal">
             <Zap size={16} /> 1x
           </span>
-          <span className="rounded-lg border border-[#dbe4ee] bg-[#f9fbff] px-3 py-1.5 text-sm font-black text-coal">
+          <span className="rounded-full bg-cream px-3 py-1.5 text-xs font-semibold text-ink-body">
             {progressPercent}%
           </span>
         </div>
       </div>
 
-      <div className="hidden items-center justify-between rounded-2xl border border-[#dbe4ee] bg-[#f9fbff] px-4 py-3 xl:flex">
+      <div className="hidden items-center justify-between rounded-xl border border-[#e6dfd8] bg-cream-soft px-4 py-3 xl:flex">
         <div className="flex items-center gap-3">
           <button className={toolbarButtonClass} disabled={currentIndex === 0 || !isYoutubeReady} onClick={() => onMoveAndPlay(-1)} type="button">
             <ChevronLeft size={17} />
@@ -98,7 +98,7 @@ export default function DictationPractice({
         </div>
       </div>
 
-      <p className="text-sm font-semibold text-coal/70 xl:hidden">Điền trực tiếp vào các ô trống. Bấm mắt để hiện từ đó.</p>
+      <p className="text-sm text-ink-muted xl:hidden">Điền trực tiếp vào các ô trống. Bấm mắt để hiện từ đó.</p>
       {segment ? (
         <div className="xl:hidden">
           <InlineDictationInputs
@@ -112,16 +112,16 @@ export default function DictationPractice({
         </div>
       ) : null}
 
-      <div className="relative hidden rounded-2xl border border-[#dbe4ee] bg-white p-4 shadow-sm xl:block">
-        <label className="mb-3 hidden text-sm font-black uppercase tracking-wide text-coal/65 xl:block">Gõ những gì bạn nghe được:</label>
+      <div className="relative hidden rounded-xl border border-[#e6dfd8] bg-canvas p-5 xl:block">
+        <label className="eyebrow mb-3 hidden xl:block">Gõ những gì bạn nghe được</label>
         <textarea
-          className="min-h-36 w-full resize-none rounded-xl border-0 bg-transparent text-base font-semibold text-coal outline-none placeholder:text-coal/55 xl:min-h-32 xl:text-lg"
+          className="min-h-36 w-full resize-none rounded-xl border-0 bg-transparent font-display text-xl font-normal leading-relaxed text-coal outline-none placeholder:text-ink-muted/70 xl:min-h-32 xl:text-2xl"
           onChange={(event) => onChangeAnswer(event.target.value)}
           placeholder="Gõ câu trả lời của bạn ở đây..."
           value={answer}
         />
         <button
-          className="absolute bottom-[-14px] right-6 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#dbe4ee] bg-white text-coal shadow-sm"
+          className="absolute bottom-[-14px] right-6 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#e6dfd8] bg-canvas text-coral shadow-sm"
           type="button"
         >
           <Mic size={16} />
@@ -129,7 +129,7 @@ export default function DictationPractice({
       </div>
 
       {correctPraise ? (
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#bfe9c9] bg-[#d7f8df] px-4 py-3 text-sm font-black text-[#0e7a3d]">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-[#bed9c4] bg-[#e3f2e5] px-4 py-3 text-sm font-semibold text-[#356b42]">
           <span className="min-w-0 flex-1">{correctPraise}</span>
           {correctStickerUrl ? (
             <img alt="" aria-hidden="true" className="h-24 shrink-0 object-contain" src={correctStickerUrl} />
@@ -145,12 +145,12 @@ export default function DictationPractice({
             revealedWordIndexes={revealedWordIndexes}
             text={segment.text}
           />
-          <p className="text-sm font-semibold text-coal/65">Các từ được tiết lộ sẽ bị tính là lỗi và ảnh hưởng đến điểm số của bạn.</p>
+          <p className="text-sm text-ink-muted">Các từ được tiết lộ sẽ bị tính là lỗi và ảnh hưởng đến điểm số của bạn.</p>
         </div>
       ) : null}
 
       <button
-        className="hidden h-12 w-full rounded-2xl border-2 border-[#ffc72c] bg-[#fffaf0] text-sm font-black uppercase text-[#bf5700] xl:block"
+        className="hidden h-11 w-full rounded-lg border border-coral/35 bg-cream-soft text-sm font-semibold text-coral-dark xl:block"
         onClick={onRevealAllWords}
         type="button"
       >
@@ -158,7 +158,7 @@ export default function DictationPractice({
         Hiện tất cả từ
       </button>
       <button
-        className="hidden h-14 w-full rounded-2xl bg-[#292f68] text-base font-black uppercase text-white disabled:cursor-not-allowed disabled:opacity-50 xl:block"
+        className="hidden h-12 w-full rounded-lg bg-coral text-sm font-semibold text-white transition hover:bg-coral-dark disabled:cursor-not-allowed disabled:opacity-50 xl:block"
         disabled={!segment || !isYoutubeReady}
         onClick={onNext}
         type="button"
@@ -169,11 +169,11 @@ export default function DictationPractice({
         {checkMutation.isPending ? "Đang kiểm tra..." : "Kiểm tra"}
       </button>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#dbe4ee] bg-white p-3 xl:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#e6dfd8] bg-canvas p-3 xl:hidden">
         {hasStarted ? (
           <div className="grid grid-cols-4 gap-2">
             <button
-              className="inline-flex h-14 items-center justify-center rounded-2xl bg-[#292f68] text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-14 items-center justify-center rounded-xl bg-coral text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
               disabled={!segment || !isYoutubeReady}
               onClick={onToggleCurrentSegmentPlayback}
               type="button"
@@ -181,7 +181,7 @@ export default function DictationPractice({
               {isPlayerPlaying ? <Pause size={19} /> : <Play size={19} />}
             </button>
             <button
-              className="inline-flex h-14 items-center justify-center rounded-2xl border border-[#dbe4ee] bg-white text-coal shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-14 items-center justify-center rounded-2xl border border-[#e6dfd8] bg-white text-coal shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
               disabled={!segment || !isYoutubeReady}
               onClick={onReplayCurrentSegment}
               type="button"
@@ -189,7 +189,7 @@ export default function DictationPractice({
               <RotateCcw size={19} />
             </button>
             <button
-              className="inline-flex h-14 items-center justify-center rounded-2xl border border-[#dbe4ee] bg-white text-coal shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-14 items-center justify-center rounded-2xl border border-[#e6dfd8] bg-white text-coal shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
               disabled={currentIndex === 0 || !isYoutubeReady}
               onClick={() => onMoveAndPlay(-1)}
               type="button"
@@ -197,7 +197,7 @@ export default function DictationPractice({
               <ChevronLeft size={19} />
             </button>
             <button
-              className="inline-flex h-14 items-center justify-center rounded-2xl border border-[#dbe4ee] bg-white text-coal shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-14 items-center justify-center rounded-2xl border border-[#e6dfd8] bg-white text-coal shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
               disabled={!segment || !isYoutubeReady}
               onClick={onNext}
               type="button"
@@ -207,7 +207,7 @@ export default function DictationPractice({
           </div>
         ) : (
           <button
-            className="h-14 w-full rounded-2xl bg-[#292f68] text-base font-black uppercase text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-14 w-full rounded-xl bg-coral text-base font-semibold text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
             disabled={!segment || !isYoutubeReady}
             onClick={onStartFirstSegment}
             type="button"

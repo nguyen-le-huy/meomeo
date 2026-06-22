@@ -21,7 +21,7 @@ function DialogClose({ ...props }) {
 function DialogOverlay({ className, ...props }) {
   return (
     <DialogPrimitive.Overlay
-      className={cn("fixed inset-0 z-50 bg-coal/45", className)}
+      className={cn("fixed inset-0 z-50 bg-coal/55 backdrop-blur-[2px]", className)}
       data-slot="dialog-overlay"
       {...props}
     />
@@ -34,7 +34,7 @@ function DialogContent({ children, className, ...props }) {
       <DialogOverlay />
       <DialogPrimitive.Content
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl border border-coal/15 bg-white p-5 text-coal shadow-xl outline-none",
+          "fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl border border-[#e6dfd8] bg-canvas p-5 text-coal shadow-2xl outline-none",
           className,
         )}
         data-slot="dialog-content"
@@ -55,11 +55,11 @@ function DialogHeader({ className, ...props }) {
 }
 
 function DialogTitle({ className, ...props }) {
-  return <DialogPrimitive.Title className={cn("text-lg font-black", className)} data-slot="dialog-title" {...props} />;
+  return <DialogPrimitive.Title className={cn("font-display text-2xl font-normal tracking-tight", className)} data-slot="dialog-title" {...props} />;
 }
 
 function DialogDescription({ className, ...props }) {
-  return <DialogPrimitive.Description className={cn("text-sm font-semibold text-coal/60", className)} data-slot="dialog-description" {...props} />;
+  return <DialogPrimitive.Description className={cn("text-sm leading-relaxed text-ink-muted", className)} data-slot="dialog-description" {...props} />;
 }
 
 export {

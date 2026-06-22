@@ -1,94 +1,47 @@
+import { Captions, Library, ListChecks, LogIn, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
-import {
-  Bell,
-  Captions,
-  Headphones,
-  Home,
-  LogIn,
-  LogOut,
-  Menu,
-  Mic,
-  Video,
-} from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Button } from "../ui/button.jsx";
 import { useAuthStore } from "../../features/auth/stores/authStore.js";
 
 const links = [
-  { to: "/", Icon: Home, label: "Trang chủ" },
-  { to: "/?mode=videos", Icon: Video, label: "Video YouTube" },
-  { to: "/?mode=dictation", Icon: Captions, label: "Dictation" },
-  { to: "/?mode=shadowing", Icon: Mic, label: "Shadowing" },
-  { to: "/?mode=listen", Icon: Headphones, label: "Luyện nghe" },
+  { to: "/", Icon: Library, label: "Thư viện" },
+  { to: "/?mode=toeic-test", Icon: ListChecks, label: "Luyện đề TOEIC" },
+  { to: "/?mode=toeic-dictation", Icon: Captions, label: "Nghe chép chính tả TOEIC" },
 ];
-const mobileLogoUrl = "https://res.cloudinary.com/dknin0hhf/image/upload/v1781682627/Black_Cat_Sticker_psynzk.gif";
+const logoUrl = "https://res.cloudinary.com/dknin0hhf/image/upload/v1781682627/Black_Cat_Sticker_psynzk.gif";
 
-function SidebarContent({ onLogout, onNavigate, user }) {
+function Brand() {
   return (
-    <>
-      <NavLink
-        aria-label="Meomeo home"
-        className="mb-5 flex items-center px-1"
-        onClick={onNavigate}
-        to="/"
-      >
-        <img alt="Meomeo" className="h-14 w-14 object-contain" src={mobileLogoUrl} />
-      </NavLink>
-
-      <nav className="space-y-1.5">
-        {links.map((link, index) => {
-          const Icon = link.Icon;
-          return (
-            <NavLink
-              className={({ isActive }) =>
-                [
-                  "flex min-h-10 items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-semibold transition",
-                  isActive
-                    ? "border border-coal/15 bg-matcha text-coal shadow-sm"
-                    : "text-coal/70 hover:bg-matcha/50 hover:text-coal",
-                ].join(" ")
-              }
-              key={`${link.to}-${index}`}
-              onClick={onNavigate}
-              to={link.to}
-            >
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-matcha/70">
-                <Icon aria-hidden="true" size={16} strokeWidth={2.4} />
-              </span>
-              <span className="leading-snug">{link.label}</span>
-            </NavLink>
-          );
-        })}
-      </nav>
-
-      <div className="mt-auto border-t border-coal/10 pt-4">
-        {user?.role === "admin" ? (
-          <button
-            className="w-full rounded-xl px-3 py-2 text-left text-[13px] font-bold text-red-500 transition hover:bg-red-50"
-            onClick={onLogout}
-            type="button"
-          >
-            <span className="inline-flex items-center gap-2">
-              <LogOut aria-hidden="true" size={16} strokeWidth={2.4} />
-              Đăng xuất admin
-            </span>
-          </button>
-        ) : (
-          <NavLink
-            className="flex min-h-10 items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-bold text-coal transition hover:bg-matcha/50"
-            onClick={onNavigate}
-            to="/login"
-          >
-            <LogIn aria-hidden="true" size={16} strokeWidth={2.4} />
-            Admin login
-          </NavLink>
-        )}
-      </div>
-    </>
+    <NavLink aria-label="Meomeo home" className="inline-flex items-center" to="/">
+      <img alt="Meomeo" className="h-10 w-10 shrink-0 object-contain" src={logoUrl} />
+    </NavLink>
   );
 }
 
+function Navigation({ onNavigate }) {
+  const location = useLocation();
+
+  return links.map(({ Icon, label, to }) => {
+    const query = to.split("?")[1] || "";
+    const active = query ? location.search.includes(query) : location.pathname === "/" && !location.search;
+
+    return (
+      <NavLink
+        className={active ? "flex items-center gap-2 text-sm font-semibold text-coal" : "flex items-center gap-2 text-sm font-medium text-ink-muted transition hover:text-coal"}
+        key={to}
+        onClick={onNavigate}
+        to={to}
+      >
+        <Icon className="md:hidden" size={17} />
+        {label}
+      </NavLink>
+    );
+  });
+}
+
 export default function MainLayout() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuthStore();
@@ -96,61 +49,69 @@ export default function MainLayout() {
 
   function handleLogout() {
     logout();
-    setIsMobileMenuOpen(false);
+    setMobileOpen(false);
     navigate("/", { replace: true });
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-matcha text-coal">
-      <aside className="hidden w-[210px] shrink-0 flex-col border-r border-coal/15 bg-white/90 px-3 py-4 shadow-sm md:flex">
-        <SidebarContent onLogout={handleLogout} user={user} />
-      </aside>
+    <div className="min-h-screen bg-canvas text-coal">
+      <header className="sticky top-0 z-40 border-b border-[#e6dfd8] bg-canvas/95 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-6 px-4 sm:px-6 lg:px-10">
+          <Brand />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className={["h-14 shrink-0 items-center justify-between border-b border-coal/10 bg-white/90 px-4 md:hidden", isLearningPage ? "hidden" : "flex"].join(" ")}>
-          <button
-            aria-label="Open menu"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-xl font-bold text-coal hover:bg-matcha/60"
-            onClick={() => setIsMobileMenuOpen(true)}
-            type="button"
-          >
-            <Menu aria-hidden="true" size={22} strokeWidth={2.4} />
-          </button>
+          <nav className="hidden items-center gap-7 md:flex">
+            <Navigation />
+          </nav>
 
-          <NavLink aria-label="Meomeo home" className="flex items-center justify-center" to="/">
-            <img alt="Meomeo" className="h-11 w-11 object-contain" src={mobileLogoUrl} />
-          </NavLink>
-
-          <div className="flex items-center gap-2">
-            <button
-              aria-label="Notifications"
-              className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-coal"
-              type="button"
-            >
-              <Bell aria-hidden="true" size={18} strokeWidth={2.2} />
-            </button>
+          <div className="hidden items-center gap-2 md:flex">
+            {user?.role === "admin" ? (
+              <>
+                <span className="mr-1 rounded-full bg-cream px-3 py-1.5 text-xs font-semibold text-ink-body">Admin</span>
+                <Button aria-label="Đăng xuất" onClick={handleLogout} size="icon" type="button" variant="ghost">
+                  <LogOut size={17} />
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => navigate("/login")} size="sm" type="button" variant="outline">
+                <LogIn size={16} /> Admin
+              </Button>
+            )}
           </div>
-        </header>
 
-        <main className="min-w-0 flex-1 overflow-hidden">
-          <Outlet />
-        </main>
-      </div>
+          <Button aria-label="Mở menu" className="md:hidden" onClick={() => setMobileOpen(true)} size="icon" type="button" variant="ghost">
+            <Menu size={21} />
+          </Button>
+        </div>
+      </header>
 
-      {isMobileMenuOpen ? (
+      <main className={isLearningPage ? "h-[calc(100vh-4rem)] overflow-hidden" : "min-h-[calc(100vh-4rem)]"}>
+        <Outlet />
+      </main>
+
+      {mobileOpen ? (
         <div className="fixed inset-0 z-50 md:hidden">
-          <button
-            aria-label="Close menu overlay"
-            className="absolute inset-0 bg-coal/45"
-            onClick={() => setIsMobileMenuOpen(false)}
-            type="button"
-          />
-          <aside className="relative flex h-full w-[255px] max-w-[86vw] flex-col border-r border-coal/15 bg-white px-3 py-4 shadow-2xl">
-            <SidebarContent
-              onLogout={handleLogout}
-              onNavigate={() => setIsMobileMenuOpen(false)}
-              user={user}
-            />
+          <button aria-label="Đóng menu" className="absolute inset-0 bg-coal/40" onClick={() => setMobileOpen(false)} type="button" />
+          <aside className="absolute right-0 top-0 flex h-full w-[290px] flex-col bg-canvas p-5 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <Brand />
+              <Button aria-label="Đóng menu" onClick={() => setMobileOpen(false)} size="icon" type="button" variant="ghost">
+                <X size={20} />
+              </Button>
+            </div>
+            <nav className="mt-10 flex flex-col gap-6">
+              <Navigation onNavigate={() => setMobileOpen(false)} />
+            </nav>
+            <div className="mt-auto border-t border-[#e6dfd8] pt-5">
+              {user?.role === "admin" ? (
+                <Button className="w-full" onClick={handleLogout} type="button" variant="outline">
+                  <LogOut size={16} /> Đăng xuất admin
+                </Button>
+              ) : (
+                <Button className="w-full" onClick={() => navigate("/login")} type="button">
+                  <LogIn size={16} /> Đăng nhập admin
+                </Button>
+              )}
+            </div>
           </aside>
         </div>
       ) : null}

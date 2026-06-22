@@ -2,9 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background: #c2d8c4;
-  color: #222222;
-  font-family: "Google Sans", Arial, sans-serif;
-  margin: 0;
+@layer base {
+  :root {
+    color-scheme: light;
+    font-synthesis: none;
+  }
+
+  * {
+    border-color: #e6dfd8;
+  }
+
+  html {
+    background: #faf9f5;
+  }
+
+  body {
+    background: #faf9f5;
+    color: #141413;
+    font-family: "Google Sans", Arial, sans-serif;
+    margin: 0;
+    min-width: 320px;
+    text-rendering: optimizeLegibility;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  ::selection {
+    background: #cc785c;
+    color: white;
+  }
+}
+
+@layer components {
+  .display-heading {
+    font-family: "Google Sans", Arial, sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.035em;
+  }
+
+  .eyebrow {
+    color: #6c6a64;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
 }

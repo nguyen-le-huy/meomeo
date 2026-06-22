@@ -21,24 +21,24 @@ export default function TranscriptPanel({
   const lastSegment = segments[segments.length - 1];
 
   return (
-    <aside className="hidden max-h-[calc(100vh-2rem)] min-h-[calc(100vh-2rem)] flex-col rounded-2xl border border-[#d9e2ec] bg-white p-4 shadow-sm xl:flex">
+    <aside className="hidden max-h-[calc(100vh-6rem)] min-h-[calc(100vh-6rem)] flex-col rounded-xl border border-[#e6dfd8] bg-canvas p-4 xl:flex">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-black uppercase tracking-wide text-coal">Bản chép</h2>
+        <h2 className="eyebrow">Bản chép</h2>
         <div className="flex items-center gap-2">
           {isAdmin ? (
             <button
-              className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#dbe4ee] bg-white px-3 text-xs font-black text-coal shadow-sm"
+              className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#e6dfd8] bg-white px-3 text-xs font-black text-coal shadow-sm"
               onClick={() => setShowAddTranscriptForm((current) => !current)}
               type="button"
             >
               <Plus size={14} /> Thêm card
             </button>
           ) : null}
-          <span className="rounded-lg border border-[#dbe4ee] bg-[#f9fbff] px-3 py-1 text-sm font-black text-coal">{progressPercent}%</span>
+          <span className="rounded-full bg-cream px-3 py-1 text-xs font-semibold text-ink-body">{progressPercent}%</span>
         </div>
       </div>
-      <div className="mb-4 h-3 overflow-hidden rounded-full border border-[#dbe4ee] bg-[#eef3fb]">
-        <div className="h-full rounded-full bg-[#292f68]" style={{ width: `${progressPercent}%` }} />
+      <div className="mb-4 h-2 overflow-hidden rounded-full bg-cream">
+        <div className="h-full rounded-full bg-coral" style={{ width: `${progressPercent}%` }} />
       </div>
       {isAdmin && showAddTranscriptForm ? (
         <TranscriptCreateForm
@@ -54,14 +54,14 @@ export default function TranscriptPanel({
           segments.map((item, index) => (
             <div
               className={[
-                "rounded-2xl border p-4 text-sm shadow-sm transition",
-                index === currentIndex ? "border-[#292f68] bg-[#eef2ff]" : "border-[#dbe4ee] bg-white",
+                "rounded-xl border p-4 text-sm transition",
+                index === currentIndex ? "border-coral bg-cream-soft" : "border-[#e6dfd8] bg-canvas hover:bg-cream-soft/60",
               ].join(" ")}
               key={item._id}
             >
               <div className="mb-3 flex items-center justify-between gap-2">
                 <button
-                  className="rounded-lg border border-[#dbe4ee] bg-[#f9fbff] px-3 py-1 text-sm font-black text-coal"
+                  className="rounded-lg border border-[#e6dfd8] bg-cream-soft px-3 py-1 text-sm font-black text-coal"
                   onClick={() => onSelect(index)}
                   type="button"
                 >
@@ -94,11 +94,11 @@ export default function TranscriptPanel({
             </div>
           ))
         ) : (
-          <div className="space-y-3 rounded-2xl border border-dashed border-[#dbe4ee] bg-[#f9fbff] p-4 text-sm font-bold text-coal/60">
+          <div className="space-y-3 rounded-2xl border border-dashed border-[#e6dfd8] bg-cream-soft p-4 text-sm font-bold text-coal/60">
             <p>Chưa có transcript. Admin bấm “Phân tích transcript” để lấy subtitle từ YouTube hoặc thêm thủ công.</p>
             {isAdmin && !showAddTranscriptForm ? (
               <button
-                className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#292f68] px-3 text-sm font-black text-white"
+                className="inline-flex h-10 items-center gap-2 rounded-lg bg-coal px-3 text-sm font-black text-white"
                 onClick={() => setShowAddTranscriptForm(true)}
                 type="button"
               >
@@ -133,7 +133,7 @@ function TranscriptCreateForm({ className = "", isSaving, lastEndTime = 0, onCan
 
   return (
     <form
-      className={`${className} space-y-2 rounded-2xl border border-[#dbe4ee] bg-[#f9fbff] p-3 text-sm shadow-sm`}
+      className={`${className} space-y-2 rounded-2xl border border-[#e6dfd8] bg-cream-soft p-3 text-sm shadow-sm`}
       onSubmit={(event) => {
         event.preventDefault();
         onSave(form);
@@ -141,7 +141,7 @@ function TranscriptCreateForm({ className = "", isSaving, lastEndTime = 0, onCan
     >
       <p className="text-xs font-black uppercase tracking-wide text-coal/65">Thêm transcript card</p>
       <textarea
-        className="min-h-20 w-full resize-none rounded-lg border border-[#dbe4ee] bg-white p-2 text-sm font-semibold outline-none"
+        className="min-h-20 w-full resize-none rounded-lg border border-[#e6dfd8] bg-white p-2 text-sm font-semibold outline-none"
         onChange={(event) => setForm((current) => ({ ...current, text: event.target.value }))}
         placeholder="Nhập nội dung transcript..."
         required
@@ -151,7 +151,7 @@ function TranscriptCreateForm({ className = "", isSaving, lastEndTime = 0, onCan
         <label className="space-y-1 text-xs font-bold text-coal/65">
           Bắt đầu
           <input
-            className="h-9 w-full rounded-lg border border-[#dbe4ee] bg-white px-2 text-sm font-bold text-coal outline-none"
+            className="h-9 w-full rounded-lg border border-[#e6dfd8] bg-white px-2 text-sm font-bold text-coal outline-none"
             min="0"
             onChange={(event) => setForm((current) => ({ ...current, startTime: Number(event.target.value) }))}
             step="0.1"
@@ -162,7 +162,7 @@ function TranscriptCreateForm({ className = "", isSaving, lastEndTime = 0, onCan
         <label className="space-y-1 text-xs font-bold text-coal/65">
           Kết thúc
           <input
-            className="h-9 w-full rounded-lg border border-[#dbe4ee] bg-white px-2 text-sm font-bold text-coal outline-none"
+            className="h-9 w-full rounded-lg border border-[#e6dfd8] bg-white px-2 text-sm font-bold text-coal outline-none"
             min="0"
             onChange={(event) => setForm((current) => ({ ...current, endTime: Number(event.target.value) }))}
             step="0.1"
@@ -181,13 +181,13 @@ function TranscriptCreateForm({ className = "", isSaving, lastEndTime = 0, onCan
       </label>
       <div className="flex gap-2">
         <button
-          className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-[#292f68] text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-coal text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isSaving}
           type="submit"
         >
           <Save size={15} /> {isSaving ? "Đang lưu..." : "Lưu card"}
         </button>
-        <button className="h-10 rounded-lg border border-[#dbe4ee] bg-white px-3 text-sm font-black text-coal" onClick={onCancel} type="button">
+        <button className="h-10 rounded-lg border border-[#e6dfd8] bg-white px-3 text-sm font-black text-coal" onClick={onCancel} type="button">
           Hủy
         </button>
       </div>

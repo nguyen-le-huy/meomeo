@@ -255,11 +255,11 @@ export default function VideoLearningPage() {
   }, [isAnswerCorrect]);
 
   if (isVideoLoading || isSegmentsLoading) {
-    return <section className="h-full overflow-auto bg-matcha p-6 font-bold">Đang tải bài học...</section>;
+    return <section className="h-full overflow-auto bg-canvas p-6 text-sm text-ink-muted">Đang tải bài học...</section>;
   }
 
   if (!video) {
-    return <section className="h-full overflow-auto bg-matcha p-6 font-bold text-red-600">Không tìm thấy video.</section>;
+    return <section className="h-full overflow-auto bg-canvas p-6 text-sm text-red-600">Không tìm thấy video.</section>;
   }
 
   if (mode === "shadowing") {
@@ -287,8 +287,8 @@ export default function VideoLearningPage() {
   }
 
   return (
-    <section className="h-full w-full max-w-full overflow-x-hidden overflow-y-auto bg-white pb-24 md:bg-[#eef4ee] md:p-4 md:pb-4">
-      <div className="mx-auto grid w-full max-w-full min-w-0 gap-0 xl:max-w-[1500px] xl:grid-cols-[minmax(360px,0.9fr)_minmax(420px,0.78fr)_minmax(300px,0.56fr)] xl:gap-2">
+    <section className="h-full w-full max-w-full overflow-x-hidden overflow-y-auto bg-cream-soft pb-24 md:p-4 md:pb-4">
+      <div className="mx-auto grid w-full max-w-full min-w-0 gap-3 xl:max-w-[1440px] xl:grid-cols-[minmax(360px,0.9fr)_minmax(420px,0.78fr)_minmax(300px,0.56fr)]">
         <VideoColumn
           analyzeMutation={analyzeMutation}
           isAdmin={isAdmin}
@@ -302,7 +302,7 @@ export default function VideoLearningPage() {
           video={video}
         />
 
-        <section className="min-w-0 max-w-full overflow-hidden bg-white p-2 md:rounded-2xl md:border md:border-[#d9e2ec] md:p-4 md:shadow-sm xl:min-h-[calc(100vh-2rem)]">
+        <section className="min-w-0 max-w-full overflow-hidden bg-canvas p-3 md:rounded-xl md:border md:border-[#e6dfd8] md:p-4 xl:min-h-[calc(100vh-6rem)]">
           <DictationPractice
             answer={answer}
             checkMutation={checkMutation}
