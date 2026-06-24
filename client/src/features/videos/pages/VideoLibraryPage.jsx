@@ -42,7 +42,13 @@ export default function VideoLibraryPage() {
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
   const [visibleCount, setVisibleCount] = useState(pageSize);
-  const { data: videos = [], isLoading } = useVideos({ includeUnpublished: isAdmin || undefined });
+  const {
+    data: videos = [],
+    error: videosError,
+    isError: isVideosError,
+    isLoading,
+    refetch: refetchVideos,
+  } = useVideos({ includeUnpublished: isAdmin || undefined });
   const createVideoMutation = useCreateVideo();
   const publishVideoMutation = usePublishVideo();
   const deleteVideoMutation = useDeleteVideo();
@@ -95,7 +101,22 @@ export default function VideoLibraryPage() {
 
         {isLoading ? <p className="px-3 text-sm font-bold md:px-0">Đang tải video...</p> : null}
 
-        {!isLoading && videos.length === 0 ? (
+        {isVideosError ? (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="space-y-3 p-6 text-center">
+              <p className="font-display text-2xl text-red-900">Không tải được video.</p>
+              <p className="mx-auto max-w-xl text-sm text-red-700">
+                {videosError?.response?.data?.message ||
+                  "Trình duyệt trong Instagram đang chặn hoặc không gọi được API. Bấm thử lại hoặc mở bằng trình duyệt ngoài."}
+              </p>
+              <Button onClick={() => refetchVideos()} type="button" variant="outline">
+                Tải lại
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {!isLoading && !isVideosError && videos.length === 0 ? (
           <Card className="border-dashed bg-cream-soft">
             <CardContent className="p-8 text-center">
               <p className="font-display text-2xl">Chưa có video nào.</p>
@@ -296,7 +317,7 @@ function AddVideoDialog({ createVideoMutation, onVideoCreated }) {
     title: "",
     description: "",
     level: "A2",
-    isPublished: false,
+    isPublished: true,
   });
 
   async function handleCreateVideo(event) {
@@ -317,7 +338,7 @@ function AddVideoDialog({ createVideoMutation, onVideoCreated }) {
       transcripts: manualTranscripts.segments.length ? manualTranscripts.segments : undefined,
     });
     const video = response.data.data.video;
-    setVideoForm({ youtubeUrl: "", title: "", description: "", level: "A2", isPublished: false });
+    setVideoForm({ youtubeUrl: "", title: "", description: "", level: "A2", isPublished: true });
     setTranscriptText("");
     setIsOpen(false);
     onVideoCreated(video);
