@@ -34,6 +34,7 @@ export const updateSegmentSchema = z.object({
   body: z
     .object({
       text: z.string().trim().min(1).optional(),
+      translationText: z.string().optional(),
       startTime: z.coerce.number().min(0).optional(),
       endTime: z.coerce.number().min(0).optional(),
       isPublished: z.preprocess(optionalBoolean, z.boolean().optional()),

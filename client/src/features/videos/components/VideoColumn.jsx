@@ -63,7 +63,13 @@ export default function VideoColumn({
             <Button
               className="mt-3"
               disabled={analyzeMutation.isPending}
-              onClick={() => analyzeMutation.mutate()}
+              onClick={() => {
+                if (video.bilingualStatus === "completed") {
+                  const ok = window.confirm("Phân tích lại transcript sẽ xóa Vietsub hiện có. Bạn có muốn tiếp tục?");
+                  if (!ok) return;
+                }
+                analyzeMutation.mutate();
+              }}
               type="button"
               variant="outline"
             >

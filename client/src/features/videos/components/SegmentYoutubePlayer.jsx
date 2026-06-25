@@ -24,12 +24,13 @@ function loadYouTubeIframeApi() {
 }
 
 const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
-  { onPlayingChange, onReadyChange, segment, title, youtubeVideoId },
+  { continuous, onPlayingChange, onReadyChange, onTimeChange, segment, title, youtubeVideoId },
   ref,
 ) {
   const hostRef = useRef(null);
   const playerRef = useRef(null);
   const boundaryTimerRef = useRef(null);
+  const timeTrackerRef = useRef(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -40,12 +41,41 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
     }
   }, []);
 
+  const stopTimeTracker = useCallback(() => {
+    if (timeTrackerRef.current) {
+      window.clearInterval(timeTrackerRef.current);
+      timeTrackerRef.current = null;
+    }
+  }, []);
+
   const pauseVideo = useCallback(() => {
     stopBoundaryTimer();
+    stopTimeTracker();
     playerRef.current?.pauseVideo?.();
     setIsPlaying(false);
     onPlayingChange?.(false);
-  }, [onPlayingChange, stopBoundaryTimer]);
+  }, [onPlayingChange, stopBoundaryTimer, stopTimeTracker]);
+
+  const startTimeTracker = useCallback(() => {
+    const player = playerRef.current;
+    if (!player) return;
+    stopTimeTracker();
+    timeTrackerRef.current = window.setInterval(() => {
+      const currentTime = Number(player.getCurrentTime?.() || 0);
+      onTimeChange?.(currentTime);
+    }, 250);
+  }, [onTimeChange, stopTimeTracker]);
+
+  const playVideo = useCallback(() => {
+    const player = playerRef.current;
+    if (!player) return;
+    stopBoundaryTimer();
+    stopTimeTracker();
+    player.playVideo();
+    setIsPlaying(true);
+    onPlayingChange?.(true);
+    if (continuous) startTimeTracker();
+  }, [continuous, onPlayingChange, startTimeTracker, stopBoundaryTimer, stopTimeTracker]);
 
   const playSegment = useCallback(
     (targetSegment = segment, options = {}) => {
@@ -56,20 +86,24 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
       const endTime = Number(targetSegment.endTime || startTime);
 
       stopBoundaryTimer();
+      stopTimeTracker();
       player.seekTo(startTime, true);
       player.playVideo();
       setIsPlaying(true);
       onPlayingChange?.(true);
 
-      boundaryTimerRef.current = window.setInterval(() => {
-        const currentTime = Number(player.getCurrentTime?.() || 0);
-
-        if (currentTime >= endTime) {
-          pauseVideo();
-        }
-      }, 120);
+      if (continuous) {
+        startTimeTracker();
+      } else {
+        boundaryTimerRef.current = window.setInterval(() => {
+          const currentTime = Number(player.getCurrentTime?.() || 0);
+          if (currentTime >= endTime) {
+            pauseVideo();
+          }
+        }, 120);
+      }
     },
-    [onPlayingChange, pauseVideo, segment, stopBoundaryTimer],
+    [continuous, onPlayingChange, pauseVideo, segment, startTimeTracker, stopBoundaryTimer, stopTimeTracker],
   );
 
   const playFrom = useCallback(
@@ -78,12 +112,17 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
       if (!player) return;
 
       stopBoundaryTimer();
+      stopTimeTracker();
       player.seekTo(Number(startTime || 0), true);
       player.playVideo();
       setIsPlaying(true);
       onPlayingChange?.(true);
+
+      if (continuous) {
+        startTimeTracker();
+      }
     },
-    [onPlayingChange, stopBoundaryTimer],
+    [continuous, onPlayingChange, startTimeTracker, stopBoundaryTimer, stopTimeTracker],
   );
 
   useEffect(() => {
@@ -119,11 +158,13 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
             if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
               setIsPlaying(false);
               onPlayingChange?.(false);
+              if (continuous) stopTimeTracker();
             }
 
             if (event.data === YT.PlayerState.PLAYING) {
               setIsPlaying(true);
               onPlayingChange?.(true);
+              if (continuous) startTimeTracker();
             }
           },
         },
@@ -133,17 +174,18 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
     return () => {
       isMounted = false;
       stopBoundaryTimer();
+      stopTimeTracker();
       playerRef.current?.destroy?.();
       playerRef.current = null;
     };
-  }, [onPlayingChange, onReadyChange, stopBoundaryTimer, youtubeVideoId]);
+  }, [onPlayingChange, onReadyChange, startTimeTracker, stopBoundaryTimer, stopTimeTracker, youtubeVideoId]);
 
-  useImperativeHandle(ref, () => ({ pauseVideo, playFrom, playSegment }), [pauseVideo, playFrom, playSegment]);
+  useImperativeHandle(ref, () => ({ pauseVideo, playFrom, playSegment, playVideo }), [pauseVideo, playFrom, playSegment, playVideo]);
 
   return (
-    <div className="w-full max-w-full min-w-0 overflow-hidden rounded-none border-b-4 border-coral bg-[#181715] md:rounded-xl md:border-4 md:border-[#181715]">
+    <div className="w-full max-w-full min-w-0 rounded-none border-b-4 border-coral bg-[#181715] md:rounded-xl md:border-4 md:border-[#181715]">
       <div
-        className="h-[210px] w-full max-w-full min-w-0 [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:max-w-full [&>iframe]:object-contain md:aspect-video md:h-auto"
+        className="h-[210px] w-full max-w-full min-w-0 [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:max-w-full md:aspect-video md:h-auto"
         ref={hostRef}
         title={title}
       />

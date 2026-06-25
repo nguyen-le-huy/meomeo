@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createTopic } from "../../topics/services/topicApi.js";
+import { createTopic, deleteTopic, updateTopic } from "../../topics/services/topicApi.js";
 import {
   analyzeVideoTranscript,
   assessShadowing,
@@ -68,6 +68,22 @@ export function useCreateTopic() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createTopic,
+    onSuccess: () => invalidateLibrary(queryClient),
+  });
+}
+
+export function useUpdateTopic() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }) => updateTopic(id, data),
+    onSuccess: () => invalidateLibrary(queryClient),
+  });
+}
+
+export function useDeleteTopic() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteTopic,
     onSuccess: () => invalidateLibrary(queryClient),
   });
 }

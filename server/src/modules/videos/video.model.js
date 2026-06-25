@@ -22,6 +22,21 @@ const videoLessonSchema = new mongoose.Schema(
     studyCount: { type: Number, default: 0 },
     isPublished: { type: Boolean, default: false },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    contentType: {
+      type: String,
+      enum: ["lesson", "music", "movie", "other"],
+      default: "lesson",
+    },
+    bilingualStatus: {
+      type: String,
+      enum: ["none", "pending", "processing", "completed", "failed"],
+      default: "none",
+    },
+    bilingualSourceLanguage: { type: String, default: "en" },
+    bilingualTargetLanguage: { type: String, default: "vi" },
+    bilingualModel: { type: String, default: "" },
+    bilingualError: { type: String, default: "" },
+    bilingualGeneratedAt: { type: Date },
   },
   { timestamps: true },
 );

@@ -1,4 +1,4 @@
-import { Captions, Library, ListChecks, LogIn, LogOut, Menu, X } from "lucide-react";
+import { Captions, Languages, Library, ListChecks, LogIn, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button.jsx";
@@ -8,6 +8,7 @@ const links = [
   { to: "/", Icon: Library, label: "Thư viện" },
   { to: "/?mode=toeic-test", Icon: ListChecks, label: "Luyện đề TOEIC" },
   { to: "/?mode=toeic-dictation", Icon: Captions, label: "Nghe chép chính tả TOEIC" },
+  { to: "/?mode=bilingual", Icon: Languages, label: "Song Ngữ" },
 ];
 const logoUrl = "https://res.cloudinary.com/dknin0hhf/image/upload/v1781682627/Black_Cat_Sticker_psynzk.gif";
 
@@ -55,7 +56,7 @@ export default function MainLayout() {
 
   return (
     <div className="min-h-screen bg-canvas text-coal">
-      <header className="sticky top-0 z-40 border-b border-[#e6dfd8] bg-canvas/95 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b bg-canvas/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-6 px-4 sm:px-6 lg:px-10">
           <Brand />
 

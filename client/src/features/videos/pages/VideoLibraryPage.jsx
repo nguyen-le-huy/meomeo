@@ -1,5 +1,5 @@
-import { ArrowDown, ArrowRight, Headphones, Mic, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, Edit3, Eye, EyeOff, FolderPlus, Headphones, Plus, Sparkles, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "../../../components/ui/badge.jsx";
 import { Button } from "../../../components/ui/button.jsx";
@@ -21,27 +21,38 @@ import {
   SelectValue,
 } from "../../../components/ui/select.jsx";
 import { Textarea } from "../../../components/ui/textarea.jsx";
+import { Alert } from "../../../components/ui/alert.jsx";
 import { cn } from "../../../utils/cn.js";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import {
+  useCreateTopic,
   useCreateVideo,
+  useDeleteTopic,
   useDeleteVideo,
   usePublishVideo,
+  useTopics,
+  useUpdateTopic,
+  useUpdateVideo,
   useVideos,
 } from "../hooks/useVideoLearning.js";
 
 const levels = ["A1", "A2", "B1", "B2", "C1"];
-const pageSize = 8;
+const homeTopicVideoLimit = 4;
 const dictationStickerUrl =
   "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3YjhtdDg4Y25ocWtjemR1MnJma3dzODdrYzE2dW9vc2hzMzN0bm02dCZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/BOHvk845AYKAVlETl4/giphy.gif";
 const shadowingStickerUrl =
   "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3aHJuZzM2eGFxcTRobnVoN2tyNDVpZ2E3cGc0dHpheHVuM3BoY3ljMiZlcD12MV9zdGlja2Vyc19yZWxhdGVkJmN0PXM/ZrDBGncV67i6UUGnj4/giphy.gif";
+const bilingualStickerUrl =
+  "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExandpdXN3M2lpMzM2N2w0bDRvcXdsc2djNXF2dmFseWhieWE5eHlsZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/2NYPupxBORY8upRLh9/giphy.gif";
+const heroCatUrl =
+  "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExbTczdTY1a3J1NnY0eTRpaTJjaHE5NGQzbnM1NHpoemxyeDI3NXp0YiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/754u3UNlbbc2tMg97K/giphy.gif";
+const practiceCatUrl =
+  "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExMzg0NXpjdW9vajJ1cGx2YmNyajM2Z2gxdnlidjRnNnVzZW13bDhzcCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/2A6uZ0XlO5UIy6OiEM/giphy.gif";
 
 export default function VideoLibraryPage() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
-  const [visibleCount, setVisibleCount] = useState(pageSize);
   const {
     data: videos = [],
     error: videosError,
@@ -49,16 +60,28 @@ export default function VideoLibraryPage() {
     isLoading,
     refetch: refetchVideos,
   } = useVideos({ includeUnpublished: isAdmin || undefined });
+  const { data: topics = [], isLoading: isTopicsLoading } = useTopics({ includeUnpublished: isAdmin || undefined });
   const createVideoMutation = useCreateVideo();
+  const createTopicMutation = useCreateTopic();
+  const updateTopicMutation = useUpdateTopic();
+  const deleteTopicMutation = useDeleteTopic();
+  const updateVideoMutation = useUpdateVideo();
   const publishVideoMutation = usePublishVideo();
   const deleteVideoMutation = useDeleteVideo();
   const [modePickerVideo, setModePickerVideo] = useState(null);
-  const visibleVideos = videos.slice(0, visibleCount);
-  const hasMoreVideos = visibleCount < videos.length;
+  const visibleTopics = useMemo(() => topics.filter((topic) => topic.slug !== "all-videos"), [topics]);
+  const topicSections = useMemo(
+    () => buildTopicSections({ isAdmin, topics: visibleTopics, videos }),
+    [isAdmin, visibleTopics, videos],
+  );
 
   function startLearning(mode) {
     if (!modePickerVideo?._id) return;
     setModePickerVideo(null);
+    if (mode === "bilingual") {
+      navigate(`/videos/${modePickerVideo._id}/bilingual`);
+      return;
+    }
     navigate(`/videos/${modePickerVideo._id}?mode=${mode}`);
   }
 
@@ -67,20 +90,26 @@ export default function VideoLibraryPage() {
       <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-12 sm:px-6 lg:px-10 lg:pt-20">
         <div className="grid items-end gap-10 border-b border-[#e6dfd8] pb-12 lg:grid-cols-[minmax(0,1fr)_360px] lg:pb-16">
           <div className="max-w-3xl">
-            <p className="eyebrow mb-5">YouTube shadowing & dictation</p>
+            <p className="eyebrow mb-5">Meomeo English cinema club</p>
             <h1 className="display-heading text-[44px] leading-[1.02] sm:text-6xl lg:text-[72px]">
-              Nghe rõ hơn.<br />Nói tự nhiên hơn.
+              Bật video lên.<br />Meo meo học liền.
             </h1>
             <p className="mt-6 max-w-xl text-base leading-7 text-ink-body sm:text-lg">
-              Luyện tiếng Anh từ những video bạn yêu thích, từng câu một — nghe, viết và bắt chước nhịp nói thật.
+              Xem phim, nghe nhạc, luyện nghe chép chính tả và shadowing từ YouTube. Mỗi câu đều có chỗ để nghe kỹ, nhại lại và hiểu sâu hơn.
             </p>
           </div>
           <Card className="overflow-hidden border-0 bg-[#181715] text-canvas">
-            <CardContent className="p-7">
-              <Sparkles className="mb-12 text-coral" size={24} />
-              <p className="font-display text-3xl leading-tight">Một video.<br />Hai cách luyện.</p>
-              <div className="mt-7 flex gap-2 text-sm text-[#a09d96]">
-                <span>Dictation</span><span>·</span><span>Shadowing</span>
+            <CardContent className="relative min-h-[250px] p-7">
+              <Sparkles className="mb-8 text-coral" size={24} />
+              <div className="absolute right-4 top-4 flex gap-2">
+                <img alt="" aria-hidden="true" className="h-20 w-20 rounded-2xl object-contain" src={heroCatUrl} />
+                <img alt="" aria-hidden="true" className="h-20 w-20 rounded-2xl object-contain" src={practiceCatUrl} />
+              </div>
+              <div className="max-w-[210px] pt-16">
+                <p className="font-display text-3xl leading-tight">Một video.<br />Ba kiểu luyện.</p>
+                <div className="mt-7 flex flex-wrap gap-2 text-sm text-[#a09d96]">
+                  <span>Dictation</span><span>·</span><span>Shadowing</span><span>·</span><span>Song ngữ</span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -88,18 +117,27 @@ export default function VideoLibraryPage() {
 
         <div className="mb-8 mt-12 flex items-end justify-between gap-4">
           <div>
-            <p className="eyebrow">Thư viện</p>
-            <h2 className="mt-2 font-display text-3xl font-normal tracking-tight sm:text-4xl">Chọn bài học hôm nay</h2>
+            <p className="eyebrow">Thư viện theo topic</p>
+            <h2 className="mt-2 font-display text-3xl font-normal tracking-tight sm:text-4xl">Chọn chủ đề hôm nay</h2>
           </div>
           {isAdmin ? (
-            <AddVideoDialog
-              createVideoMutation={createVideoMutation}
-              onVideoCreated={(video) => navigate(`/videos/${video._id}`)}
-            />
+            <div className="flex flex-wrap justify-end gap-2">
+              <TopicManagerDialog
+                createTopicMutation={createTopicMutation}
+                deleteTopicMutation={deleteTopicMutation}
+                topics={visibleTopics}
+                updateTopicMutation={updateTopicMutation}
+              />
+              <AddVideoDialog
+                createVideoMutation={createVideoMutation}
+                onVideoCreated={(video) => navigate(`/videos/${video._id}`)}
+                topics={visibleTopics}
+              />
+            </div>
           ) : null}
         </div>
 
-        {isLoading ? <p className="px-3 text-sm font-bold md:px-0">Đang tải video...</p> : null}
+        {isLoading || isTopicsLoading ? <p className="px-3 text-sm font-bold md:px-0">Đang tải thư viện...</p> : null}
 
         {isVideosError ? (
           <Card className="border-red-200 bg-red-50">
@@ -127,35 +165,28 @@ export default function VideoLibraryPage() {
           </Card>
         ) : null}
 
-        {videos.length > 0 ? (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" data-lesson-grid>
-            {visibleVideos.map((video, index) => (
-              <LessonCard
-                deleteVideoMutation={deleteVideoMutation}
-                isAdmin={isAdmin}
-                key={video._id}
-                onSelect={() => setModePickerVideo(video)}
-                publishVideoMutation={publishVideoMutation}
-                video={video}
-                variant={index % 3 === 0 ? "featured" : "default"}
-              />
-            ))}
-          </div>
-        ) : null}
+        {topicSections.length > 0 ? (
+          <div className="space-y-8">
+            {topicSections.map((section) => {
+              const sectionVideos = section.videos.slice(0, homeTopicVideoLimit);
+              const canExpand = section.topic?.slug && section.videos.length > homeTopicVideoLimit;
 
-        {hasMoreVideos ? (
-          <div className="mt-10 flex flex-col items-center gap-3">
-            <Button
-              className="min-w-40"
-              onClick={() => setVisibleCount((count) => Math.min(count + pageSize, videos.length))}
-              type="button"
-              variant="outline"
-            >
-              Xem thêm <ArrowDown size={16} />
-            </Button>
-            <p className="text-xs text-ink-muted">
-              Đang hiển thị {visibleVideos.length} / {videos.length} video
-            </p>
+              return (
+                <TopicVideoSection
+                  canExpand={canExpand}
+                  deleteVideoMutation={deleteVideoMutation}
+                  isAdmin={isAdmin}
+                  key={section.key}
+                  onSelectVideo={(video) => setModePickerVideo(video)}
+                  onViewAll={() => navigate(`/topics/${section.topic.slug}`)}
+                  publishVideoMutation={publishVideoMutation}
+                  section={section}
+                  topics={visibleTopics}
+                  updateVideoMutation={updateVideoMutation}
+                  videos={sectionVideos}
+                />
+              );
+            })}
           </div>
         ) : null}
 
@@ -171,14 +202,109 @@ export default function VideoLibraryPage() {
   );
 }
 
-function LessonCard({ deleteVideoMutation, isAdmin, onSelect, publishVideoMutation, video, variant }) {
+export function buildTopicSections({ isAdmin, topics, videos }) {
+  const sections = topics
+    .map((topic) => ({
+      key: topic._id,
+      title: topic.name,
+      description: topic.description,
+      topic,
+      videos: videos.filter((video) => getTopicId(video) === topic._id),
+    }))
+    .filter((section) => isAdmin || section.videos.length > 0);
+  const knownTopicIds = new Set(topics.map((topic) => topic._id));
+  const uncategorizedVideos = videos.filter((video) => !knownTopicIds.has(getTopicId(video)));
+
+  if (uncategorizedVideos.length || isAdmin) {
+    sections.push({
+      key: "uncategorized",
+      title: isAdmin ? "Chưa phân loại" : "Video mới",
+      description: isAdmin ? "Video đang nằm ngoài các topic công khai." : "Các video mới nhất trong thư viện.",
+      topic: null,
+      videos: uncategorizedVideos,
+    });
+  }
+
+  return sections;
+}
+
+export function getTopicId(video) {
+  if (!video?.topicId) return "";
+  return typeof video.topicId === "string" ? video.topicId : video.topicId._id || "";
+}
+
+export function TopicVideoSection({
+  canExpand,
+  deleteVideoMutation,
+  isAdmin,
+  onSelectVideo,
+  onViewAll,
+  publishVideoMutation,
+  section,
+  topics,
+  updateVideoMutation,
+  videos,
+}) {
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#d8e1ed] bg-canvas px-5 py-3 shadow-[0_2px_0_rgba(20,20,19,0.08)]">
+        <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="h-9 w-1.5 shrink-0 rounded-full bg-[#303866]" />
+            <h3 className="truncate text-base font-black tracking-tight text-[#202036] sm:text-xl lg:text-2xl">{section.title}</h3>
+            <span className="shrink-0 text-xs font-semibold text-[#46516d] sm:text-sm">({section.videos.length} bài học)</span>
+          </div>
+          {section.description ? (
+            <p className="ml-4 mt-1 line-clamp-1 text-sm text-ink-muted">{section.description}</p>
+          ) : null}
+        </div>
+        {canExpand ? (
+          <Button
+            className="shrink-0 rounded-2xl border-[#bfc4d3] bg-canvas px-4 font-black uppercase tracking-[0.12em] text-[#303866] shadow-[0_3px_0_rgba(48,56,102,0.16)]"
+            onClick={onViewAll}
+            type="button"
+            variant="outline"
+          >
+            Xem thêm <ArrowRight size={16} />
+          </Button>
+        ) : null}
+      </div>
+
+      {videos.length ? (
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4" data-lesson-grid>
+          {videos.map((video, index) => (
+            <LessonCard
+              deleteVideoMutation={deleteVideoMutation}
+              isAdmin={isAdmin}
+              key={video._id}
+              onSelect={() => onSelectVideo(video)}
+              publishVideoMutation={publishVideoMutation}
+              topics={topics}
+              updateVideoMutation={updateVideoMutation}
+              video={video}
+              variant={index % 4 === 0 ? "featured" : "default"}
+            />
+          ))}
+        </div>
+      ) : (
+        <Card className="border-dashed bg-cream-soft">
+          <CardContent className="p-5 text-sm font-semibold text-ink-muted">Topic này chưa có video.</CardContent>
+        </Card>
+      )}
+    </section>
+  );
+}
+
+export function LessonCard({ deleteVideoMutation, isAdmin, onSelect, publishVideoMutation, topics, updateVideoMutation, video, variant }) {
   const isFeatured = variant === "featured";
+  const rawTopicId = getTopicId(video);
+  const currentTopicValue = topics.some((topic) => topic._id === rawTopicId) ? rawTopicId : "__none__";
 
   return (
     <Card
       className={cn(
-        "group cursor-pointer overflow-hidden border-[#e6dfd8] bg-canvas outline-none transition duration-300 hover:-translate-y-1 hover:border-[#cfc5b8] hover:shadow-[0_16px_38px_rgba(20,20,19,0.08)] focus-visible:ring-2 focus-visible:ring-coral/30",
-        isFeatured && "bg-cream",
+        "group cursor-pointer overflow-hidden rounded-2xl border-[#d8e1ed] bg-canvas shadow-[0_4px_0_rgba(48,56,102,0.12)] outline-none transition duration-300 hover:-translate-y-1 hover:border-[#c0c8d8] hover:shadow-[0_10px_22px_rgba(48,56,102,0.16)] focus-visible:ring-2 focus-visible:ring-coral/30",
+        isFeatured && "border-amber-400 bg-[#fff8e8] shadow-[0_4px_0_rgba(180,116,0,0.35)]",
       )}
       data-lesson-card
       onClick={onSelect}
@@ -200,52 +326,77 @@ function LessonCard({ deleteVideoMutation, isAdmin, onSelect, publishVideoMutati
         <Badge className="absolute left-3 top-3 gap-1 bg-coal/90 text-white">
           <Headphones size={12} /> {formatNumber(video.viewCount || 0)}
         </Badge>
-        <Badge className="absolute right-3 top-3 bg-coral text-white">
-          {video.level || "A2"}
-        </Badge>
         <Badge className="absolute bottom-3 right-3 gap-1 bg-coal/90 text-white">
           ◷ {formatDuration(video.duration || 0)}
         </Badge>
       </div>
 
-      <CardContent className="space-y-4 p-5">
+      <CardContent className="space-y-2 p-2.5 sm:space-y-3 sm:p-4">
         <p
           className={cn(
-            "line-clamp-2 min-h-[48px] font-display text-xl font-normal leading-snug text-coal",
+            "line-clamp-2 min-h-[34px] text-xs font-black leading-snug text-[#202036] sm:min-h-[42px] sm:text-sm",
+            isFeatured && "text-coral-dark",
           )}
         >
           {video.title}
         </p>
 
-        <div className="flex items-center justify-between border-t border-[#e6dfd8] pt-4">
-          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-muted">Bắt đầu học</span>
-          <ArrowRight className="text-coral transition group-hover:translate-x-1" size={18} />
+        <div className="hidden grid-cols-1 gap-1 text-xs font-semibold text-[#202036] sm:grid sm:grid-cols-2 sm:gap-3 sm:text-sm">
+          <span className="inline-flex items-center gap-1">
+            Dictation <span className="text-[#a9b2c4]">ⓧ</span>
+          </span>
+          <span className="inline-flex items-center gap-1 sm:justify-end">
+            Shadowing <span className="text-[#a9b2c4]">ⓧ</span>
+          </span>
         </div>
 
         {isAdmin ? (
-          <div className="flex gap-2 border-t border-[#e6dfd8] pt-3" onClick={(event) => event.stopPropagation()}>
-            <Button
-              onClick={(event) => {
-                event.stopPropagation();
-                publishVideoMutation.mutate({ id: video._id, isPublished: !video.isPublished });
+          <div className="space-y-2 border-t border-[#e6dfd8] pt-3" onClick={(event) => event.stopPropagation()}>
+            <Select
+              onValueChange={(value) => {
+                updateVideoMutation.mutate({
+                  id: video._id,
+                  data: { topicId: value === "__none__" ? null : value },
+                });
               }}
-              size="sm"
-              type="button"
-              variant="outline"
+              value={currentTopicValue}
             >
-              {video.isPublished ? "Unpublish" : "Publish"}
-            </Button>
-            <Button
-              onClick={(event) => {
-                event.stopPropagation();
-                if (window.confirm("Xóa video này?")) deleteVideoMutation.mutate(video._id);
-              }}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              <Trash2 size={14} />
-            </Button>
+              <SelectTrigger className="h-9 bg-white text-xs font-semibold">
+                <SelectValue placeholder="Chọn topic" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Chưa phân loại</SelectItem>
+                {topics.map((topic) => (
+                  <SelectItem key={topic._id} value={topic._id}>
+                    {topic.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex gap-2">
+              <Button
+                onClick={(event) => {
+                  event.stopPropagation();
+                  publishVideoMutation.mutate({ id: video._id, isPublished: !video.isPublished });
+                }}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                {video.isPublished ? "Unpublish" : "Publish"}
+              </Button>
+              <Button
+                onClick={(event) => {
+                  event.stopPropagation();
+                  if (window.confirm("Xóa video này?")) deleteVideoMutation.mutate(video._id);
+                }}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <Trash2 size={14} />
+              </Button>
+            </div>
           </div>
         ) : null}
       </CardContent>
@@ -253,66 +404,239 @@ function LessonCard({ deleteVideoMutation, isAdmin, onSelect, publishVideoMutati
   );
 }
 
-function LearningModeDialog({ onOpenChange, onSelectMode, open }) {
+export const modeConfig = [
+  {
+    mode: "dictation",
+    title: "Nghe - viết chính tả",
+    desc: "Nghe từng câu và gõ lại nội dung chính xác",
+    imageAlt: "Nghe viết chính tả",
+    imageUrl: dictationStickerUrl,
+  },
+  {
+    mode: "shadowing",
+    title: "Bắt chước phát âm",
+    desc: "Nghe và ghi âm giọng đọc, chấm điểm bằng AI",
+    imageAlt: "Bắt chước phát âm",
+    imageUrl: shadowingStickerUrl,
+  },
+  {
+    mode: "bilingual",
+    title: "Xem song ngữ",
+    desc: "Xem video với phụ đề Anh - Việt đồng bộ",
+    imageAlt: "Xem song ngữ",
+    imageUrl: bilingualStickerUrl,
+  },
+];
+
+export function LearningModeDialog({ onOpenChange, onSelectMode, open }) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="bottom-0 top-auto max-h-[92vh] w-full max-w-none translate-y-0 gap-5 rounded-b-none rounded-t-2xl p-4 pb-5 sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[calc(100%-2rem)] sm:max-w-xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-7">
+      <DialogContent className="bottom-0 top-auto max-h-[92vh] w-full max-w-none translate-y-0 gap-5 rounded-b-none rounded-t-2xl p-4 pb-5 sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[calc(100%-2rem)] sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-8">
         <div className="mx-auto h-1.5 w-20 rounded-full bg-cream sm:hidden" />
         <DialogHeader className="px-0 text-left sm:text-center">
-          <DialogTitle>Chọn chế độ học</DialogTitle>
+          <DialogTitle className="text-2xl">Chọn chế độ</DialogTitle>
           <DialogDescription className="sm:text-base">
-            Chọn chế độ học phù hợp với bạn nhất
+            Học sâu từng câu hoặc xem phụ đề song ngữ liền mạch
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-          <LearningModeCard
-            imageAlt="Nghe viết chính tả"
-            imageUrl={dictationStickerUrl}
-            mode="dictation"
-            onSelectMode={onSelectMode}
-            title="Nghe - viết chính tả"
-          />
-          <LearningModeCard
-            Icon={Mic}
-            imageAlt="Bắt chước phát âm"
-            imageUrl={shadowingStickerUrl}
-            mode="shadowing"
-            onSelectMode={onSelectMode}
-            title="Bắt chước phát âm"
-          />
+        <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
+          {modeConfig.map((item) => (
+            <LearningModeCard key={item.mode} {...item} onSelectMode={onSelectMode} />
+          ))}
+        </div>
+
+        <p className="pt-1 text-center text-xs text-ink-muted">
+          Tất cả chế độ đều miễn phí, không cần đăng nhập
+        </p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function LearningModeCard({ desc, imageAlt, imageUrl, mode, onSelectMode, title }) {
+  return (
+    <Card className="overflow-hidden bg-cream-soft transition hover:-translate-y-1 hover:border-coral/40">
+      <Button
+        className="flex h-full w-full min-w-0 flex-col gap-3 whitespace-normal rounded-xl bg-transparent px-4 py-5 text-coal hover:bg-cream sm:px-5 sm:py-7"
+        onClick={() => onSelectMode(mode)}
+        type="button"
+        variant="ghost"
+      >
+        <img alt={imageAlt} className="h-20 w-20 shrink-0 object-contain sm:h-24 sm:w-24" src={imageUrl} />
+        <div className="min-w-0 space-y-1 text-center">
+          <span className="block text-wrap font-display text-lg font-medium leading-snug">
+            {title}
+          </span>
+          <span className="block text-wrap text-xs leading-relaxed text-ink-muted">
+            {desc}
+          </span>
+        </div>
+      </Button>
+    </Card>
+  );
+}
+
+function TopicManagerDialog({ createTopicMutation, deleteTopicMutation, topics, updateTopicMutation }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [editingTopic, setEditingTopic] = useState(null);
+  const [form, setForm] = useState({ name: "", description: "", order: 0, isPublished: true });
+
+  function resetForm() {
+    setEditingTopic(null);
+    setForm({ name: "", description: "", order: 0, isPublished: true });
+  }
+
+  function editTopic(topic) {
+    setEditingTopic(topic);
+    setForm({
+      name: topic.name || "",
+      description: topic.description || "",
+      order: topic.order || 0,
+      isPublished: topic.isPublished ?? true,
+    });
+  }
+
+  async function submitTopic(event) {
+    event.preventDefault();
+    const payload = {
+      name: form.name,
+      description: form.description,
+      order: Number(form.order || 0),
+      isPublished: form.isPublished,
+    };
+
+    if (editingTopic?._id) {
+      await updateTopicMutation.mutateAsync({ id: editingTopic._id, data: payload });
+    } else {
+      await createTopicMutation.mutateAsync(payload);
+    }
+
+    resetForm();
+  }
+
+  const activeError =
+    createTopicMutation.error?.response?.data?.message ||
+    updateTopicMutation.error?.response?.data?.message ||
+    deleteTopicMutation.error?.response?.data?.message ||
+    "";
+
+  return (
+    <Dialog
+      onOpenChange={(nextOpen) => {
+        setIsOpen(nextOpen);
+        if (!nextOpen) resetForm();
+      }}
+      open={isOpen}
+    >
+      <DialogTrigger asChild>
+        <Button className="rounded-xl" type="button" variant="outline">
+          <FolderPlus size={16} /> Topic
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Quản lý topic video</DialogTitle>
+          <DialogDescription>Tạo topic, sửa thông tin, ẩn/hiện topic và xóa topic chưa có video.</DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-5 lg:grid-cols-[1fr_1.1fr]">
+          <form className="space-y-3 rounded-2xl border border-[#e6dfd8] bg-cream-soft p-4" onSubmit={submitTopic}>
+            <p className="text-sm font-black text-coal">{editingTopic ? "Sửa topic" : "Thêm topic mới"}</p>
+            <Input
+              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              placeholder="Tên topic, ví dụ Movie short clip"
+              required
+              value={form.name}
+            />
+            <Textarea
+              onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+              placeholder="Mô tả ngắn"
+              value={form.description}
+            />
+            <div className="grid grid-cols-[1fr_auto] gap-3">
+              <Input
+                min="0"
+                onChange={(event) => setForm((current) => ({ ...current, order: Number(event.target.value) }))}
+                placeholder="Thứ tự"
+                type="number"
+                value={form.order}
+              />
+              <Button
+                aria-label={form.isPublished ? "Topic đang hiển thị" : "Topic đang ẩn"}
+                onClick={() => setForm((current) => ({ ...current, isPublished: !current.isPublished }))}
+                type="button"
+                variant="outline"
+              >
+                {form.isPublished ? <Eye size={16} /> : <EyeOff size={16} />}
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Button disabled={createTopicMutation.isPending || updateTopicMutation.isPending} type="submit">
+                {editingTopic ? "Lưu topic" : "Tạo topic"}
+              </Button>
+              {editingTopic ? (
+                <Button onClick={resetForm} type="button" variant="outline">
+                  Hủy
+                </Button>
+              ) : null}
+            </div>
+            {activeError ? <Alert variant="error">{activeError}</Alert> : null}
+          </form>
+
+          <div className="space-y-2">
+            {topics.length ? (
+              topics.map((topic) => (
+                <Card className="bg-canvas" key={topic._id}>
+                  <CardContent className="flex items-center gap-3 p-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-black text-coal">{topic.name}</p>
+                        <Badge variant={topic.isPublished ? "success" : "secondary"}>
+                          {topic.isPublished ? "Public" : "Ẩn"}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 line-clamp-1 text-xs text-ink-muted">
+                        Thứ tự {topic.order || 0}
+                        {topic.description ? ` · ${topic.description}` : ""}
+                      </p>
+                    </div>
+                    <Button onClick={() => editTopic(topic)} size="icon" type="button" variant="outline">
+                      <Edit3 size={15} />
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (window.confirm(`Xóa topic "${topic.name}"? Chỉ xóa được topic chưa có video.`)) {
+                          deleteTopicMutation.mutate(topic._id);
+                        }
+                      }}
+                      size="icon"
+                      type="button"
+                      variant="outline"
+                    >
+                      <Trash2 size={15} />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <Card className="border-dashed bg-canvas">
+                <CardContent className="p-5 text-sm text-ink-muted">Chưa có topic nào.</CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-function LearningModeCard({ Icon = Pencil, imageAlt, imageUrl, mode, onSelectMode, title }) {
-  return (
-    <Card
-      className="min-h-[168px] overflow-hidden bg-cream-soft transition hover:-translate-y-1 hover:border-coral/40 sm:min-h-[224px]"
-    >
-      <Button
-        className="flex h-full min-h-[168px] w-full flex-col gap-4 rounded-xl bg-transparent px-4 py-6 text-coal hover:bg-cream sm:min-h-[224px] sm:gap-5 sm:px-5"
-        onClick={() => onSelectMode(mode)}
-        type="button"
-        variant="ghost"
-      >
-        <img alt={imageAlt} className="h-20 w-20 shrink-0 object-contain sm:h-24 sm:w-24" src={imageUrl} />
-        <span className="flex whitespace-normal items-center justify-center gap-2 text-center font-display text-xl font-normal leading-snug">
-          <Icon className="h-4 w-4 shrink-0" />
-          {title}
-        </span>
-      </Button>
-    </Card>
-  );
-}
-
-function AddVideoDialog({ createVideoMutation, onVideoCreated }) {
+function AddVideoDialog({ createVideoMutation, onVideoCreated, topics }) {
   const [isOpen, setIsOpen] = useState(false);
   const [transcriptText, setTranscriptText] = useState("");
   const [transcriptError, setTranscriptError] = useState("");
   const [videoForm, setVideoForm] = useState({
+    topicId: "__none__",
     youtubeUrl: "",
     title: "",
     description: "",
@@ -333,12 +657,13 @@ function AddVideoDialog({ createVideoMutation, onVideoCreated }) {
 
     const response = await createVideoMutation.mutateAsync({
       ...videoForm,
+      topicId: videoForm.topicId === "__none__" ? undefined : videoForm.topicId,
       title: videoForm.title || undefined,
       description: videoForm.description || undefined,
       transcripts: manualTranscripts.segments.length ? manualTranscripts.segments : undefined,
     });
     const video = response.data.data.video;
-    setVideoForm({ youtubeUrl: "", title: "", description: "", level: "A2", isPublished: true });
+    setVideoForm({ topicId: "__none__", youtubeUrl: "", title: "", description: "", level: "A2", isPublished: true });
     setTranscriptText("");
     setIsOpen(false);
     onVideoCreated(video);
@@ -388,6 +713,22 @@ function AddVideoDialog({ createVideoMutation, onVideoCreated }) {
               </SelectContent>
             </Select>
           </div>
+          <Select
+            onValueChange={(value) => setVideoForm((current) => ({ ...current, topicId: value }))}
+            value={videoForm.topicId}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Topic" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">Chưa phân loại</SelectItem>
+              {topics.map((topic) => (
+                <SelectItem key={topic._id} value={topic._id}>
+                  {topic.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Textarea
             onChange={(event) => setVideoForm((current) => ({ ...current, description: event.target.value }))}
             placeholder="Mô tả ngắn"

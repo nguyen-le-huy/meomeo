@@ -161,8 +161,8 @@ export async function updateVideo(id, data) {
   const video = await getVideoById(id, { admin: true });
 
   if (data.topicId !== undefined) {
-    await assertTopic(data.topicId, { admin: true });
-    video.topicId = data.topicId;
+    const topic = data.topicId ? await assertTopic(data.topicId, { admin: true }) : await getDefaultTopic();
+    video.topicId = topic._id;
   }
   if (data.youtubeUrl !== undefined) {
     const analyzed = await analyzeYoutubeUrl(data.youtubeUrl);

@@ -69,6 +69,19 @@ export async function updateSegment(segmentId, data) {
   segment.duration = Math.max(0, segment.endTime - segment.startTime);
   if (data.isPublished !== undefined) segment.isPublished = data.isPublished;
 
+  if (data.translationText !== undefined) {
+    segment.translationText = data.translationText;
+    if (data.translationText.trim()) {
+      segment.translationStatus = "edited";
+      segment.translationError = "";
+      segment.translatedAt = new Date();
+    } else {
+      segment.translationStatus = "none";
+      segment.translationError = "";
+      segment.translatedAt = undefined;
+    }
+  }
+
   await segment.save();
   return segment;
 }

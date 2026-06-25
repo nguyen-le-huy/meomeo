@@ -15,9 +15,11 @@ const transcriptInputSchema = z.object({
   text: z.string().trim().min(1),
 });
 
+const topicIdSchema = z.union([z.string().regex(objectIdRegex, "Invalid topic id"), z.null()]);
+
 const videoBodySchema = z
   .object({
-    topicId: z.string().regex(objectIdRegex, "Invalid topic id").optional(),
+    topicId: topicIdSchema.optional(),
     youtubeUrl: z.string().trim().min(1),
     title: z.string().trim().optional(),
     description: z.string().optional(),
