@@ -115,13 +115,7 @@ export default function BilingualWatchPage() {
                 </Link>
               </Button>
               <div>
-                <h1 className="line-clamp-1 font-display text-lg font-medium">{video.title}</h1>
-                <div className="flex items-center gap-2 text-xs text-ink-muted">
-                  <Badge variant="secondary">{video.level}</Badge>
-                  <Badge variant={video.bilingualStatus === "completed" ? "success" : "default"}>
-                    {video.bilingualStatus === "completed" ? "Có Vietsub" : "Chưa có Vietsub"}
-                  </Badge>
-                </div>
+                <h4 className="line-clamp-1 font-display text-sm font-medium">{video.title}</h4>
               </div>
             </div>
           </div>
@@ -149,7 +143,7 @@ export default function BilingualWatchPage() {
                     type="button"
                   >
                     <Play className="h-10 w-10 text-coral" fill="currentColor" />
-                    <span className="text-sm font-medium text-canvas">Bắt đầu xem</span>
+                    <span className="text-sm text-canvas">Bắt đầu xem</span>
                   </button>
                 </div>
               ) : null}
@@ -211,8 +205,8 @@ export default function BilingualWatchPage() {
         </aside>
 
         <div className="flex min-h-0 flex-1 flex-col xl:hidden">
-          <div className="shrink-0 border-b border-[#e6dfd8] bg-canvas px-5 py-3">
-            <h3 className="font-display text-lg font-medium">Phụ đề song ngữ</h3>
+          <div className="shrink-0 border-b border-[#e6dfd8] bg-canvas px-5 py-3 flex items-center gap-3">
+            <h3 className="font-display text-sm font-medium">Phụ đề song ngữ</h3>
             <p className="text-xs text-ink-muted">{segments.length} đoạn</p>
           </div>
           <div className="flex-1 overflow-y-auto">

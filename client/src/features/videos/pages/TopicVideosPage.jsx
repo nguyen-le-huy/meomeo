@@ -11,7 +11,9 @@ import {
   useUpdateVideo,
   useVideos,
 } from "../hooks/useVideoLearning.js";
-import { getTopicId, LearningModeDialog, LessonCard } from "./VideoLibraryPage.jsx";
+import LearningModeDialog from "../components/LearningModeDialog.jsx";
+import LessonCard from "../components/LessonCard.jsx";
+import { getTopicId } from "../utils/videoLibrary.js";
 
 const pageSize = 8;
 

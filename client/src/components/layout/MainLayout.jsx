@@ -15,7 +15,7 @@ const logoUrl = "https://res.cloudinary.com/dknin0hhf/image/upload/v1781682627/B
 function Brand() {
   return (
     <NavLink aria-label="Meomeo home" className="inline-flex items-center" to="/">
-      <img alt="Meomeo" className="h-10 w-10 shrink-0 object-contain" src={logoUrl} />
+      <img alt="Meomeo" className="h-8 w-8 shrink-0 object-contain md:h-10 md:w-10" src={logoUrl} />
     </NavLink>
   );
 }
@@ -57,7 +57,7 @@ export default function MainLayout() {
   return (
     <div className="min-h-screen bg-canvas text-coal">
       <header className="sticky top-0 z-40 border-b bg-canvas/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-6 px-4 sm:px-6 lg:px-10">
+        <div className="mx-auto flex h-12 max-w-[1440px] items-center justify-between gap-6 px-4 sm:px-6 md:h-16 lg:px-10">
           <Brand />
 
           <nav className="hidden items-center gap-7 md:flex">
@@ -79,13 +79,13 @@ export default function MainLayout() {
             )}
           </div>
 
-          <Button aria-label="Mở menu" className="md:hidden" onClick={() => setMobileOpen(true)} size="icon" type="button" variant="ghost">
+          <Button aria-label="Mở menu" className="h-9 w-9 md:hidden" onClick={() => setMobileOpen(true)} size="icon" type="button" variant="ghost">
             <Menu size={21} />
           </Button>
         </div>
       </header>
 
-      <main className={isLearningPage ? "h-[calc(100vh-4rem)] overflow-hidden" : "min-h-[calc(100vh-4rem)]"}>
+      <main className={isLearningPage ? "h-[calc(100vh-3rem)] overflow-hidden md:h-[calc(100vh-4rem)]" : "min-h-[calc(100vh-3rem)] md:min-h-[calc(100vh-4rem)]"}>
         <Outlet />
       </main>
 
