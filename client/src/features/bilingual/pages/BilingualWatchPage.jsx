@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Maximize, Minimize, Pause, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
@@ -12,6 +13,7 @@ import { useBilingualVideo, useGenerateVietsub } from "../hooks/useBilingualWatc
 
 export default function BilingualWatchPage() {
   const { id } = useParams();
+  const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
   const playerRef = useRef(null);
@@ -79,7 +81,10 @@ export default function BilingualWatchPage() {
 
   const handleVietsubDone = useCallback(() => {
     generateVietsubMutation.reset?.();
-  }, [generateVietsubMutation]);
+    queryClient.invalidateQueries({ queryKey: ["bilingual-video", id] });
+    queryClient.invalidateQueries({ queryKey: ["video", id] });
+    queryClient.invalidateQueries({ queryKey: ["video-transcripts", id] });
+  }, [generateVietsubMutation, id, queryClient]);
 
   if (isLoading) {
     return (
@@ -149,7 +154,7 @@ export default function BilingualWatchPage() {
               ) : null}
 
               {isPlaying && activeSegment ? (
-                <div className="pointer-events-none absolute bottom-1.5 left-1/2 w-[94%] max-w-2xl -translate-x-1/2 space-y-0 rounded-lg bg-black/60 px-2 py-1.5 text-center backdrop-blur-sm sm:bottom-4 sm:space-y-1 sm:px-5 sm:py-3">
+                <div className="pointer-events-none absolute bottom-1.5 left-1/2 w-[94%] max-w-2xl -translate-x-1/2 space-y-0 rounded-lg bg-black p-[5px] text-center sm:bottom-4 sm:space-y-1">
                   <p className="font-normal leading-snug text-[#fdd835] text-[11px] sm:text-xl [text-shadow:0_0_3px_rgba(0,0,0,0.8)]">
                     {activeSegment.text}
                   </p>
@@ -171,13 +176,16 @@ export default function BilingualWatchPage() {
                 </button>
               ) : null}
 
-              <button
-                className="absolute bottom-3 right-3 rounded-full bg-[#181715]/85 p-2.5 opacity-60 transition hover:opacity-100"
+              <Button
+                aria-label={isFullscreen ? "Thoát toàn màn hình" : "Xem toàn màn hình"}
+                className="absolute bottom-3 right-3 hidden rounded-full bg-coal/85 opacity-60 hover:bg-coal hover:opacity-100 sm:inline-flex"
                 onClick={handleToggleFullscreen}
+                size="icon"
                 type="button"
+                variant="secondary"
               >
                 {isFullscreen ? <Minimize className="h-5 w-5 text-canvas" /> : <Maximize className="h-5 w-5 text-canvas" />}
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -205,7 +213,7 @@ export default function BilingualWatchPage() {
         </aside>
 
         <div className="flex min-h-0 flex-1 flex-col xl:hidden">
-          <div className="shrink-0 border-b border-[#e6dfd8] bg-canvas px-5 py-3 flex items-center gap-3">
+          <div className="shrink-0 border-b border-[#e6dfd8] bg-canvas px-5 py-3 flex items-center justify-between">
             <h3 className="font-display text-sm font-medium">Phụ đề song ngữ</h3>
             <p className="text-xs text-ink-muted">{segments.length} đoạn</p>
           </div>

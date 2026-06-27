@@ -28,6 +28,20 @@ export function buildTopicSections({ isAdmin, topics, videos }) {
 
 export { getTopicId };
 
+export function getNewestVideoIds(videos, limit = 3) {
+  return new Set(
+    [...videos]
+      .sort((firstVideo, secondVideo) => {
+        const firstCreatedAt = new Date(firstVideo.createdAt || 0).getTime();
+        const secondCreatedAt = new Date(secondVideo.createdAt || 0).getTime();
+
+        return secondCreatedAt - firstCreatedAt;
+      })
+      .slice(0, limit)
+      .map((video) => video._id),
+  );
+}
+
 export function formatNumber(value) {
   return new Intl.NumberFormat("en-US").format(value || 0);
 }

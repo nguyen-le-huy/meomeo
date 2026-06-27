@@ -10,64 +10,47 @@ import {
   DialogTrigger,
 } from "../../../components/ui/dialog.jsx";
 import { updateTranscriptSegment } from "../../videos/services/videoApi.js";
+import { parseTimedTextLines } from "../../videos/utils/manualTranscript.js";
 
-function parseTimeToSeconds(value) {
-  const raw = String(value || "").trim().replace(",", ".");
-  if (!raw) return Number.NaN;
-  if (!raw.includes(":")) return Number(raw);
-  const parts = raw.split(":").map((part) => Number(part));
-  if (parts.some((part) => Number.isNaN(part))) return Number.NaN;
-  if (parts.length === 2) return parts[0] * 60 + parts[1];
-  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-  return Number.NaN;
-}
+const START_TOLERANCE_SECONDS = 2.5;
+const END_TOLERANCE_SECONDS = 4;
+const MIN_OVERLAP_RATIO = 0.35;
 
 function parseManualVietsub(value) {
-  const lines = String(value || "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  if (!lines.length) return { entries: [], error: "" };
-
-  const entries = [];
-
-  for (const [lineIndex, line] of lines.entries()) {
-    const pipeMatch = line.match(/^(.+?)\s*\|\s*(.+?)\s*\|\s*(.+)$/);
-    const dashMatch = line.match(/^(\S+)\s*(?:-->|-|–|—)\s*(\S+)\s+(.+)$/);
-    const match = pipeMatch || dashMatch;
-
-    if (!match) {
-      return {
-        entries: [],
-        error: `Dòng ${lineIndex + 1} chưa đúng định dạng. Dùng "00:01 - 00:04 Nội dung" hoặc "1 | 4 | Nội dung".`,
-      };
-    }
-
-    const startTime = parseTimeToSeconds(match[1]);
-    const endTime = parseTimeToSeconds(match[2]);
-    const text = match[3].trim();
-
-    if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) {
-      return { entries: [], error: `Dòng ${lineIndex + 1} có thời gian không hợp lệ.` };
-    }
-
-    if (!text) {
-      return { entries: [], error: `Dòng ${lineIndex + 1} chưa có nội dung.` };
-    }
-
-    entries.push({ startTime, endTime, text });
-  }
-
-  return { entries, error: "" };
+  return parseTimedTextLines(value, { contentLabel: "Vietsub" });
 }
 
-function matchSegment(entry, segments) {
-  return segments.find(
-    (s) =>
-      Math.abs(s.startTime - entry.startTime) < 2 &&
-      Math.abs(s.endTime - entry.endTime) < 3,
+function getOverlapScore(entry, segment) {
+  const overlap = Math.min(entry.endTime, segment.endTime) - Math.max(entry.startTime, segment.startTime);
+  if (overlap <= 0) return 0;
+
+  const entryDuration = Math.max(entry.endTime - entry.startTime, 0.001);
+  const segmentDuration = Math.max(segment.endTime - segment.startTime, 0.001);
+  return overlap / Math.max(entryDuration, segmentDuration);
+}
+
+function matchSegment(entry, segments, usedSegmentIds, entryIndex, entryCount) {
+  const availableSegments = segments.filter((segment) => !usedSegmentIds.has(segment._id));
+
+  const exactMatch = availableSegments.find(
+    (segment) =>
+      Math.abs(Number(segment.startTime) - entry.startTime) <= START_TOLERANCE_SECONDS &&
+      Math.abs(Number(segment.endTime) - entry.endTime) <= END_TOLERANCE_SECONDS,
   );
+  if (exactMatch) return exactMatch;
+
+  const overlapMatch = availableSegments
+    .map((segment) => ({ segment, score: getOverlapScore(entry, segment) }))
+    .filter((item) => item.score >= MIN_OVERLAP_RATIO)
+    .sort((a, b) => b.score - a.score)[0]?.segment;
+  if (overlapMatch) return overlapMatch;
+
+  if (entryCount === segments.length) {
+    const indexedSegment = segments[entryIndex];
+    if (indexedSegment && !usedSegmentIds.has(indexedSegment._id)) return indexedSegment;
+  }
+
+  return null;
 }
 
 export default function ManualVietsubDialog({ segments, onDone }) {
@@ -93,14 +76,16 @@ export default function ManualVietsubDialog({ segments, onDone }) {
     setSaving(true);
     let matched = 0;
     let unmatched = 0;
+    const usedSegmentIds = new Set();
 
-    for (const entry of entries) {
-      const segment = matchSegment(entry, segments);
+    for (const [entryIndex, entry] of entries.entries()) {
+      const segment = matchSegment(entry, segments, usedSegmentIds, entryIndex, entries.length);
       if (segment) {
         try {
           await updateTranscriptSegment(segment._id, {
             translationText: entry.text,
           });
+          usedSegmentIds.add(segment._id);
           matched++;
         } catch {
           unmatched++;

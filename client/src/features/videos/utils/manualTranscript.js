@@ -1,5 +1,15 @@
+const TIME_TOKEN_PATTERN = String.raw`\d{1,2}(?::\d{1,2}){1,2}(?:[\.,]\d+)?|\d+(?:[\.,]\d+)?`;
+const DASH_TIME_PATTERN = new RegExp(
+  String.raw`^[^\d|]*(${TIME_TOKEN_PATTERN})\s*(?:-->|-|–|—)\s*(${TIME_TOKEN_PATTERN})\s+(.+)$`,
+);
+const PIPE_TIME_PATTERN = new RegExp(
+  String.raw`^[^\d|]*(${TIME_TOKEN_PATTERN})\s*\|\s*(${TIME_TOKEN_PATTERN})\s*\|\s*(.+)$`,
+);
+
 export function parseTimeToSeconds(value) {
-  const raw = String(value || "").trim().replace(",", ".");
+  const raw = String(value || "")
+    .trim()
+    .replace(",", ".");
   if (!raw) return Number.NaN;
 
   if (!raw.includes(":")) return Number(raw);
@@ -18,24 +28,25 @@ export function parseTimeToSeconds(value) {
   return Number.NaN;
 }
 
-export function parseManualTranscript(value) {
+export function parseTimedTextLines(value, options = {}) {
+  const contentLabel = options.contentLabel || "transcript";
   const lines = String(value || "")
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
 
-  if (!lines.length) return { segments: [], error: "" };
+  if (!lines.length) return { entries: [], error: "" };
 
-  const segments = [];
+  const entries = [];
 
   for (const [lineIndex, line] of lines.entries()) {
-    const pipeMatch = line.match(/^(.+?)\s*\|\s*(.+?)\s*\|\s*(.+)$/);
-    const dashMatch = line.match(/^(\S+)\s*(?:-->|-|–|—)\s*(\S+)\s+(.+)$/);
+    const pipeMatch = line.match(PIPE_TIME_PATTERN);
+    const dashMatch = line.match(DASH_TIME_PATTERN);
     const match = pipeMatch || dashMatch;
 
     if (!match) {
       return {
-        segments: [],
+        entries: [],
         error: `Dòng ${lineIndex + 1} chưa đúng định dạng. Dùng "00:01 - 00:04 Nội dung" hoặc "1 | 4 | Nội dung".`,
       };
     }
@@ -45,19 +56,27 @@ export function parseManualTranscript(value) {
     const text = match[3].trim();
 
     if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) {
-      return { segments: [], error: `Dòng ${lineIndex + 1} có thời gian không hợp lệ.` };
+      return { entries: [], error: `Dòng ${lineIndex + 1} có thời gian không hợp lệ.` };
     }
 
     if (endTime <= startTime) {
-      return { segments: [], error: `Dòng ${lineIndex + 1} cần thời gian kết thúc lớn hơn thời gian bắt đầu.` };
+      return { entries: [], error: `Dòng ${lineIndex + 1} cần thời gian kết thúc lớn hơn thời gian bắt đầu.` };
     }
 
     if (!text) {
-      return { segments: [], error: `Dòng ${lineIndex + 1} chưa có nội dung transcript.` };
+      return { entries: [], error: `Dòng ${lineIndex + 1} chưa có nội dung ${contentLabel}.` };
     }
 
-    segments.push({ startTime, endTime, text });
+    entries.push({ startTime, endTime, text });
   }
+
+  return { entries, error: "" };
+}
+
+export function parseManualTranscript(value) {
+  const { entries, error } = parseTimedTextLines(value, { contentLabel: "transcript" });
+  if (error) return { segments: [], error };
+  const segments = entries;
 
   return { segments, error: "" };
 }

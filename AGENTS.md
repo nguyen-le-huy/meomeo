@@ -26,7 +26,6 @@ Frontend:
 - React
 - Vite
 - Tailwind CSS
-- shadcn/ui
 - React Router DOM
 - TanStack Query
 - Zustand
@@ -36,19 +35,17 @@ Frontend:
 
 ## Frontend UI Rule
 
-Use shadcn/ui 100% for application UI from now on.
+Do not use shadcn/ui or the shadcn CLI.
 
 Requirements:
 
-- New UI must be built from shadcn/ui components first: `Button`, `Input`, `Textarea`, `Select`, `Dialog`, `Sheet`, `Card`, `Tabs`, `Badge`, `Table`, `Form`, `DropdownMenu`, `Alert`, `Toast/Sonner`, and related primitives.
-- Existing custom Tailwind-only UI should be migrated to shadcn/ui when touched.
-- Do not create new ad hoc button/input/card/modal/table styles if a shadcn/ui component exists.
-- Tailwind utility classes are allowed only for layout, spacing, responsive behavior, and small visual adjustments around shadcn/ui components.
-- Shared shadcn/ui primitives should live in `client/src/components/ui`.
-- Feature-specific compositions should live inside their feature folder and compose `components/ui` primitives.
-- Use `lucide-react` icons inside shadcn/ui buttons/menus where icons are needed.
-- Keep the matcha/coal theme through shadcn tokens in CSS variables and Tailwind theme, not scattered hardcoded colors.
-- If a needed component is missing, add it with the shadcn CLI pattern before building the feature UI.
+- Follow `DESIGN.MD` for colors, typography, spacing and component style.
+- Build reusable React UI primitives in `client/src/components/ui` with Tailwind CSS.
+- Reuse an existing primitive before creating another button, input, card, modal or table implementation.
+- Keep feature-specific compositions inside their feature folder.
+- Use Tailwind for component styling, layout, spacing and responsive behavior.
+- Use shared theme tokens instead of scattering hardcoded colors.
+- Use `lucide-react` for interface icons where appropriate.
 
 Backend:
 

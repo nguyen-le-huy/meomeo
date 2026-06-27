@@ -12,7 +12,7 @@ import {
 import { cn } from "../../../utils/cn.js";
 import { formatDuration, formatNumber, getTopicId } from "../utils/videoLibrary.js";
 
-export default function LessonCard({ deleteVideoMutation, isAdmin, onSelect, publishVideoMutation, topics, updateVideoMutation, video, variant }) {
+export default function LessonCard({ deleteVideoMutation, isAdmin, isNew, onSelect, publishVideoMutation, topics, updateVideoMutation, video, variant }) {
   const isFeatured = variant === "featured";
   const rawTopicId = getTopicId(video);
   const currentTopicValue = topics.some((topic) => topic._id === rawTopicId) ? rawTopicId : "__none__";
@@ -43,6 +43,11 @@ export default function LessonCard({ deleteVideoMutation, isAdmin, onSelect, pub
         <Badge className="absolute left-3 top-3 gap-1 bg-coal/90 text-white">
           <Headphones size={12} /> {formatNumber(video.viewCount || 0)}
         </Badge>
+        {isNew ? (
+          <Badge className="absolute right-3 top-3 border border-white/70 bg-coral px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.14em] text-white shadow-sm">
+            New
+          </Badge>
+        ) : null}
         <Badge className="absolute bottom-3 right-3 gap-1 bg-coal/90 text-white">
           ◷ {formatDuration(video.duration || 0)}
         </Badge>

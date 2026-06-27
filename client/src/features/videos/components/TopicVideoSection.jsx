@@ -7,6 +7,7 @@ export default function TopicVideoSection({
   canExpand,
   deleteVideoMutation,
   isAdmin,
+  newestVideoIds,
   onSelectVideo,
   onViewAll,
   publishVideoMutation,
@@ -46,6 +47,7 @@ export default function TopicVideoSection({
             <LessonCard
               deleteVideoMutation={deleteVideoMutation}
               isAdmin={isAdmin}
+              isNew={newestVideoIds.has(video._id)}
               key={video._id}
               onSelect={() => onSelectVideo(video)}
               publishVideoMutation={publishVideoMutation}

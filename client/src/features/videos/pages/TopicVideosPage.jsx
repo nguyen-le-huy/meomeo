@@ -13,7 +13,7 @@ import {
 } from "../hooks/useVideoLearning.js";
 import LearningModeDialog from "../components/LearningModeDialog.jsx";
 import LessonCard from "../components/LessonCard.jsx";
-import { getTopicId } from "../utils/videoLibrary.js";
+import { getNewestVideoIds, getTopicId } from "../utils/videoLibrary.js";
 
 const pageSize = 8;
 
@@ -40,6 +40,7 @@ export default function TopicVideosPage() {
     if (!topic?._id) return [];
     return videos.filter((video) => getTopicId(video) === topic._id);
   }, [topic?._id, videos]);
+  const newestVideoIds = useMemo(() => getNewestVideoIds(topicVideos), [topicVideos]);
   const visibleVideos = topicVideos.slice(0, visibleCount);
   const hasMore = visibleCount < topicVideos.length;
   const isLoading = isTopicsLoading || isVideosLoading;
@@ -110,6 +111,7 @@ export default function TopicVideosPage() {
                   <LessonCard
                     deleteVideoMutation={deleteVideoMutation}
                     isAdmin={isAdmin}
+                    isNew={newestVideoIds.has(video._id)}
                     key={video._id}
                     onSelect={() => setModePickerVideo(video)}
                     publishVideoMutation={publishVideoMutation}

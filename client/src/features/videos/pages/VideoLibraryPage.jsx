@@ -19,7 +19,7 @@ import VideoLibraryEmptyState from "../components/VideoLibraryEmptyState.jsx";
 import VideoLibraryErrorState from "../components/VideoLibraryErrorState.jsx";
 import VideoLibraryHero from "../components/VideoLibraryHero.jsx";
 import { homeTopicVideoLimit } from "../constants/videoLibrary.constants.js";
-import { buildTopicSections } from "../utils/videoLibrary.js";
+import { buildTopicSections, getNewestVideoIds } from "../utils/videoLibrary.js";
 
 export default function VideoLibraryPage() {
   const { user } = useAuthStore();
@@ -46,7 +46,6 @@ export default function VideoLibraryPage() {
     () => buildTopicSections({ isAdmin, topics: visibleTopics, videos }),
     [isAdmin, visibleTopics, videos],
   );
-
   function startLearning(mode) {
     if (!modePickerVideo?._id) return;
     setModePickerVideo(null);
@@ -92,6 +91,7 @@ export default function VideoLibraryPage() {
             {topicSections.map((section) => {
               const sectionVideos = section.videos.slice(0, homeTopicVideoLimit);
               const canExpand = section.topic?.slug && section.videos.length > homeTopicVideoLimit;
+              const newestVideoIds = getNewestVideoIds(section.videos);
 
               return (
                 <TopicVideoSection
@@ -99,6 +99,7 @@ export default function VideoLibraryPage() {
                   deleteVideoMutation={deleteVideoMutation}
                   isAdmin={isAdmin}
                   key={section.key}
+                  newestVideoIds={newestVideoIds}
                   onSelectVideo={(video) => setModePickerVideo(video)}
                   onViewAll={() => navigate(`/topics/${section.topic.slug}`)}
                   publishVideoMutation={publishVideoMutation}
