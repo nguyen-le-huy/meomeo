@@ -1,4 +1,4 @@
-import { Headphones, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Badge } from "../../../components/ui/badge.jsx";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
@@ -10,10 +10,10 @@ import {
   SelectValue,
 } from "../../../components/ui/select.jsx";
 import { cn } from "../../../utils/cn.js";
-import { formatDuration, formatNumber, getTopicId } from "../utils/videoLibrary.js";
+import { formatDuration, getTopicId } from "../utils/videoLibrary.js";
 
-export default function LessonCard({ deleteVideoMutation, isAdmin, isNew, onSelect, publishVideoMutation, topics, updateVideoMutation, video, variant }) {
-  const isFeatured = variant === "featured";
+export default function LessonCard({ deleteVideoMutation, isAdmin, isNew, onSelect, publishVideoMutation, topics, updateVideoMutation, video }) {
+  const isFeatured = isNew;
   const rawTopicId = getTopicId(video);
   const currentTopicValue = topics.some((topic) => topic._id === rawTopicId) ? rawTopicId : "__none__";
 
@@ -40,14 +40,6 @@ export default function LessonCard({ deleteVideoMutation, isAdmin, isNew, onSele
           className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
           src={video.thumbnailUrl}
         />
-        <Badge className="absolute left-3 top-3 gap-1 bg-coal/90 text-white">
-          <Headphones size={12} /> {formatNumber(video.viewCount || 0)}
-        </Badge>
-        {isNew ? (
-          <Badge className="absolute right-3 top-3 border border-white/70 bg-coral px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.14em] text-white shadow-sm">
-            New
-          </Badge>
-        ) : null}
         <Badge className="absolute bottom-3 right-3 gap-1 bg-coal/90 text-white">
           ◷ {formatDuration(video.duration || 0)}
         </Badge>
@@ -62,15 +54,6 @@ export default function LessonCard({ deleteVideoMutation, isAdmin, isNew, onSele
         >
           {video.title}
         </p>
-
-        <div className="hidden grid-cols-1 gap-1 text-xs font-semibold text-[#202036] sm:grid sm:grid-cols-2 sm:gap-3 sm:text-sm">
-          <span className="inline-flex items-center gap-1">
-            Dictation <span className="text-[#a9b2c4]">ⓧ</span>
-          </span>
-          <span className="inline-flex items-center gap-1 sm:justify-end">
-            Shadowing <span className="text-[#a9b2c4]">ⓧ</span>
-          </span>
-        </div>
 
         {isAdmin ? (
           <div className="space-y-2 border-t border-[#e6dfd8] pt-3" onClick={(event) => event.stopPropagation()}>

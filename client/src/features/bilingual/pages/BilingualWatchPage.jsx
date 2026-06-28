@@ -9,7 +9,11 @@ import SegmentYoutubePlayer from "../../videos/components/SegmentYoutubePlayer.j
 import BilingualSubtitleList from "../components/BilingualSubtitleList.jsx";
 import BilingualAdminToolbar from "../components/BilingualAdminToolbar.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
-import { useBilingualVideo, useGenerateVietsub } from "../hooks/useBilingualWatch.js";
+import {
+  useBilingualVideo,
+  useGenerateVietsub,
+  useUpdateBilingualSegment,
+} from "../hooks/useBilingualWatch.js";
 
 export default function BilingualWatchPage() {
   const { id } = useParams();
@@ -25,6 +29,7 @@ export default function BilingualWatchPage() {
 
   const { data, isLoading, error } = useBilingualVideo(id);
   const generateVietsubMutation = useGenerateVietsub(id);
+  const updateSegmentMutation = useUpdateBilingualSegment(id);
 
   const video = data?.video;
   const segments = data?.segments || [];
@@ -209,7 +214,15 @@ export default function BilingualWatchPage() {
             <h3 className="font-display text-lg font-medium">Phụ đề song ngữ</h3>
             <p className="text-xs text-ink-muted">{segments.length} đoạn</p>
           </div>
-          <BilingualSubtitleList activeIndex={activeIndex} onSeek={handleSeek} segments={segments} />
+          <BilingualSubtitleList
+            activeIndex={activeIndex}
+            canEdit={isAdmin}
+            onSeek={handleSeek}
+            onUpdateSegment={(segmentId, segmentData) =>
+              updateSegmentMutation.mutateAsync({ data: segmentData, segmentId })
+            }
+            segments={segments}
+          />
         </aside>
 
         <div className="flex min-h-0 flex-1 flex-col xl:hidden">
@@ -218,7 +231,15 @@ export default function BilingualWatchPage() {
             <p className="text-xs text-ink-muted">{segments.length} đoạn</p>
           </div>
           <div className="flex-1 overflow-y-auto">
-            <BilingualSubtitleList activeIndex={activeIndex} onSeek={handleSeek} segments={segments} />
+            <BilingualSubtitleList
+              activeIndex={activeIndex}
+              canEdit={isAdmin}
+              onSeek={handleSeek}
+              onUpdateSegment={(segmentId, segmentData) =>
+                updateSegmentMutation.mutateAsync({ data: segmentData, segmentId })
+              }
+              segments={segments}
+            />
           </div>
         </div>
       </div>

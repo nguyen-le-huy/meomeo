@@ -96,7 +96,7 @@ export default function TopicVideosPage() {
               <div className="flex min-w-0 items-center gap-3">
                 <span className="h-10 w-1.5 shrink-0 rounded-full bg-[#303866]" />
                 <div className="min-w-0">
-                  <h1 className="truncate text-3xl font-black tracking-tight text-[#202036]">{topic.name}</h1>
+                  <h1 className="truncate text-xl font-black tracking-tight text-[#202036] sm:text-2xl">{topic.name}</h1>
                   <p className="mt-1 text-sm font-semibold text-[#46516d]">
                     {topicVideos.length} bài học
                     {topic.description ? ` · ${topic.description}` : ""}
@@ -107,7 +107,7 @@ export default function TopicVideosPage() {
 
             {topicVideos.length ? (
               <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-                {visibleVideos.map((video, index) => (
+                {visibleVideos.map((video) => (
                   <LessonCard
                     deleteVideoMutation={deleteVideoMutation}
                     isAdmin={isAdmin}
@@ -118,7 +118,6 @@ export default function TopicVideosPage() {
                     topics={visibleTopics}
                     updateVideoMutation={updateVideoMutation}
                     video={video}
-                    variant={index % 4 === 0 ? "featured" : "default"}
                   />
                 ))}
               </div>
@@ -131,18 +130,15 @@ export default function TopicVideosPage() {
             )}
 
             {hasMore ? (
-              <div className="mt-10 flex flex-col items-center gap-3">
+              <div className="mt-10 flex justify-center">
                 <Button
                   className="min-w-44"
                   onClick={() => setVisibleCount((count) => Math.min(count + pageSize, topicVideos.length))}
                   type="button"
                   variant="outline"
                 >
-                  Tải thêm 8 video <ArrowDown size={16} />
+                  Tải thêm <ArrowDown size={16} />
                 </Button>
-                <p className="text-xs text-ink-muted">
-                  Đang hiển thị {visibleVideos.length} / {topicVideos.length} video
-                </p>
               </div>
             ) : null}
           </>

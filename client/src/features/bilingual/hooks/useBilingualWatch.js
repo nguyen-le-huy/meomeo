@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getBilingualVideo, generateVietsub } from "../services/bilingualApi.js";
+import { updateTranscriptSegment } from "../../videos/services/videoApi.js";
 
 export function useBilingualVideo(id) {
   return useQuery({
@@ -22,6 +23,18 @@ export function useGenerateVietsub(id) {
     },
     onError: () => {
       queryClient.invalidateQueries({ queryKey: ["bilingual-video", id] });
+    },
+  });
+}
+
+export function useUpdateBilingualSegment(id) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ segmentId, data }) => updateTranscriptSegment(segmentId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bilingual-video", id] });
+      queryClient.invalidateQueries({ queryKey: ["video-transcripts", id] });
     },
   });
 }
