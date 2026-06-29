@@ -4,10 +4,12 @@ import {
   deleteTopicController,
   getTopicVideosController,
   getTopicsController,
+  reorderTopicsController,
   updateTopicController,
 } from "./topic.controller.js";
 import {
   createTopicSchema,
+  reorderTopicsSchema,
   topicIdParamSchema,
   topicQuerySchema,
   topicSlugParamSchema,
@@ -20,6 +22,7 @@ import { validate } from "../../middlewares/validate.middleware.js";
 const router = Router();
 
 router.get("/", optionalAuth, validate(topicQuerySchema), getTopicsController);
+router.post("/reorder", requireAuth, requireRole("admin"), validate(reorderTopicsSchema), reorderTopicsController);
 router.get("/:slug/videos", optionalAuth, validate(topicSlugParamSchema), getTopicVideosController);
 router.post("/", requireAuth, requireRole("admin"), validate(createTopicSchema), createTopicController);
 router.patch("/:id", requireAuth, requireRole("admin"), validate(updateTopicSchema), updateTopicController);

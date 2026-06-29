@@ -7,6 +7,7 @@ import {
   useDeleteTopic,
   useDeleteVideo,
   usePublishVideo,
+  useReorderTopics,
   useTopics,
   useUpdateTopic,
   useUpdateVideo,
@@ -36,6 +37,7 @@ export default function VideoLibraryPage() {
   const createVideoMutation = useCreateVideo();
   const createTopicMutation = useCreateTopic();
   const updateTopicMutation = useUpdateTopic();
+  const reorderTopicsMutation = useReorderTopics();
   const deleteTopicMutation = useDeleteTopic();
   const updateVideoMutation = useUpdateVideo();
   const publishVideoMutation = usePublishVideo();
@@ -71,6 +73,7 @@ export default function VideoLibraryPage() {
               createTopicMutation={createTopicMutation}
               createVideoMutation={createVideoMutation}
               deleteTopicMutation={deleteTopicMutation}
+              reorderTopicsMutation={reorderTopicsMutation}
               onVideoCreated={(video) => navigate(`/videos/${video._id}`)}
               topics={visibleTopics}
               updateTopicMutation={updateTopicMutation}

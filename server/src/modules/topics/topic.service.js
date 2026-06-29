@@ -57,11 +57,12 @@ export async function getTopicBySlug(slug, options = {}) {
 
 export async function createTopic(data) {
   const slug = await createUniqueSlug(data.name);
+  const lastTopic = data.order === undefined ? await Topic.findOne().sort({ order: -1 }).select("order") : null;
   return Topic.create({
     name: data.name,
     slug,
     description: data.description || "",
-    order: data.order ?? 0,
+    order: data.order ?? (lastTopic?.order ?? -1) + 1,
     isPublished: data.isPublished ?? true,
   });
 }
@@ -80,6 +81,22 @@ export async function updateTopic(id, data) {
 
   await topic.save();
   return topic;
+}
+
+export async function reorderTopics(topicIds) {
+  const topicCount = await Topic.countDocuments({ _id: { $in: topicIds } });
+  if (topicCount !== topicIds.length) throw createHttpError(404, "One or more topics were not found");
+
+  await Topic.bulkWrite(
+    topicIds.map((topicId, order) => ({
+      updateOne: {
+        filter: { _id: topicId },
+        update: { $set: { order } },
+      },
+    })),
+  );
+
+  return Topic.find({ _id: { $in: topicIds } }).sort({ order: 1, name: 1 });
 }
 
 export async function deleteTopic(id) {

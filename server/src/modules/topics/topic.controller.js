@@ -3,6 +3,7 @@ import {
   deleteTopic,
   getTopicBySlug,
   getTopics,
+  reorderTopics,
   updateTopic,
 } from "./topic.service.js";
 import { getVideosByTopicSlug } from "../videos/video.service.js";
@@ -32,6 +33,11 @@ export const createTopicController = asyncHandler(async (req, res) => {
 export const updateTopicController = asyncHandler(async (req, res) => {
   const topic = await updateTopic(req.validated.params.id, req.validated.body);
   return successResponse(res, "Topic updated successfully", { topic });
+});
+
+export const reorderTopicsController = asyncHandler(async (req, res) => {
+  const topics = await reorderTopics(req.validated.body.topicIds);
+  return successResponse(res, "Topics reordered successfully", { topics });
 });
 
 export const deleteTopicController = asyncHandler(async (req, res) => {

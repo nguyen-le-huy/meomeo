@@ -48,7 +48,7 @@ export default function LessonCard({ deleteVideoMutation, isAdmin, isNew, onSele
       <CardContent className="space-y-2 p-2.5 sm:space-y-3 sm:p-4">
         <p
           className={cn(
-            "line-clamp-2 min-h-[34px] text-xs font-black leading-snug text-[#202036] sm:min-h-[42px] sm:text-sm",
+            "line-clamp-2 min-h-[34px] text-xs font-medium leading-snug text-[#202036] sm:min-h-[42px] sm:text-sm",
             isFeatured && "text-coral-dark",
           )}
         >

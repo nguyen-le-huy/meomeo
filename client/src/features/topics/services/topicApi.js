@@ -12,6 +12,10 @@ export function updateTopic(id, data) {
   return apiClient.patch(`/topics/${id}`, data);
 }
 
+export function reorderTopics(topicIds) {
+  return apiClient.post("/topics/reorder", { topicIds });
+}
+
 export function deleteTopic(id) {
   return apiClient.delete(`/topics/${id}`);
 }

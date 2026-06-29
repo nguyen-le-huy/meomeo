@@ -36,6 +36,18 @@ export const topicQuerySchema = z.object({
 
 export const createTopicSchema = z.object({ body: topicBodySchema });
 
+export const reorderTopicsSchema = z.object({
+  body: z
+    .object({
+      topicIds: z.array(z.string().regex(objectIdRegex, "Invalid topic id")).min(1),
+    })
+    .strict()
+    .refine(({ topicIds }) => new Set(topicIds).size === topicIds.length, {
+      message: "Topic ids must be unique",
+      path: ["topicIds"],
+    }),
+});
+
 export const updateTopicSchema = z.object({
   params: z.object({ id: z.string().regex(objectIdRegex, "Invalid topic id") }),
   body: topicBodySchema.partial().refine((value) => Object.keys(value).length > 0, {

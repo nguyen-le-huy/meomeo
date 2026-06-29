@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createTopic, deleteTopic, updateTopic } from "../../topics/services/topicApi.js";
+import { createTopic, deleteTopic, reorderTopics, updateTopic } from "../../topics/services/topicApi.js";
 import {
   analyzeVideoTranscript,
   assessShadowing,
@@ -76,6 +76,14 @@ export function useUpdateTopic() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }) => updateTopic(id, data),
+    onSuccess: () => invalidateLibrary(queryClient),
+  });
+}
+
+export function useReorderTopics() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: reorderTopics,
     onSuccess: () => invalidateLibrary(queryClient),
   });
 }

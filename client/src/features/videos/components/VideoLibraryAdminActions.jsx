@@ -5,6 +5,7 @@ export default function VideoLibraryAdminActions({
   createTopicMutation,
   createVideoMutation,
   deleteTopicMutation,
+  reorderTopicsMutation,
   onVideoCreated,
   topics,
   updateTopicMutation,
@@ -14,6 +15,7 @@ export default function VideoLibraryAdminActions({
       <TopicManagerDialog
         createTopicMutation={createTopicMutation}
         deleteTopicMutation={deleteTopicMutation}
+        reorderTopicsMutation={reorderTopicsMutation}
         topics={topics}
         updateTopicMutation={updateTopicMutation}
       />
