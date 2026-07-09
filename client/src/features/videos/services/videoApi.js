@@ -53,3 +53,27 @@ export function updateTranscriptSegment(segmentId, data) {
 export function mergeTranscriptSegment(segmentId) {
   return apiClient.post(`/transcripts/${segmentId}/merge-next`);
 }
+
+export function submitShadowingSession(data) {
+  return apiClient.post("/shadowing/sessions", data);
+}
+
+export function saveShadowingSessionProgress(data) {
+  return apiClient.put("/shadowing/sessions/progress", data);
+}
+
+export function getMyShadowingSession(videoId, sessionId) {
+  return apiClient.get("/shadowing/sessions/mine", { params: { videoId, sessionId } });
+}
+
+export function getMyShadowingSessions(sessionId) {
+  return apiClient.get("/shadowing/sessions/mine/all", { params: { sessionId } });
+}
+
+export function getShadowingSessions(videoId) {
+  return apiClient.get("/shadowing/sessions", { params: { videoId } });
+}
+
+export function deleteShadowingSession(id) {
+  return apiClient.delete(`/shadowing/sessions/${id}`);
+}

@@ -1,11 +1,16 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { useAuthStore } from "../../auth/stores/authStore.js";
+import LatestReadingCard from "../../reading/components/LatestReadingCard.jsx";
+import { useLatestReading } from "../../reading/hooks/useReadings.js";
+import { normalizeReading } from "../../reading/utils/readingFormat.js";
 import {
   useCreateTopic,
   useCreateVideo,
   useDeleteTopic,
   useDeleteVideo,
+  useMyShadowingSessions,
   usePublishVideo,
   useReorderTopics,
   useTopics,
@@ -43,10 +48,18 @@ export default function VideoLibraryPage() {
   const publishVideoMutation = usePublishVideo();
   const deleteVideoMutation = useDeleteVideo();
   const [modePickerVideo, setModePickerVideo] = useState(null);
+  const sessionId = getGuestSessionId();
+  const { data: myShadowingSessions = [] } = useMyShadowingSessions(sessionId);
+  const { data: latestReading } = useLatestReading();
+  const latestReadingLesson = normalizeReading(latestReading);
   const visibleTopics = useMemo(() => topics.filter((topic) => topic.slug !== "all-videos"), [topics]);
   const topicSections = useMemo(
     () => buildTopicSections({ isAdmin, topics: visibleTopics, videos }),
     [isAdmin, visibleTopics, videos],
+  );
+  const shadowingSessionByVideoId = useMemo(
+    () => new Map(myShadowingSessions.map((session) => [String(session.videoId), session])),
+    [myShadowingSessions],
   );
   function startLearning(mode) {
     if (!modePickerVideo?._id) return;
@@ -62,8 +75,13 @@ export default function VideoLibraryPage() {
     <section className="min-h-full overflow-auto bg-canvas text-coal">
       <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-12 sm:px-6 lg:px-10 lg:pt-20">
         <VideoLibraryHero />
+        <LatestReadingCard
+          lesson={latestReadingLesson}
+          onManage={isAdmin ? () => navigate("/admin/readings") : undefined}
+          onOpen={() => navigate(`/reading/${latestReadingLesson.slug}`)}
+        />
 
-        <div className="mb-8 mt-12 flex items-end justify-between gap-4">
+        <div className="mb-8 mt-10 flex items-end justify-between gap-4">
           <div>
             <p className="eyebrow">Thư viện theo topic</p>
             <h2 className="mt-2 font-display text-2xl font-normal tracking-tight sm:text-3xl">Chọn chủ đề hôm nay</h2>
@@ -107,6 +125,7 @@ export default function VideoLibraryPage() {
                   onViewAll={() => navigate(`/topics/${section.topic.slug}`)}
                   publishVideoMutation={publishVideoMutation}
                   section={section}
+                  shadowingSessionByVideoId={shadowingSessionByVideoId}
                   topics={visibleTopics}
                   updateVideoMutation={updateVideoMutation}
                   videos={sectionVideos}

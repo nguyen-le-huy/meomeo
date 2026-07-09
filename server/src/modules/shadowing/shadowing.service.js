@@ -11,7 +11,7 @@ import { uploadMedia } from "../media/media.service.js";
 import { config } from "../../config/env.js";
 import { createHttpError } from "../../utils/createHttpError.js";
 
-const passingScore = 70;
+const passingScore = 60;
 
 function normalizeWord(value) {
   return String(value || "")

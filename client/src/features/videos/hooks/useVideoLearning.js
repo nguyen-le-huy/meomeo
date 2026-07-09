@@ -14,6 +14,12 @@ import {
   publishVideo,
   updateTranscriptSegment,
   updateVideo,
+  saveShadowingSessionProgress,
+  submitShadowingSession,
+  getMyShadowingSession,
+  getMyShadowingSessions,
+  getShadowingSessions,
+  deleteShadowingSession,
 } from "../services/videoApi.js";
 import { getTopics } from "../../topics/services/topicApi.js";
 
@@ -179,5 +185,68 @@ export function useMergeTranscriptSegment(videoId) {
   return useMutation({
     mutationFn: mergeTranscriptSegment,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["video-transcripts", videoId] }),
+  });
+}
+
+export function useSubmitShadowingSession() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: submitShadowingSession,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shadowing-sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["my-shadowing-session"] });
+      queryClient.invalidateQueries({ queryKey: ["my-shadowing-sessions"] });
+    },
+  });
+}
+
+export function useSaveShadowingSessionProgress() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: saveShadowingSessionProgress,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shadowing-sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["my-shadowing-session"] });
+      queryClient.invalidateQueries({ queryKey: ["my-shadowing-sessions"] });
+    },
+  });
+}
+
+export function useMyShadowingSession(videoId, sessionId, options = {}) {
+  return useQuery({
+    queryKey: ["my-shadowing-session", videoId, sessionId],
+    queryFn: () => getMyShadowingSession(videoId, sessionId).then((r) => r.data.data.shadowingSession),
+    enabled: Boolean(videoId) && Boolean(sessionId),
+    ...options,
+  });
+}
+
+export function useMyShadowingSessions(sessionId, options = {}) {
+  return useQuery({
+    queryKey: ["my-shadowing-sessions", sessionId],
+    queryFn: () => getMyShadowingSessions(sessionId).then((r) => r.data.data.shadowingSessions),
+    enabled: Boolean(sessionId),
+    ...options,
+  });
+}
+
+export function useShadowingSessions(videoId, options = {}) {
+  return useQuery({
+    queryKey: ["shadowing-sessions", videoId],
+    queryFn: () => getShadowingSessions(videoId).then((r) => r.data.data.shadowingSessions),
+    enabled: Boolean(videoId),
+    ...options,
+  });
+}
+
+export function useDeleteShadowingSession() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteShadowingSession,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shadowing-sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["my-shadowing-session"] });
+      queryClient.invalidateQueries({ queryKey: ["my-shadowing-sessions"] });
+    },
   });
 }

@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Eye, Keyboard, Mic, Pause, Play, RotateCcw, Settings, Zap } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, Keyboard, Mic, Pause, Play, RotateCcw } from "lucide-react";
 import {
   compactActiveButtonClass,
   compactButtonClass,
@@ -53,12 +53,6 @@ export default function DictationPractice({
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <button className={toolbarButtonClass} type="button">
-            <Settings size={17} />
-          </button>
-          <span className="inline-flex items-center gap-1 text-sm font-black text-coal">
-            <Zap size={16} /> 1x
-          </span>
           <span className="rounded-full bg-cream px-3 py-1.5 text-xs font-semibold text-ink-body">
             {progressPercent}%
           </span>
@@ -86,12 +80,6 @@ export default function DictationPractice({
           </button>
         </div>
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1 text-sm font-black text-coal">
-            <Zap size={16} /> 1x
-          </span>
-          <button className={toolbarButtonClass} type="button">
-            <Settings size={17} />
-          </button>
           <button className={toolbarButtonClass} type="button">
             <Keyboard size={17} />
           </button>

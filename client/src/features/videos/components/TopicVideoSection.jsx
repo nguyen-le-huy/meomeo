@@ -12,6 +12,7 @@ export default function TopicVideoSection({
   onViewAll,
   publishVideoMutation,
   section,
+  shadowingSessionByVideoId,
   topics,
   updateVideoMutation,
   videos,
@@ -51,6 +52,7 @@ export default function TopicVideoSection({
               key={video._id}
               onSelect={() => onSelectVideo(video)}
               publishVideoMutation={publishVideoMutation}
+              shadowingSession={shadowingSessionByVideoId?.get(String(video._id))}
               topics={topics}
               updateVideoMutation={updateVideoMutation}
               video={video}

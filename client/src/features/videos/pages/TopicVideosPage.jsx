@@ -3,9 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
+import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import {
   useDeleteVideo,
+  useMyShadowingSessions,
   usePublishVideo,
   useTopics,
   useUpdateVideo,
@@ -32,6 +34,8 @@ export default function TopicVideosPage() {
   const updateVideoMutation = useUpdateVideo();
   const publishVideoMutation = usePublishVideo();
   const deleteVideoMutation = useDeleteVideo();
+  const sessionId = getGuestSessionId();
+  const { data: myShadowingSessions = [] } = useMyShadowingSessions(sessionId);
   const [visibleCount, setVisibleCount] = useState(pageSize);
   const [modePickerVideo, setModePickerVideo] = useState(null);
   const visibleTopics = useMemo(() => topics.filter((topic) => topic.slug !== "all-videos"), [topics]);
@@ -44,6 +48,10 @@ export default function TopicVideosPage() {
   const visibleVideos = topicVideos.slice(0, visibleCount);
   const hasMore = visibleCount < topicVideos.length;
   const isLoading = isTopicsLoading || isVideosLoading;
+  const shadowingSessionByVideoId = useMemo(
+    () => new Map(myShadowingSessions.map((session) => [String(session.videoId), session])),
+    [myShadowingSessions],
+  );
 
   useEffect(() => {
     setVisibleCount(pageSize);
@@ -115,6 +123,7 @@ export default function TopicVideosPage() {
                     key={video._id}
                     onSelect={() => setModePickerVideo(video)}
                     publishVideoMutation={publishVideoMutation}
+                    shadowingSession={shadowingSessionByVideoId.get(String(video._id))}
                     topics={visibleTopics}
                     updateVideoMutation={updateVideoMutation}
                     video={video}

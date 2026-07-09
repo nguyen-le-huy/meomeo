@@ -1,5 +1,5 @@
 export const levels = ["A1", "A2", "B1", "B2", "C1"];
-export const homeTopicVideoLimit = 8;
+export const homeTopicVideoLimit = 4;
 export const dictationStickerUrl =
   "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3YjhtdDg4Y25ocWtjemR1MnJma3dzODdrYzE2dW9vc2hzMzN0bm02dCZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/BOHvk845AYKAVlETl4/giphy.gif";
 export const shadowingStickerUrl =

@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react";
+import { CheckCircle2, Trash2 } from "lucide-react";
 import { Badge } from "../../../components/ui/badge.jsx";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
@@ -12,10 +12,21 @@ import {
 import { cn } from "../../../utils/cn.js";
 import { formatDuration, getTopicId } from "../utils/videoLibrary.js";
 
-export default function LessonCard({ deleteVideoMutation, isAdmin, isNew, onSelect, publishVideoMutation, topics, updateVideoMutation, video }) {
+export default function LessonCard({
+  deleteVideoMutation,
+  isAdmin,
+  isNew,
+  onSelect,
+  publishVideoMutation,
+  shadowingSession,
+  topics,
+  updateVideoMutation,
+  video,
+}) {
   const isFeatured = isNew;
   const rawTopicId = getTopicId(video);
   const currentTopicValue = topics.some((topic) => topic._id === rawTopicId) ? rawTopicId : "__none__";
+  const isShadowingDone = shadowingSession?.status === "completed";
 
   return (
     <Card
@@ -43,6 +54,11 @@ export default function LessonCard({ deleteVideoMutation, isAdmin, isNew, onSele
         <Badge className="absolute bottom-3 right-3 gap-1 bg-coal/90 text-white">
           ◷ {formatDuration(video.duration || 0)}
         </Badge>
+        {isShadowingDone ? (
+          <Badge className="absolute left-3 top-3 gap-1 bg-emerald-600 text-white">
+            <CheckCircle2 size={14} /> Done · {shadowingSession.averageScore || 0}đ
+          </Badge>
+        ) : null}
       </div>
 
       <CardContent className="space-y-2 p-2.5 sm:space-y-3 sm:p-4">
@@ -54,6 +70,11 @@ export default function LessonCard({ deleteVideoMutation, isAdmin, isNew, onSele
         >
           {video.title}
         </p>
+        {isShadowingDone ? (
+          <div className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700">
+            <CheckCircle2 size={13} /> Shadowing done · TB {shadowingSession.averageScore || 0}đ
+          </div>
+        ) : null}
 
         {isAdmin ? (
           <div className="space-y-2 border-t border-[#e6dfd8] pt-3" onClick={(event) => event.stopPropagation()}>

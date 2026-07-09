@@ -88,6 +88,12 @@ export default function VideoLearningPage() {
     resetDictationState();
   }
 
+  function resumeShadowingSegment(index) {
+    setCurrentIndex(index);
+    setHasStarted(false);
+    resetDictationState();
+  }
+
   function playSegmentAt(index, options = {}) {
     const targetSegment = segments[index];
     if (!targetSegment) return;
@@ -274,6 +280,7 @@ export default function VideoLearningPage() {
         onPlayingChange={setIsPlayerPlaying}
         onReadyChange={setIsYoutubeReady}
         onReplayCurrentSegment={replayCurrentSegment}
+        onResumeSegment={resumeShadowingSegment}
         onSelectSegment={selectSegment}
         onStartFirstSegment={startFirstSegment}
         onToggleCurrentSegmentPlayback={toggleCurrentSegmentPlayback}

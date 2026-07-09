@@ -30,7 +30,7 @@ export default function VideoLibraryHero() {
           meo meo {greeting}<br />Vào học ngay cho tớ.
         </h1>
         <p className="mt-2 max-w-xl text-sm font-semibold leading-5 text-ink-body sm:mt-6 sm:text-base sm:leading-7">
-          Chịu khó học nhé con bé Yến
+          Chịu khó học vào con ranh này
         </p>
       </div>
       <div className="flex items-end justify-between gap-3 overflow-hidden sm:gap-5 lg:justify-end lg:gap-4 lg:overflow-visible">
