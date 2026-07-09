@@ -1,4 +1,4 @@
-import { Edit3, FilePlus2, Heading2, ImagePlus, ListPlus, Plus, Quote, Trash2 } from "lucide-react";
+import { Edit3, FilePlus2, Heading2, ImagePlus, ListPlus, Plus, Quote, RemoveFormatting, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert } from "../../../components/ui/alert.jsx";
 import { Button } from "../../../components/ui/button.jsx";
@@ -40,6 +40,15 @@ const emptyForm = {
 };
 
 const readingWordsPerMinute = 200;
+const editorFontSizes = [
+  { label: "14", value: "14px" },
+  { label: "16", value: "16px" },
+  { label: "18", value: "18px" },
+  { label: "21", value: "21px" },
+  { label: "24", value: "24px" },
+  { label: "28", value: "28px" },
+  { label: "32", value: "32px" },
+];
 
 function parseParagraphs(value) {
   return value
@@ -165,6 +174,7 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
   const readingStats = useMemo(() => getReadingStats(form), [form]);
   const bodyEditorRef = useRef(null);
   const hydrationDoneRef = useRef(false);
+  const savedEditorRangeRef = useRef(null);
   const activeReading = draftReading || reading;
   const editorHydrationKey = `${activeReading?._id || "new"}-${isOpen ? "open" : "closed"}`;
 
@@ -175,6 +185,22 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
     setEditorBody(getEditorBodyFromReading(activeReading));
     hydrationDoneRef.current = false;
   }, [activeReading, isOpen, reading]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const saveSelection = () => {
+      const editor = bodyEditorRef.current;
+      const selection = window.getSelection();
+      if (!editor || !selection?.rangeCount) return;
+      const range = selection.getRangeAt(0);
+      if (!editor.contains(range.commonAncestorContainer)) return;
+      savedEditorRangeRef.current = range.cloneRange();
+    };
+
+    document.addEventListener("selectionchange", saveSelection);
+    return () => document.removeEventListener("selectionchange", saveSelection);
+  }, [isOpen]);
 
   const setupBodyEditorRef = (node) => {
     bodyEditorRef.current = node;
@@ -198,6 +224,57 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
       bodyEditorRef.current?.focus();
       window.getSelection()?.collapseToEnd?.();
     });
+  }
+
+  function updateEditorStateFromDom() {
+    const editor = bodyEditorRef.current;
+    if (!editor) return;
+    setEditorBody(editor.innerHTML || "");
+    updateField("paragraphsText", editor.textContent || "");
+  }
+
+  function restoreEditorSelection() {
+    const editor = bodyEditorRef.current;
+    const range = savedEditorRangeRef.current;
+    if (!editor || !range || !editor.contains(range.commonAncestorContainer)) return null;
+
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    return range;
+  }
+
+  function formatSelectionAsNormalText() {
+    const editor = bodyEditorRef.current;
+    if (!editor) return;
+
+    editor.focus();
+    restoreEditorSelection();
+    document.execCommand("removeFormat");
+    document.execCommand("formatBlock", false, "p");
+    updateEditorStateFromDom();
+  }
+
+  function applyFontSizeToSelection(fontSize) {
+    const editor = bodyEditorRef.current;
+    if (!editor || !fontSize) return;
+
+    editor.focus();
+    const range = restoreEditorSelection();
+    if (!range || range.collapsed) return;
+
+    const wrapper = document.createElement("span");
+    wrapper.style.fontSize = fontSize;
+    wrapper.appendChild(range.extractContents());
+    range.insertNode(wrapper);
+
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    const nextRange = document.createRange();
+    nextRange.selectNodeContents(wrapper);
+    selection.addRange(nextRange);
+    savedEditorRangeRef.current = nextRange.cloneRange();
+    updateEditorStateFromDom();
   }
 
   function generateSummary() {
@@ -330,6 +407,25 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
                       <span className="truncate text-xs font-black uppercase tracking-[0.14em] text-ink-muted">Medium style editor</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                      <Button onClick={formatSelectionAsNormalText} size="sm" type="button" variant="ghost">
+                        <RemoveFormatting size={15} /> Normal
+                      </Button>
+                      <select
+                        aria-label="Cỡ chữ"
+                        className="h-9 rounded-lg border border-transparent bg-transparent px-2 text-sm font-bold text-coal outline-none transition hover:bg-cream-soft focus:border-[#d8d0c6] focus:bg-white"
+                        defaultValue=""
+                        onChange={(event) => {
+                          applyFontSizeToSelection(event.target.value);
+                          event.target.value = "";
+                        }}
+                      >
+                        <option value="">Size</option>
+                        {editorFontSizes.map((item) => (
+                          <option key={item.value} value={item.value}>
+                            {item.label}
+                          </option>
+                        ))}
+                      </select>
                       <Button onClick={() => appendParagraphTemplate("New paragraph...")} size="sm" type="button" variant="ghost">
                         <ListPlus size={15} /> Paragraph
                       </Button>

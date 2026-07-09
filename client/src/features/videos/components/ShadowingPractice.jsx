@@ -5,6 +5,7 @@ import {
   ChevronRight,
   EyeOff,
   FilePenLine,
+  LoaderCircle,
   Mic,
   Pause,
   Play,
@@ -30,6 +31,8 @@ import { useAuthStore } from "../../auth/stores/authStore.js";
 import SegmentYoutubePlayer from "./SegmentYoutubePlayer.jsx";
 
 const passingScore = 60;
+const actionButtonMotionClass = "transition-all duration-200 ease-out active:scale-[0.98] disabled:active:scale-100";
+const recordingButtonClass = "animate-pulse shadow-[0_0_0_4px_rgba(204,120,92,0.18),0_10px_26px_rgba(204,120,92,0.28)]";
 
 function getSupportedRecordingMimeType() {
   const candidates = [
@@ -510,7 +513,7 @@ export default function ShadowingPractice({
             {!hasStarted ? (
               <div className="hidden justify-center xl:flex">
                 <Button
-                  className="h-12 min-w-52 bg-coral text-base text-white hover:bg-coral-dark"
+                  className={cn("h-12 min-w-52 bg-coral text-base text-white hover:bg-coral-dark", actionButtonMotionClass)}
                   disabled={!canUseSegment}
                   onClick={onReplayCurrentSegment}
                   type="button"
@@ -561,7 +564,7 @@ export default function ShadowingPractice({
                 isCurrentSegmentPassed ? (
                   <>
                     <Button
-                      className="h-12 min-w-44 rounded-2xl border-[#e6dfd8] bg-white text-sm font-black uppercase text-ink-muted shadow-sm"
+                      className={cn("h-12 min-w-44 rounded-2xl border-[#e6dfd8] bg-white text-sm font-black uppercase text-ink-muted shadow-sm", actionButtonMotionClass)}
                       disabled={!canUseSegment || assessMutation.isPending || locked}
                       onClick={handleRetryAction}
                       type="button"
@@ -570,18 +573,18 @@ export default function ShadowingPractice({
                       <Mic size={16} /> Thử lại
                     </Button>
                     <Button
-                      className="h-12 min-w-48 bg-coral text-sm text-white hover:bg-coral-dark"
+                      className={cn("h-12 min-w-48 bg-coral text-sm text-white hover:bg-coral-dark", actionButtonMotionClass)}
                       disabled={!isYoutubeReady || submitMutation.isPending || locked}
                       onClick={handleContinueAction}
                       type="button"
                     >
-                      {allCompleted ? <CheckCircle2 size={16} /> : <ChevronRight size={16} />}
+                      {submitMutation.isPending ? <LoaderCircle className="animate-spin" size={16} /> : allCompleted ? <CheckCircle2 size={16} /> : <ChevronRight size={16} />}
                       {allCompleted ? (submitMutation.isPending ? "Đang hoàn thành..." : "Hoàn thành") : "Tiếp tục"}
                     </Button>
                   </>
                 ) : (
                   <Button
-                    className="h-12 min-w-48 bg-coral text-sm text-white hover:bg-coral-dark"
+                    className={cn("h-12 min-w-48 bg-coral text-sm text-white hover:bg-coral-dark", actionButtonMotionClass)}
                     disabled={!canUseSegment || assessMutation.isPending || locked}
                     onClick={handleRetryAction}
                     type="button"
@@ -592,7 +595,7 @@ export default function ShadowingPractice({
               ) : (
                 <>
                   <Button
-                    className="h-12 min-w-44 rounded-2xl border-[#e6dfd8] bg-white text-sm font-black uppercase text-ink-muted shadow-sm"
+                    className={cn("h-12 min-w-44 rounded-2xl border-[#e6dfd8] bg-white text-sm font-black uppercase text-ink-muted shadow-sm", actionButtonMotionClass)}
                     disabled={!hasStarted}
                     onClick={onReplayCurrentSegment}
                     type="button"
@@ -601,12 +604,17 @@ export default function ShadowingPractice({
                     <Play size={16} /> Phát lại ghi âm
                   </Button>
                   <Button
-                    className="h-12 min-w-48 bg-coral text-sm text-white hover:bg-coral-dark"
+                    className={cn(
+                      "h-12 min-w-48 bg-coral text-sm text-white hover:bg-coral-dark",
+                      actionButtonMotionClass,
+                      isRecording && recordingButtonClass,
+                    )}
                     disabled={!canUseSegment || !hasStarted || assessMutation.isPending || locked}
                     onClick={isRecording ? stopRecording : startRecording}
                     type="button"
                   >
-                    <Mic size={16} /> {assessMutation.isPending ? "Đang chấm..." : isRecording ? "Dừng ghi âm" : "Ghi âm"}
+                    {assessMutation.isPending ? <LoaderCircle className="animate-spin" size={16} /> : <Mic className={cn(isRecording && "animate-bounce")} size={16} />}
+                    {assessMutation.isPending ? "Đang chấm..." : isRecording ? "Dừng ghi âm" : "Ghi âm"}
                   </Button>
                 </>
               )}
@@ -661,11 +669,12 @@ export default function ShadowingPractice({
 	                </span>
               </div>
               <Button
-                className="mt-3 h-12 w-full bg-coral text-sm text-white hover:bg-coral-dark"
+                className={cn("mt-3 h-12 w-full bg-coral text-sm text-white hover:bg-coral-dark", actionButtonMotionClass)}
                 disabled={submitMutation.isPending}
                 onClick={handleSubmit}
                 type="button"
               >
+                {submitMutation.isPending ? <LoaderCircle className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
                 {submitMutation.isPending ? "Đang nộp..." : "Nộp bài"}
               </Button>
               {submitMutation.isError ? (
@@ -729,7 +738,7 @@ export default function ShadowingPractice({
         {hasStarted && showResultActions && isCurrentSegmentPassed ? (
           <div className="grid grid-cols-[0.85fr_1fr] gap-2">
             <Button
-              className="h-14 border-[#e6dfd8] bg-white text-base font-black text-ink-muted shadow-sm"
+              className={cn("h-14 border-[#e6dfd8] bg-white text-base font-black text-ink-muted shadow-sm", actionButtonMotionClass)}
               disabled={!activeSegment || !isYoutubeReady || assessMutation.isPending || locked}
               onClick={handleRetryAction}
               type="button"
@@ -738,25 +747,35 @@ export default function ShadowingPractice({
               <Mic size={17} /> Thử lại
             </Button>
             <Button
-              className="h-14 bg-coral text-base text-white shadow-lg hover:bg-coral-dark"
+              className={cn("h-14 bg-coral text-base text-white shadow-lg hover:bg-coral-dark", actionButtonMotionClass)}
               disabled={!activeSegment || !isYoutubeReady || locked || submitMutation.isPending}
               onClick={handleContinueAction}
               type="button"
             >
-              {allCompleted ? <CheckCircle2 size={17} /> : <ChevronRight size={17} />}
+              {submitMutation.isPending ? <LoaderCircle className="animate-spin" size={17} /> : allCompleted ? <CheckCircle2 size={17} /> : <ChevronRight size={17} />}
               {allCompleted ? (submitMutation.isPending ? "Đang hoàn thành..." : "Hoàn thành") : "Tiếp tục"}
             </Button>
           </div>
         ) : (
           <Button
-            className="h-14 w-full bg-coral text-base text-white shadow-lg hover:bg-coral-dark"
+            className={cn(
+              "h-14 w-full bg-coral text-base text-white shadow-lg hover:bg-coral-dark",
+              actionButtonMotionClass,
+              isRecording && recordingButtonClass,
+            )}
             disabled={!activeSegment || !isYoutubeReady || assessMutation.isPending || locked || submitMutation.isPending}
             onClick={hasStarted && showResultActions && !isCurrentSegmentPassed ? handleRetryAction : handlePrimaryAction}
             type="button"
           >
-            {hasStarted ? <Mic size={17} /> : <Play size={17} />}
+            {assessMutation.isPending || submitMutation.isPending ? (
+              <LoaderCircle className="animate-spin" size={17} />
+            ) : hasStarted ? (
+              <Mic className={cn(isRecording && "animate-bounce")} size={17} />
+            ) : (
+              <Play size={17} />
+            )}
             {hasStarted
-              ? (assessMutation.isPending ? "Đang chấm..." : isRecording ? "Dừng ghi âm" : showResultActions ? "Nói lại" : "Ghi âm")
+              ? (submitMutation.isPending ? "Đang nộp..." : assessMutation.isPending ? "Đang chấm..." : isRecording ? "Dừng ghi âm" : showResultActions ? "Nói lại" : "Ghi âm")
               : "Bắt đầu"}
           </Button>
         )}
@@ -951,7 +970,7 @@ function WordLine({ assessmentWords, isMuted = false, text }) {
   const words = String(text || "").split(/\s+/).filter(Boolean);
 
   return (
-    <div className={cn("flex flex-wrap gap-x-3 gap-y-2 text-base font-black leading-7", isMuted ? "text-[#687386]" : "text-coal")}>
+    <div className={cn("flex flex-wrap gap-x-1.5 gap-y-1 text-base font-semibold leading-6", isMuted ? "text-[#687386]" : "text-coal")}>
       {words.map((word, index) => (
         <span
           className={cn(
@@ -971,7 +990,7 @@ function TranslationLine({ isMuted = false, text }) {
   if (!text) return null;
 
   return (
-    <p className={cn("whitespace-normal text-sm font-semibold leading-6", isMuted ? "text-[#8b95a6]" : "text-coral-dark")}>
+    <p className={cn("whitespace-normal text-sm font-normal leading-6", isMuted ? "text-[#8b95a6]" : "text-coral-dark")}>
       {text}
     </p>
   );
