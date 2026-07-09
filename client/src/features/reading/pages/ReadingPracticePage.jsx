@@ -375,16 +375,7 @@ export default function ReadingPracticePage() {
   const [localAnswers, setLocalAnswers] = useState({});
   const [showResult, setShowResult] = useState(false);
   const articleTextRef = useRef(null);
-  const splitContainerRef = useRef(null);
   const highlightStorageKey = `reading-highlights-${lesson?._id || slug}`;
-  const [mobileSplitPercent, setMobileSplitPercent] = useState(() => {
-    try {
-      const stored = Number(localStorage.getItem("reading-mobile-split-percent"));
-      return Number.isFinite(stored) ? Math.min(Math.max(stored, 28), 72) : 60;
-    } catch {
-      return 60;
-    }
-  });
   const [selectionDraft, setSelectionDraft] = useState(null);
   const [activeHighlight, setActiveHighlight] = useState(null);
   const [highlights, setHighlights] = useState([]);
@@ -428,14 +419,6 @@ export default function ReadingPracticePage() {
       // ignore unavailable storage
     }
   }, [highlightStorageKey, highlights]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("reading-mobile-split-percent", String(mobileSplitPercent));
-    } catch {
-      // ignore unavailable storage
-    }
-  }, [mobileSplitPercent]);
 
   if (isLoading && !fallbackLesson) {
     return (
@@ -580,53 +563,10 @@ export default function ReadingPracticePage() {
     setActiveHighlight(null);
   }
 
-  function handleMobileSplitPointerDown(event) {
-    if (window.matchMedia("(min-width: 768px)").matches) return;
-    const container = splitContainerRef.current;
-    if (!container) return;
-
-    event.preventDefault();
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    document.body.style.userSelect = "none";
-    document.body.style.cursor = "row-resize";
-
-    const updateSplit = (clientY) => {
-      const rect = container.getBoundingClientRect();
-      if (!rect.height) return;
-      const nextPercent = ((clientY - rect.top) / rect.height) * 100;
-      setMobileSplitPercent(Math.min(Math.max(nextPercent, 28), 72));
-    };
-
-    updateSplit(event.clientY);
-
-    const handlePointerMove = (moveEvent) => {
-      moveEvent.preventDefault();
-      updateSplit(moveEvent.clientY);
-    };
-
-    const stopDragging = () => {
-      document.body.style.userSelect = "";
-      document.body.style.cursor = "";
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", stopDragging);
-      window.removeEventListener("pointercancel", stopDragging);
-    };
-
-    window.addEventListener("pointermove", handlePointerMove, { passive: false });
-    window.addEventListener("pointerup", stopDragging);
-    window.addEventListener("pointercancel", stopDragging);
-  }
-
   return (
     <section className="h-[calc(100dvh-3rem)] overflow-hidden bg-cream-soft text-coal md:h-[calc(100dvh-4rem)]">
-      <div
-        className="flex h-full min-h-0 flex-col p-2 md:grid md:grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)] md:gap-3 md:p-4"
-        ref={splitContainerRef}
-      >
-        <article
-          className="bbc-article min-h-0 min-w-0 shrink-0 overflow-y-auto overflow-x-hidden rounded-xl border border-[#d8d0c6] bg-canvas shadow-sm md:shrink md:overflow-y-auto"
-          style={{ flexBasis: `${mobileSplitPercent}%` }}
-        >
+      <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,1fr)] gap-2 p-2 md:grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)] md:grid-rows-1 md:gap-3 md:p-4">
+        <article className="bbc-article min-h-0 min-w-0 overflow-y-auto overflow-x-hidden rounded-xl border border-[#d8d0c6] bg-canvas shadow-sm">
           <div
             className="mx-auto min-w-0 max-w-[700px] overflow-x-hidden px-3 py-4 sm:px-6 lg:py-8"
             onClick={openHighlightToolbar}
@@ -698,16 +638,7 @@ export default function ReadingPracticePage() {
           </div>
         </article>
 
-        <button
-          aria-label="Kéo để chỉnh chiều cao bài đọc và câu hỏi"
-          className="my-1 flex h-4 shrink-0 touch-none cursor-row-resize items-center justify-center rounded-full bg-[#d8d0c6]/80 text-[#7a7268] md:hidden"
-          onPointerDown={handleMobileSplitPointerDown}
-          type="button"
-        >
-          <span className="h-0.5 w-10 rounded-full bg-current" />
-        </button>
-
-        <section className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-[#d8d0c6] bg-canvas shadow-sm">
+        <section className="min-h-0 overflow-y-auto rounded-xl border border-[#d8d0c6] bg-canvas shadow-sm">
           <div className="mx-auto max-w-[760px] px-3 py-4 sm:px-6 lg:py-8">
         {lesson.questions.length ? (
           <form
