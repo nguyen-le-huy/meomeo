@@ -2,12 +2,14 @@ import { Router } from "express";
 import {
   createSegmentController,
   deleteSegmentController,
+  deleteSegmentsController,
   mergeSegmentController,
   reorderSegmentsController,
   updateSegmentController,
 } from "./transcript.controller.js";
 import {
   createSegmentSchema,
+  deleteSegmentsSchema,
   reorderSegmentsSchema,
   segmentIdParamSchema,
   updateSegmentSchema,
@@ -28,6 +30,7 @@ router.post(
   mergeSegmentController,
 );
 router.post("/reorder", requireAuth, requireRole("admin"), validate(reorderSegmentsSchema), reorderSegmentsController);
+router.delete("/", requireAuth, requireRole("admin"), validate(deleteSegmentsSchema), deleteSegmentsController);
 router.delete(
   "/:segmentId",
   requireAuth,

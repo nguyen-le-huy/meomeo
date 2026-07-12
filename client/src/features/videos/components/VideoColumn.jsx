@@ -26,6 +26,7 @@ export default function VideoColumn({
       </div>
       <div className="space-y-4">
         <SegmentYoutubePlayer
+          disableInteraction
           onPlayingChange={onPlayingChange}
           onReadyChange={onReadyChange}
           ref={playerRef}

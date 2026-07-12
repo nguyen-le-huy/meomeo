@@ -7,6 +7,7 @@ import {
   createTranscriptSegment,
   createVideo,
   deleteVideo,
+  deleteTranscriptSegments,
   getVideo,
   getVideos,
   getVideoTranscripts,
@@ -177,6 +178,19 @@ export function useUpdateTranscriptSegment(videoId) {
   return useMutation({
     mutationFn: ({ segmentId, data }) => updateTranscriptSegment(segmentId, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["video-transcripts", videoId] }),
+  });
+}
+
+export function useDeleteTranscriptSegments(videoId) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteTranscriptSegments,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["video", videoId] });
+      queryClient.invalidateQueries({ queryKey: ["video-transcripts", videoId] });
+      queryClient.invalidateQueries({ queryKey: ["bilingual-video", videoId] });
+      queryClient.invalidateQueries({ queryKey: ["videos"] });
+    },
   });
 }
 

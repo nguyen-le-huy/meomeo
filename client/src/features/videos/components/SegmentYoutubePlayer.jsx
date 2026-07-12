@@ -24,7 +24,7 @@ function loadYouTubeIframeApi() {
 }
 
 const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
-  { continuous, onPlayingChange, onReadyChange, onTimeChange, segment, title, youtubeVideoId },
+  { continuous, disableInteraction = false, onPlayingChange, onReadyChange, onTimeChange, segment, title, youtubeVideoId },
   ref,
 ) {
   const hostRef = useRef(null);
@@ -185,7 +185,10 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
   return (
     <div className="w-full max-w-full min-w-0 rounded-none border-b-4 border-coral bg-[#181715] md:rounded-xl md:border-4 md:border-[#181715]">
       <div
-        className="h-[210px] w-full max-w-full min-w-0 [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:max-w-full md:aspect-video md:h-auto"
+        className={[
+          "h-[210px] w-full max-w-full min-w-0 [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:max-w-full md:aspect-video md:h-auto",
+          disableInteraction ? "[&>iframe]:pointer-events-none" : "",
+        ].join(" ")}
         ref={hostRef}
         title={title}
       />

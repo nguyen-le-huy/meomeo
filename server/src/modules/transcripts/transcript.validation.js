@@ -48,3 +48,11 @@ export const reorderSegmentsSchema = z.object({
     segmentIds: z.array(z.string().regex(objectIdRegex, "Invalid segment id")).min(1),
   }),
 });
+
+export const deleteSegmentsSchema = z.object({
+  body: z
+    .object({
+      segmentIds: z.array(z.string().regex(objectIdRegex, "Invalid segment id")).min(1),
+    })
+    .strict(),
+});

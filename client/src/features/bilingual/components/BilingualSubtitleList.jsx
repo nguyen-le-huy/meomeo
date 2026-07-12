@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Check, LoaderCircle, Pencil, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, LoaderCircle, Pencil, Trash2, X } from "lucide-react";
 import { Button } from "../../../components/ui/button.jsx";
 import { Textarea } from "../../../components/ui/textarea.jsx";
 import { cn } from "../../../utils/cn.js";
@@ -10,18 +10,35 @@ function formatTime(seconds) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export default function BilingualSubtitleList({ activeIndex, canEdit = false, onSeek, onUpdateSegment, segments }) {
+export default function BilingualSubtitleList({
+  activeIndex,
+  canEdit = false,
+  onDeleteSegments,
+  onSeek,
+  onUpdateSegment,
+  segments,
+}) {
   const activeRef = useRef(null);
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({ text: "", translationText: "" });
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const allSegmentIds = useMemo(() => segments.map((segment) => segment._id), [segments]);
+  const selectedSet = new Set(selectedIds);
+  const isAllSelected = allSegmentIds.length > 0 && allSegmentIds.every((id) => selectedSet.has(id));
 
   useEffect(() => {
     if (activeRef.current) {
       activeRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   }, [activeIndex]);
+
+  useEffect(() => {
+    setSelectedIds((current) => current.filter((id) => allSegmentIds.includes(id)));
+  }, [allSegmentIds]);
 
   function startEditing(segment) {
     setEditingId(segment._id);
@@ -59,11 +76,68 @@ export default function BilingualSubtitleList({ activeIndex, canEdit = false, on
     }
   }
 
+  function toggleSelected(segmentId) {
+    setSelectedIds((current) =>
+      current.includes(segmentId) ? current.filter((id) => id !== segmentId) : [...current, segmentId],
+    );
+  }
+
+  function toggleAllSelected() {
+    setSelectedIds(isAllSelected ? [] : allSegmentIds);
+  }
+
+  async function deleteSegments(segmentIds) {
+    if (!segmentIds.length || isDeleting) return;
+    const ok = window.confirm(
+      segmentIds.length === 1
+        ? "Xoá transcript này? Các transcript khác sẽ được giữ nguyên."
+        : `Xoá ${segmentIds.length} transcript đã chọn? Các transcript khác sẽ được giữ nguyên.`,
+    );
+    if (!ok) return;
+
+    setIsDeleting(true);
+    setError("");
+    try {
+      await onDeleteSegments?.(segmentIds);
+      setSelectedIds((current) => current.filter((id) => !segmentIds.includes(id)));
+      if (segmentIds.includes(editingId)) setEditingId(null);
+    } catch (deleteError) {
+      setError(deleteError?.response?.data?.message || "Không xoá được transcript.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   return (
     <div className="divide-y divide-[#e6dfd8]">
+      {canEdit ? (
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[#e6dfd8] bg-canvas px-5 py-2">
+          <label className="flex items-center gap-2 text-xs font-semibold text-ink-muted">
+            <input
+              checked={isAllSelected}
+              disabled={!segments.length || isDeleting}
+              onChange={toggleAllSelected}
+              type="checkbox"
+            />
+            Chọn tất cả
+          </label>
+          <Button
+            disabled={!selectedIds.length || isDeleting}
+            onClick={() => deleteSegments(selectedIds)}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            {isDeleting ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+            Xoá {selectedIds.length || ""}
+          </Button>
+        </div>
+      ) : null}
+      {error && !editingId ? <p className="px-5 py-2 text-xs font-semibold text-red-600">{error}</p> : null}
       {segments.map((segment, index) => {
         const isActive = index === activeIndex;
         const isEditing = editingId === segment._id;
+        const isSelected = selectedSet.has(segment._id);
 
         if (isEditing) {
           return (
@@ -76,7 +150,15 @@ export default function BilingualSubtitleList({ activeIndex, canEdit = false, on
               ref={isActive ? activeRef : null}
             >
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold text-ink-muted">Sửa phụ đề</p>
+                <div className="flex items-center gap-2">
+                  <input
+                    checked={isSelected}
+                    disabled={isDeleting}
+                    onChange={() => toggleSelected(segment._id)}
+                    type="checkbox"
+                  />
+                  <p className="text-xs font-semibold text-ink-muted">Sửa phụ đề</p>
+                </div>
                 <span className="text-xs font-medium text-ink-muted">{formatTime(segment.startTime)}</span>
               </div>
 
@@ -134,8 +216,18 @@ export default function BilingualSubtitleList({ activeIndex, canEdit = false, on
               isActive && "bg-cream-soft ring-1 ring-inset ring-coral",
             )}
           >
+            {canEdit ? (
+              <label className="flex self-stretch px-3 py-3">
+                <input
+                  checked={isSelected}
+                  disabled={isDeleting}
+                  onChange={() => toggleSelected(segment._id)}
+                  type="checkbox"
+                />
+              </label>
+            ) : null}
             <button
-              className="flex min-w-0 flex-1 gap-3 px-5 py-3 text-left"
+              className={cn("flex min-w-0 flex-1 gap-3 py-3 text-left", canEdit ? "pr-3" : "px-5")}
               onClick={() => onSeek(segment.startTime)}
               type="button"
             >
@@ -160,17 +252,29 @@ export default function BilingualSubtitleList({ activeIndex, canEdit = false, on
             </button>
 
             {canEdit ? (
-              <Button
-                aria-label="Sửa phụ đề"
-                className="mr-3 mt-2 shrink-0 opacity-70 group-hover:opacity-100"
-                onClick={() => startEditing(segment)}
-                size="icon"
-                title="Sửa phụ đề"
-                type="button"
-                variant="ghost"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
+              <div className="mr-3 mt-2 flex shrink-0 items-center gap-1 opacity-70 group-hover:opacity-100">
+                <Button
+                  aria-label="Sửa phụ đề"
+                  onClick={() => startEditing(segment)}
+                  size="icon"
+                  title="Sửa phụ đề"
+                  type="button"
+                  variant="ghost"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  aria-label="Xoá phụ đề"
+                  disabled={isDeleting}
+                  onClick={() => deleteSegments([segment._id])}
+                  size="icon"
+                  title="Xoá phụ đề"
+                  type="button"
+                  variant="ghost"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             ) : null}
           </div>
         );

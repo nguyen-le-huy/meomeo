@@ -19,6 +19,7 @@ import {
   useAnalyzeVideoTranscript,
   useCheckDictation,
   useCreateTranscriptSegment,
+  useDeleteTranscriptSegments,
   useUpdateTranscriptSegment,
   useVideo,
   useVideoTranscripts,
@@ -48,6 +49,7 @@ export default function VideoLearningPage() {
   const checkMutation = useCheckDictation();
   const analyzeMutation = useAnalyzeVideoTranscript(id);
   const createSegmentMutation = useCreateTranscriptSegment(id);
+  const deleteSegmentsMutation = useDeleteTranscriptSegments(id);
   const updateSegmentMutation = useUpdateTranscriptSegment(id);
   const segment = segments[currentIndex];
 
@@ -225,6 +227,16 @@ export default function VideoLearningPage() {
     setEditingSegmentId("");
   }
 
+  async function deleteSegments(segmentIds) {
+    await deleteSegmentsMutation.mutateAsync(segmentIds);
+    if (segmentIds.includes(segment?._id)) {
+      selectSegment(Math.min(currentIndex, Math.max(segments.length - segmentIds.length - 1, 0)));
+    }
+    if (segmentIds.includes(editingSegmentId)) {
+      setEditingSegmentId("");
+    }
+  }
+
   useEffect(() => {
     if (!isAnswerCorrect || !segment?._id) return;
 
@@ -346,7 +358,9 @@ export default function VideoLearningPage() {
           editingSegmentId={editingSegmentId}
           isAdmin={isAdmin}
           isCreating={createSegmentMutation.isPending}
+          isDeleting={deleteSegmentsMutation.isPending}
           onCreate={createSegment}
+          onDelete={deleteSegments}
           onEdit={setEditingSegmentId}
           onSelect={selectSegment}
           onUpdate={updateSegment}

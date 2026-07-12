@@ -11,6 +11,7 @@ import BilingualAdminToolbar from "../components/BilingualAdminToolbar.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import {
   useBilingualVideo,
+  useDeleteBilingualSegments,
   useGenerateVietsub,
   useUpdateBilingualSegment,
 } from "../hooks/useBilingualWatch.js";
@@ -30,6 +31,7 @@ export default function BilingualWatchPage() {
   const { data, isLoading, error } = useBilingualVideo(id);
   const generateVietsubMutation = useGenerateVietsub(id);
   const updateSegmentMutation = useUpdateBilingualSegment(id);
+  const deleteSegmentsMutation = useDeleteBilingualSegments(id);
 
   const video = data?.video;
   const segments = data?.segments || [];
@@ -221,6 +223,7 @@ export default function BilingualWatchPage() {
             onUpdateSegment={(segmentId, segmentData) =>
               updateSegmentMutation.mutateAsync({ data: segmentData, segmentId })
             }
+            onDeleteSegments={(segmentIds) => deleteSegmentsMutation.mutateAsync(segmentIds)}
             segments={segments}
           />
         </aside>
@@ -238,6 +241,7 @@ export default function BilingualWatchPage() {
               onUpdateSegment={(segmentId, segmentData) =>
                 updateSegmentMutation.mutateAsync({ data: segmentData, segmentId })
               }
+              onDeleteSegments={(segmentIds) => deleteSegmentsMutation.mutateAsync(segmentIds)}
               segments={segments}
             />
           </div>

@@ -1,5 +1,5 @@
-import { AlertTriangle, NotebookPen, Plus, Save } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, LoaderCircle, NotebookPen, Plus, Save, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { getMaskedWords } from "../utils/dictationText.js";
 
 export default function TranscriptPanel({
@@ -8,7 +8,9 @@ export default function TranscriptPanel({
   editingSegmentId,
   isAdmin,
   isCreating,
+  isDeleting = false,
   onCreate,
+  onDelete,
   onEdit,
   onSelect,
   onUpdate,
@@ -19,6 +21,43 @@ export default function TranscriptPanel({
   showAddTranscriptForm,
 }) {
   const lastSegment = segments[segments.length - 1];
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [deleteError, setDeleteError] = useState("");
+  const allSegmentIds = useMemo(() => segments.map((segment) => segment._id), [segments]);
+  const selectedSet = new Set(selectedIds);
+  const isAllSelected = allSegmentIds.length > 0 && allSegmentIds.every((id) => selectedSet.has(id));
+
+  useEffect(() => {
+    setSelectedIds((current) => current.filter((id) => allSegmentIds.includes(id)));
+  }, [allSegmentIds]);
+
+  function toggleSelected(segmentId) {
+    setSelectedIds((current) =>
+      current.includes(segmentId) ? current.filter((id) => id !== segmentId) : [...current, segmentId],
+    );
+  }
+
+  function toggleAllSelected() {
+    setSelectedIds(isAllSelected ? [] : allSegmentIds);
+  }
+
+  async function deleteSegments(segmentIds) {
+    if (!segmentIds.length || isDeleting) return;
+    const ok = window.confirm(
+      segmentIds.length === 1
+        ? "Xoá transcript này? Các transcript khác sẽ được giữ nguyên."
+        : `Xoá ${segmentIds.length} transcript đã chọn? Các transcript khác sẽ được giữ nguyên.`,
+    );
+    if (!ok) return;
+
+    setDeleteError("");
+    try {
+      await onDelete?.(segmentIds);
+      setSelectedIds((current) => current.filter((id) => !segmentIds.includes(id)));
+    } catch (error) {
+      setDeleteError(error?.response?.data?.message || "Không xoá được transcript.");
+    }
+  }
 
   return (
     <aside className="hidden max-h-[calc(100vh-6rem)] min-h-[calc(100vh-6rem)] flex-col rounded-xl border border-[#e6dfd8] bg-canvas p-4 xl:flex">
@@ -34,9 +73,34 @@ export default function TranscriptPanel({
               <Plus size={14} /> Thêm card
             </button>
           ) : null}
+          {isAdmin ? (
+            <button
+              className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#e6dfd8] bg-white px-3 text-xs font-black text-coal shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={!selectedIds.length || isDeleting}
+              onClick={() => deleteSegments(selectedIds)}
+              type="button"
+            >
+              {isDeleting ? <LoaderCircle className="animate-spin" size={14} /> : <Trash2 size={14} />}
+              Xoá {selectedIds.length || ""}
+            </button>
+          ) : null}
           <span className="rounded-full bg-cream px-3 py-1 text-xs font-semibold text-ink-body">{progressPercent}%</span>
         </div>
       </div>
+      {isAdmin ? (
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <label className="flex items-center gap-2 text-xs font-bold text-coal/65">
+            <input
+              checked={isAllSelected}
+              disabled={!segments.length || isDeleting}
+              onChange={toggleAllSelected}
+              type="checkbox"
+            />
+            Chọn tất cả
+          </label>
+          {deleteError ? <p className="text-xs font-bold text-red-600">{deleteError}</p> : null}
+        </div>
+      ) : null}
       <div className="mb-4 h-2 overflow-hidden rounded-full bg-cream">
         <div className="h-full rounded-full bg-coral" style={{ width: `${progressPercent}%` }} />
       </div>
@@ -60,13 +124,23 @@ export default function TranscriptPanel({
               key={item._id}
             >
               <div className="mb-3 flex items-center justify-between gap-2">
-                <button
-                  className="rounded-lg border border-[#e6dfd8] bg-cream-soft px-3 py-1 text-sm font-black text-coal"
-                  onClick={() => onSelect(index)}
-                  type="button"
-                >
-                  #{item.index}
-                </button>
+                <div className="flex items-center gap-2">
+                  {isAdmin ? (
+                    <input
+                      checked={selectedSet.has(item._id)}
+                      disabled={isDeleting}
+                      onChange={() => toggleSelected(item._id)}
+                      type="checkbox"
+                    />
+                  ) : null}
+                  <button
+                    className="rounded-lg border border-[#e6dfd8] bg-cream-soft px-3 py-1 text-sm font-black text-coal"
+                    onClick={() => onSelect(index)}
+                    type="button"
+                  >
+                    #{item.index}
+                  </button>
+                </div>
                 {isAdmin ? (
                   <div className="flex items-center gap-2 text-coal/70">
                     <button
@@ -75,6 +149,14 @@ export default function TranscriptPanel({
                       type="button"
                     >
                       <NotebookPen size={16} />
+                    </button>
+                    <button
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg hover:bg-coal/5 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={isDeleting}
+                      onClick={() => deleteSegments([item._id])}
+                      type="button"
+                    >
+                      <Trash2 size={16} />
                     </button>
                     <AlertTriangle size={16} />
                   </div>

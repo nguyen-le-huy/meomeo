@@ -1,6 +1,7 @@
 import {
   createSegment,
   deleteSegment,
+  deleteSegments,
   mergeWithNextSegment,
   reorderSegments,
   updateSegment,
@@ -26,6 +27,11 @@ export const mergeSegmentController = asyncHandler(async (req, res) => {
 export const deleteSegmentController = asyncHandler(async (req, res) => {
   const data = await deleteSegment(req.validated.params.segmentId);
   return successResponse(res, "Transcript segment deleted successfully", data);
+});
+
+export const deleteSegmentsController = asyncHandler(async (req, res) => {
+  const data = await deleteSegments(req.validated.body.segmentIds);
+  return successResponse(res, "Transcript segments deleted successfully", data);
 });
 
 export const reorderSegmentsController = asyncHandler(async (req, res) => {

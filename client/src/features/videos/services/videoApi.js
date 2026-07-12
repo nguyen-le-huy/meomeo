@@ -50,6 +50,10 @@ export function updateTranscriptSegment(segmentId, data) {
   return apiClient.patch(`/transcripts/${segmentId}`, data);
 }
 
+export function deleteTranscriptSegments(segmentIds) {
+  return apiClient.delete("/transcripts", { data: { segmentIds } });
+}
+
 export function mergeTranscriptSegment(segmentId) {
   return apiClient.post(`/transcripts/${segmentId}/merge-next`);
 }

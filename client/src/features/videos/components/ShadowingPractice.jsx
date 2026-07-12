@@ -443,6 +443,7 @@ export default function ShadowingPractice({
           </div>
 
           <SegmentYoutubePlayer
+            disableInteraction
             onPlayingChange={onPlayingChange}
             onReadyChange={onReadyChange}
             ref={playerRef}

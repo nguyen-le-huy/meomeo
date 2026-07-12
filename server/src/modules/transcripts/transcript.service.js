@@ -120,18 +120,22 @@ export async function mergeWithNextSegment(segmentId) {
 
 export async function deleteSegment(segmentId) {
   const segment = await getSegment(segmentId);
-  const videoId = segment.videoId;
   await segment.deleteOne();
 
-  const remainingSegments = await TranscriptSegment.find({ videoId }).sort({ index: 1 });
-  await Promise.all(
-    remainingSegments.map((item, index) => {
-      item.index = index + 1;
-      return item.save();
-    }),
-  );
-
   return { id: segmentId };
+}
+
+export async function deleteSegments(segmentIds) {
+  const uniqueSegmentIds = [...new Set(segmentIds)];
+  const segments = await TranscriptSegment.find({ _id: { $in: uniqueSegmentIds } }).select("_id");
+
+  if (segments.length !== uniqueSegmentIds.length) {
+    throw createHttpError(404, "Some transcript segments were not found");
+  }
+
+  await TranscriptSegment.deleteMany({ _id: { $in: uniqueSegmentIds } });
+
+  return { ids: uniqueSegmentIds, deletedCount: uniqueSegmentIds.length };
 }
 
 export async function reorderSegments(segmentIds) {
