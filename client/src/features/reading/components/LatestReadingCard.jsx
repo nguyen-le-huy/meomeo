@@ -1,10 +1,51 @@
-import { ArrowRight, BookOpenText, Clock3, Settings2 } from "lucide-react";
+import { ArrowUpRight, BookOpenText, Clock3, Settings2 } from "lucide-react";
 
-export default function LatestReadingCard({ lesson, onManage, onOpen }) {
-  if (!lesson && !onManage) return null;
+function ReadingMeta({ lesson }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-ink-muted">
+      <span className="inline-flex items-center gap-1 rounded-full bg-cream px-2.5 py-1 text-coal">
+        <BookOpenText size={14} />
+        {lesson.level}
+      </span>
+      <span className="inline-flex items-center gap-1 rounded-full bg-cream px-2.5 py-1 text-coal">
+        <Clock3 size={14} />
+        {lesson.durationLabel}
+      </span>
+    </div>
+  );
+}
+
+function ReadingTags({ lesson }) {
+  const tags = [lesson.level, lesson.durationLabel].filter(Boolean);
 
   return (
-    <section className="border-b border-[#e6dfd8] py-6 sm:py-8">
+    <div className="mt-4 flex flex-wrap gap-2">
+      {tags.map((tag) => (
+        <span
+          className="rounded-full border border-coal/70 px-2.5 py-0.5 text-xs font-semibold leading-5 text-coal"
+          key={tag}
+        >
+          {tag}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export default function LatestReadingCard({ lesson, lessons = [], onManage, onOpen }) {
+  const readingItems = (lessons.length > 0 ? lessons : lesson ? [lesson] : []).filter(Boolean);
+  const primaryLesson = readingItems[0] || null;
+  const secondaryLessons = readingItems.slice(1, 4);
+
+  if (!primaryLesson && !onManage) return null;
+
+  function openLesson(selectedLesson) {
+    if (!selectedLesson) return;
+    onOpen?.(selectedLesson);
+  }
+
+  return (
+    <section className="border-b border-[#e6dfd8] py-8 sm:py-10">
       <div className="mb-4 flex items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Luyện đọc hôm nay</p>
@@ -23,7 +64,7 @@ export default function LatestReadingCard({ lesson, onManage, onOpen }) {
         ) : null}
       </div>
 
-      {!lesson ? (
+      {!primaryLesson ? (
         <div className="rounded-lg border border-dashed border-[#d8d0c6] bg-cream-soft p-5">
           <p className="text-sm font-semibold text-ink-muted">Chưa có bài đọc public trên home.</p>
           <button
@@ -35,59 +76,95 @@ export default function LatestReadingCard({ lesson, onManage, onOpen }) {
           </button>
         </div>
       ) : (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(220px,0.55fr)_minmax(250px,0.68fr)] lg:grid-rows-3 lg:gap-x-6 lg:gap-y-5">
+          <article className="group min-w-0 lg:row-span-3">
+            <button
+              className="block w-full overflow-hidden rounded-lg bg-cream-soft text-left shadow-sm"
+              onClick={() => openLesson(primaryLesson)}
+              type="button"
+            >
+              <img
+                alt={primaryLesson.title}
+                className="aspect-[16/11] w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                src={primaryLesson.imageUrl}
+              />
+            </button>
 
-        <div
-          className="group grid w-full overflow-hidden rounded-lg border border-[#d8d0c6] bg-canvas text-left shadow-sm transition hover:border-coral/50 hover:shadow-md md:grid-cols-[minmax(260px,0.48fr)_1fr]"
-          role="presentation"
-        >
-          <button className="relative aspect-[16/10] overflow-hidden bg-cream-soft text-left md:aspect-auto md:min-h-[220px]" onClick={onOpen} type="button">
-            <img
-              alt={lesson.title}
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-              src={lesson.imageUrl}
-            />
-          </button>
-
-          <div className="flex min-w-0 flex-col p-4 sm:p-5">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-ink-muted">
-              <span className="inline-flex items-center gap-1 rounded-full bg-cream px-2.5 py-1 text-coal">
-                <BookOpenText size={14} />
-                {lesson.level}
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-cream px-2.5 py-1 text-coal">
-                <Clock3 size={14} />
-                {lesson.durationLabel}
-              </span>
-            </div>
-
-            <h3 className="mt-4 text-2xl font-semibold leading-tight text-coal sm:text-3xl">
-              {lesson.title}
-            </h3>
-            <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-ink-body sm:text-base">
-              {lesson.summary}
-            </p>
-
-            <div className="mt-5 border-t border-[#e6dfd8] pt-4">
-              <button
-                className="inline-flex h-10 w-full items-center justify-between gap-2 rounded-lg bg-coral px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-coral-dark sm:w-auto"
-                onClick={onOpen}
-                type="button"
-              >
-                Luyện đọc
-                <ArrowRight size={16} />
-              </button>
-              {onManage ? (
+            <div className="mt-5">
+              <p className="text-xs font-semibold text-coal">
+                {primaryLesson.author || "Meo Meo English"} • {primaryLesson.displayDate}
+              </p>
+              <div className="mt-2 flex items-start justify-between gap-4">
+                <button className="text-left" onClick={() => openLesson(primaryLesson)} type="button">
+                  <h3 className="text-2xl font-bold leading-tight text-coal sm:text-3xl">
+                    {primaryLesson.title}
+                  </h3>
+                </button>
                 <button
-                  className="mt-2 inline-flex h-10 w-full items-center justify-between gap-2 rounded-lg border border-[#d8d0c6] px-4 text-sm font-semibold transition hover:bg-cream-soft sm:hidden"
-                  onClick={onManage}
+                  aria-label={`Mở bài đọc ${primaryLesson.title}`}
+                  className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-coal transition hover:bg-cream"
+                  onClick={() => openLesson(primaryLesson)}
                   type="button"
                 >
-                  Quản lý bài đọc
-                  <Settings2 size={16} />
+                  <ArrowUpRight size={20} />
                 </button>
-              ) : null}
+              </div>
+              <p className="mt-3 line-clamp-2 max-w-2xl text-sm font-medium leading-6 text-ink-body">
+                {primaryLesson.summary}
+              </p>
+              <ReadingTags lesson={primaryLesson} />
             </div>
-          </div>
+          </article>
+
+          {secondaryLessons.length > 0 ? (
+            secondaryLessons.map((item) => (
+              <article className="group grid gap-4 md:grid-cols-[220px_1fr] lg:contents" key={item._id || item.slug}>
+                <button
+                  className="block overflow-hidden rounded-lg bg-cream-soft text-left shadow-sm lg:col-start-2"
+                  onClick={() => openLesson(item)}
+                  type="button"
+                >
+                  <img
+                    alt={item.title}
+                    className="aspect-[16/10] w-full object-cover transition duration-300 group-hover:scale-[1.03] lg:h-full lg:min-h-[145px]"
+                    src={item.imageUrl}
+                  />
+                </button>
+                <div className="min-w-0 self-start lg:col-start-3">
+                  <p className="text-xs font-semibold text-coal">
+                    {item.author || "Meo Meo English"} • {item.displayDate}
+                  </p>
+                  <button className="mt-2 text-left" onClick={() => openLesson(item)} type="button">
+                    <h3 className="line-clamp-2 text-lg font-bold leading-snug text-coal transition group-hover:text-coral">
+                      {item.title}
+                    </h3>
+                  </button>
+                  <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-ink-body">
+                    {item.summary}
+                  </p>
+                  <ReadingTags lesson={item} />
+                </div>
+              </article>
+            ))
+          ) : (
+            <article className="rounded-lg border border-dashed border-[#d8d0c6] bg-cream-soft p-5 lg:col-span-2 lg:row-span-3">
+              <ReadingMeta lesson={primaryLesson} />
+              <p className="mt-4 text-sm font-semibold leading-6 text-ink-muted">
+                Thêm bài đọc public để home hiển thị grid nhiều bài như thư viện.
+              </p>
+            </article>
+          )}
+
+          {onManage ? (
+            <button
+              className="inline-flex h-10 items-center justify-between gap-2 rounded-lg border border-[#d8d0c6] px-4 text-sm font-semibold transition hover:bg-cream-soft sm:hidden"
+              onClick={onManage}
+              type="button"
+            >
+              Quản lý bài đọc
+              <Settings2 size={16} />
+            </button>
+          ) : null}
         </div>
       )}
     </section>

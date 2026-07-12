@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import LatestReadingCard from "../../reading/components/LatestReadingCard.jsx";
-import { useLatestReading } from "../../reading/hooks/useReadings.js";
+import { useReadings } from "../../reading/hooks/useReadings.js";
 import { normalizeReading } from "../../reading/utils/readingFormat.js";
 import {
   useCreateTopic,
@@ -50,8 +50,8 @@ export default function VideoLibraryPage() {
   const [modePickerVideo, setModePickerVideo] = useState(null);
   const sessionId = getGuestSessionId();
   const { data: myShadowingSessions = [] } = useMyShadowingSessions(sessionId);
-  const { data: latestReading } = useLatestReading();
-  const latestReadingLesson = normalizeReading(latestReading);
+  const { data: readings = [] } = useReadings({ includeUnpublished: isAdmin || undefined });
+  const readingLessons = useMemo(() => readings.map(normalizeReading).filter(Boolean), [readings]);
   const visibleTopics = useMemo(() => topics.filter((topic) => topic.slug !== "all-videos"), [topics]);
   const topicSections = useMemo(
     () => buildTopicSections({ isAdmin, topics: visibleTopics, videos }),
@@ -76,9 +76,9 @@ export default function VideoLibraryPage() {
       <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-12 sm:px-6 lg:px-10 lg:pt-20">
         <VideoLibraryHero />
         <LatestReadingCard
-          lesson={latestReadingLesson}
+          lessons={readingLessons}
           onManage={isAdmin ? () => navigate("/admin/readings") : undefined}
-          onOpen={() => navigate(`/reading/${latestReadingLesson.slug}`)}
+          onOpen={(readingLesson) => navigate(`/reading/${readingLesson.slug}`)}
         />
 
         <div className="mb-8 mt-10 flex items-end justify-between gap-4">
