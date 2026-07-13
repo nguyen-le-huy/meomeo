@@ -183,7 +183,12 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
   useImperativeHandle(ref, () => ({ pauseVideo, playFrom, playSegment, playVideo }), [pauseVideo, playFrom, playSegment, playVideo]);
 
   return (
-    <div className="w-full max-w-full min-w-0 rounded-none border-b-4 border-coral bg-[#181715] md:rounded-xl md:border-4 md:border-[#181715]">
+    <div
+      className={[
+        "relative w-full max-w-full min-w-0 rounded-none border-b-4 border-coral bg-[#181715] md:rounded-xl md:border-4 md:border-[#181715]",
+        disableInteraction ? "[&_iframe]:pointer-events-none" : "",
+      ].join(" ")}
+    >
       <div
         className={[
           "h-[210px] w-full max-w-full min-w-0 [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:max-w-full md:aspect-video md:h-auto",
@@ -192,6 +197,7 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
         ref={hostRef}
         title={title}
       />
+      {disableInteraction ? <div aria-hidden="true" className="absolute inset-0 z-10 cursor-default" /> : null}
       <span className="sr-only">
         {isPlayerReady ? "Player ready" : "Player loading"} {isPlaying ? "playing" : "paused"}
       </span>

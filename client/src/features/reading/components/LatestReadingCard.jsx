@@ -85,31 +85,31 @@ export default function LatestReadingCard({ lesson, lessons = [], onManage, onOp
             >
               <img
                 alt={primaryLesson.title}
-                className="aspect-[16/11] w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                className="aspect-[16/10] w-full object-cover transition duration-300 group-hover:scale-[1.03] lg:aspect-[16/11]"
                 src={primaryLesson.imageUrl}
               />
             </button>
 
-            <div className="mt-5">
+            <div className="mt-4 lg:mt-5">
               <p className="text-xs font-semibold text-coal">
                 {primaryLesson.author || "Meo Meo English"} • {primaryLesson.displayDate}
               </p>
               <div className="mt-2 flex items-start justify-between gap-4">
                 <button className="text-left" onClick={() => openLesson(primaryLesson)} type="button">
-                  <h3 className="text-2xl font-bold leading-tight text-coal sm:text-3xl">
+                  <h3 className="line-clamp-2 text-lg font-bold leading-snug text-coal transition group-hover:text-coral lg:line-clamp-none lg:text-2xl lg:leading-tight xl:text-3xl">
                     {primaryLesson.title}
                   </h3>
                 </button>
                 <button
                   aria-label={`Mở bài đọc ${primaryLesson.title}`}
-                  className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-coal transition hover:bg-cream"
+                  className="mt-1 hidden h-9 w-9 shrink-0 items-center justify-center rounded-full text-coal transition hover:bg-cream lg:inline-flex"
                   onClick={() => openLesson(primaryLesson)}
                   type="button"
                 >
                   <ArrowUpRight size={20} />
                 </button>
               </div>
-              <p className="mt-3 line-clamp-2 max-w-2xl text-sm font-medium leading-6 text-ink-body">
+              <p className="mt-2 line-clamp-2 max-w-2xl text-sm font-medium leading-6 text-ink-body lg:mt-3">
                 {primaryLesson.summary}
               </p>
               <ReadingTags lesson={primaryLesson} />
