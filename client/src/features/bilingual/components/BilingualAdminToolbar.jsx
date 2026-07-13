@@ -2,7 +2,9 @@ import { Languages, RefreshCw } from "lucide-react";
 import { Button } from "../../../components/ui/button.jsx";
 import { Badge } from "../../../components/ui/badge.jsx";
 import { Alert } from "../../../components/ui/alert.jsx";
+import { Spinner } from "../../../components/ui/spinner.jsx";
 import ManualVietsubDialog from "./ManualVietsubDialog.jsx";
+import TranscriptImportTools from "./TranscriptImportTools.jsx";
 
 export default function BilingualAdminToolbar({
   bilingualError,
@@ -12,6 +14,7 @@ export default function BilingualAdminToolbar({
   onVietsubDone,
   segments,
   transcriptStatus,
+  videoId,
 }) {
   const isGenerating = generateVietsubMutation?.isPending;
   const mutationError = generateVietsubMutation?.error?.response?.data?.message || generateVietsubMutation?.error?.message;
@@ -55,7 +58,7 @@ export default function BilingualAdminToolbar({
         >
           {isGenerating ? (
             <>
-              <RefreshCw className="mr-1 h-3 w-3 animate-spin" />
+              <Spinner size="sm" />
               Đang dịch...
             </>
           ) : hasTranslation ? (
@@ -75,6 +78,10 @@ export default function BilingualAdminToolbar({
           <ManualVietsubDialog segments={segments} onDone={onVietsubDone} />
         ) : null}
       </div>
+
+      {transcriptStatus === "completed" && segments?.length > 0 ? (
+        <TranscriptImportTools onDone={onVietsubDone} segments={segments} videoId={videoId} />
+      ) : null}
 
       {!canGenerate && transcriptStatus !== "completed" ? (
         <p className="text-xs text-ink-muted">Cần phân tích transcript trước khi tạo Vietsub.</p>

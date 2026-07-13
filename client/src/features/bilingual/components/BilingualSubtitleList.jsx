@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, LoaderCircle, Pencil, Trash2, X } from "lucide-react";
+import { Check, Pencil, Trash2, X } from "lucide-react";
 import { Button } from "../../../components/ui/button.jsx";
 import { Textarea } from "../../../components/ui/textarea.jsx";
+import { Spinner } from "../../../components/ui/spinner.jsx";
 import { cn } from "../../../utils/cn.js";
 
 function formatTime(seconds) {
@@ -128,7 +129,7 @@ export default function BilingualSubtitleList({
             type="button"
             variant="outline"
           >
-            {isDeleting ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+            {isDeleting ? <Spinner size="sm" /> : <Trash2 className="h-3.5 w-3.5" />}
             Xoá {selectedIds.length || ""}
           </Button>
         </div>
@@ -196,7 +197,7 @@ export default function BilingualSubtitleList({
                 </Button>
                 <Button disabled={isSaving} onClick={() => saveSegment(segment._id)} size="sm" type="button">
                   {isSaving ? (
-                    <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                    <Spinner size="sm" />
                   ) : (
                     <Check className="h-3.5 w-3.5" />
                   )}

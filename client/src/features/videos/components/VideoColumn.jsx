@@ -1,6 +1,7 @@
 import { Play, RefreshCw } from "lucide-react";
 import { Button } from "../../../components/ui/button.jsx";
 import { Badge } from "../../../components/ui/badge.jsx";
+import { Spinner } from "../../../components/ui/spinner.jsx";
 import { formatDuration } from "../utils/dictationText.js";
 import SegmentYoutubePlayer from "./SegmentYoutubePlayer.jsx";
 
@@ -74,7 +75,7 @@ export default function VideoColumn({
               type="button"
               variant="outline"
             >
-              <RefreshCw className={analyzeMutation.isPending ? "animate-spin" : ""} size={16} />
+              {analyzeMutation.isPending ? <Spinner size="sm" /> : <RefreshCw size={16} />}
               {analyzeMutation.isPending ? "Đang phân tích..." : "Phân tích transcript"}
             </Button>
           ) : null}

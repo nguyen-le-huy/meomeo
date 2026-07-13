@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../../../components/ui/button.jsx";
+import { Spinner } from "../../../components/ui/spinner.jsx";
 import {
   Dialog,
   DialogContent,
@@ -166,6 +167,7 @@ export default function AddVideoDialog({ createVideoMutation, onVideoCreated, to
             </p>
           ) : null}
           <Button disabled={createVideoMutation.isPending} type="submit">
+            {createVideoMutation.isPending ? <Spinner size="sm" /> : null}
             {createVideoMutation.isPending ? "Đang phân tích transcript..." : "Thêm video"}
           </Button>
         </form>

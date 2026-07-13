@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { LoadingState } from "../../../components/ui/spinner.jsx";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import DictationPractice from "../components/DictationPractice.jsx";
@@ -273,7 +274,11 @@ export default function VideoLearningPage() {
   }, [isAnswerCorrect]);
 
   if (isVideoLoading || isSegmentsLoading) {
-    return <section className="h-full overflow-auto bg-canvas p-6 text-sm text-ink-muted">Đang tải bài học...</section>;
+    return (
+      <section className="h-full overflow-auto bg-canvas p-6">
+        <LoadingState className="h-full min-h-[50vh]" label="Đang tải bài học..." />
+      </section>
+    );
   }
 
   if (!video) {

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Maximize, Minimize, Pause, Play } from "lucide-react";
+import { ArrowLeft, Maximize, Minimize, Pause, Play, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { Badge } from "../../../components/ui/badge.jsx";
+import { LoadingState } from "../../../components/ui/spinner.jsx";
 import SegmentYoutubePlayer from "../../videos/components/SegmentYoutubePlayer.jsx";
 import BilingualSubtitleList from "../components/BilingualSubtitleList.jsx";
 import BilingualAdminToolbar from "../components/BilingualAdminToolbar.jsx";
@@ -26,6 +27,7 @@ export default function BilingualWatchPage() {
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isVideoEnded, setIsVideoEnded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const { data, isLoading, error } = useBilingualVideo(id);
@@ -47,6 +49,7 @@ export default function BilingualWatchPage() {
 
   const handleSeek = useCallback(
     (startTime) => {
+      setIsVideoEnded(false);
       playerRef.current?.playFrom(startTime);
     },
     [],
@@ -57,11 +60,13 @@ export default function BilingualWatchPage() {
       e.stopPropagation();
       if (isPlaying) {
         playerRef.current?.pauseVideo();
+      } else if (isVideoEnded) {
+        playerRef.current?.playFrom(0);
       } else {
         playerRef.current?.playFrom(currentTime || 0);
       }
     },
-    [currentTime, isPlaying],
+    [currentTime, isPlaying, isVideoEnded],
   );
 
   const handleToggleFullscreen = useCallback(
@@ -93,10 +98,12 @@ export default function BilingualWatchPage() {
     queryClient.invalidateQueries({ queryKey: ["video-transcripts", id] });
   }, [generateVietsubMutation, id, queryClient]);
 
+  const overlayButtonLabel = isVideoEnded ? "Phát lại" : currentTime > 0.5 ? "Tiếp tục" : "Bắt đầu xem";
+
   if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center bg-canvas">
-        <p className="text-sm font-medium text-ink-muted">Đang tải video...</p>
+        <LoadingState label="Đang tải video..." />
       </div>
     );
   }
@@ -136,6 +143,7 @@ export default function BilingualWatchPage() {
             <SegmentYoutubePlayer
               ref={playerRef}
               continuous
+              onEndedChange={setIsVideoEnded}
               onReadyChange={setIsPlayerReady}
               onPlayingChange={setIsPlaying}
               onTimeChange={handleTimeChange}
@@ -154,8 +162,12 @@ export default function BilingualWatchPage() {
                     onClick={handleTogglePlay}
                     type="button"
                   >
-                    <Play className="h-10 w-10 text-coral" fill="currentColor" />
-                    <span className="text-sm text-canvas">Bắt đầu xem</span>
+                    {isVideoEnded ? (
+                      <RefreshCw className="h-10 w-10 text-coral" />
+                    ) : (
+                      <Play className="h-10 w-10 text-coral" fill="currentColor" />
+                    )}
+                    <span className="text-sm text-canvas">{overlayButtonLabel}</span>
                   </button>
                 </div>
               ) : null}
@@ -206,6 +218,7 @@ export default function BilingualWatchPage() {
                 onVietsubDone={handleVietsubDone}
                 segments={segments}
                 transcriptStatus={video.transcriptStatus}
+                videoId={id}
               />
             </div>
           ) : null}

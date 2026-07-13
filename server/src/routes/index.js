@@ -16,6 +16,7 @@ import shadowingRoutes from "../modules/shadowing/shadowing.routes.js";
 import youtubeRoutes from "../modules/youtube/youtube.routes.js";
 import bilingualRoutes from "../modules/bilingual/bilingual.routes.js";
 import readingRoutes from "../modules/readings/reading.routes.js";
+import dictionaryRoutes from "../modules/dictionary/dictionary.routes.js";
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use("/dictation", dictationRoutes);
 router.use("/shadowing", shadowingRoutes);
 router.use("/youtube", youtubeRoutes);
 router.use("/readings", readingRoutes);
+router.use("/dictionary", dictionaryRoutes);
 
 export default router;

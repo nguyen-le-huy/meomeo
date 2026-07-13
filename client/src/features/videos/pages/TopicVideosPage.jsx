@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
+import { LoadingState } from "../../../components/ui/spinner.jsx";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import {
@@ -79,7 +80,7 @@ export default function TopicVideosPage() {
           </Button>
         </div>
 
-        {isLoading ? <p className="text-sm font-bold text-ink-muted">Đang tải topic...</p> : null}
+        {isLoading ? <LoadingState label="Đang tải topic..." /> : null}
 
         {!isLoading && !topic ? (
           <Card className="border-dashed bg-cream-soft">

@@ -1,14 +1,16 @@
 import { LogIn, LogOut, Menu, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button.jsx";
 import { useAuthStore } from "../../features/auth/stores/authStore.js";
+import DictionaryPopover from "../../features/dictionary/components/DictionaryPopover.jsx";
 
 const logoUrl = "https://res.cloudinary.com/dknin0hhf/image/upload/v1781682627/Black_Cat_Sticker_psynzk.gif";
-const labanDictionaryConfig = { s: "https://dict.laban.vn", w: 260, h: 260, hl: 2, th: 3 };
-const labanDictionaryMarkerId = "lbdict_plugin_frame";
-const labanDictionaryScriptId = "lbdict_plugin_frame_loader";
-const labanDictionaryScriptUrl = "https://stc-laban.zdn.vn/dictionary/js/plugin/lbdictplugin.frame.min.js";
+const navItems = [
+  { label: "Trang chủ", to: "/" },
+  { label: "Học qua YouTube", to: "/youtube" },
+  { label: "Luyện đọc", to: "/readings" },
+];
 
 function Brand() {
   return (
@@ -18,22 +20,31 @@ function Brand() {
   );
 }
 
-function DictionaryPopover({ dictionaryPanelRef, onClose }) {
+function HeaderNavLink({ item, onClick }) {
+  const location = useLocation();
+  const isReadingActive = item.to === "/readings" && location.pathname.startsWith("/reading");
+  const isYoutubeActive =
+    item.to === "/youtube" &&
+    (location.pathname.startsWith("/youtube") ||
+      location.pathname.startsWith("/topics") ||
+      location.pathname.startsWith("/videos"));
+
   return (
-    <div className="pointer-events-auto absolute right-1/2 top-[calc(100%+0.5rem)] z-50 w-[260px] translate-x-1/2 overflow-hidden rounded-md border border-[#d8d0c6] bg-white shadow-2xl md:right-auto md:left-1/2 md:-translate-x-1/2">
-      <div className="flex h-8 items-center justify-between border-b border-[#e6dfd8] bg-canvas px-2">
-        <span className="text-xs font-semibold text-ink-muted">Từ điển</span>
-        <button
-          aria-label="Đóng từ điển"
-          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-coal transition hover:bg-cream-soft"
-          onClick={onClose}
-          type="button"
-        >
-          <X size={15} />
-        </button>
-      </div>
-      <div className="min-h-[260px] [&_iframe]:block [&_iframe]:pointer-events-auto" ref={dictionaryPanelRef} />
-    </div>
+    <NavLink
+      className={({ isActive }) =>
+        [
+          "rounded-lg px-3 py-2 text-sm font-semibold transition",
+          isActive || isReadingActive || isYoutubeActive
+            ? "bg-cream text-coal"
+            : "text-ink-muted hover:bg-cream-soft hover:text-coal",
+        ].join(" ")
+      }
+      end={item.to === "/"}
+      onClick={onClick}
+      to={item.to}
+    >
+      {item.label}
+    </NavLink>
   );
 }
 
@@ -41,7 +52,6 @@ export default function MainLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
   const [dictionaryMode, setDictionaryMode] = useState("desktop");
-  const dictionaryPanelRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuthStore();
@@ -60,49 +70,17 @@ export default function MainLayout() {
     setMobileOpen(false);
   }
 
-  useEffect(() => {
-    if (!dictionaryOpen) return undefined;
-
-    const panel = dictionaryPanelRef.current;
-    if (!panel) return undefined;
-
-    panel.replaceChildren();
-
-    const marker = document.createElement("script");
-    marker.id = labanDictionaryMarkerId;
-    marker.type = "text/javascript";
-    panel.appendChild(marker);
-
-    const initDictionary = () => {
-      window.lbDictPluginFrame?.init?.(labanDictionaryConfig);
-    };
-
-    if (window.lbDictPluginFrame) {
-      initDictionary();
-      return undefined;
-    }
-
-    const existingScript = document.getElementById(labanDictionaryScriptId);
-    if (existingScript) {
-      existingScript.addEventListener("load", initDictionary, { once: true });
-      return () => existingScript.removeEventListener("load", initDictionary);
-    }
-
-    const script = document.createElement("script");
-    script.id = labanDictionaryScriptId;
-    script.type = "text/javascript";
-    script.src = labanDictionaryScriptUrl;
-    script.addEventListener("load", initDictionary, { once: true });
-    document.body.appendChild(script);
-
-    return () => script.removeEventListener("load", initDictionary);
-  }, [dictionaryMode, dictionaryOpen]);
-
   return (
     <div className="min-h-screen bg-canvas text-coal">
       <header className="sticky relative top-0 z-40 border-b bg-canvas/95 backdrop-blur">
-        <div className="mx-auto flex h-12 max-w-[1440px] items-center justify-between gap-6 px-4 sm:px-6 md:h-16 lg:px-10">
+        <div className="relative mx-auto flex h-12 max-w-[1440px] items-center justify-between gap-6 px-4 sm:px-6 md:h-16 lg:px-10">
           <Brand />
+
+          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
+            {navItems.map((item) => (
+              <HeaderNavLink item={item} key={item.to} />
+            ))}
+          </nav>
 
           <div className="hidden items-center gap-2 md:flex">
             <div className="relative">
@@ -117,7 +95,7 @@ export default function MainLayout() {
                 <img alt="Dịch" className="h-5 w-5" src="https://res.cloudinary.com/dknin0hhf/image/upload/v1783514800/translate_zo4sh6.png" />
               </Button>
               {dictionaryOpen && dictionaryMode === "desktop" ? (
-                <DictionaryPopover dictionaryPanelRef={dictionaryPanelRef} onClose={() => setDictionaryOpen(false)} />
+                <DictionaryPopover onClose={() => setDictionaryOpen(false)} />
               ) : null}
             </div>
             {user?.role === "admin" ? (
@@ -164,7 +142,7 @@ export default function MainLayout() {
 
         {dictionaryOpen && dictionaryMode === "mobile" ? (
           <div className="md:hidden">
-            <DictionaryPopover dictionaryPanelRef={dictionaryPanelRef} onClose={() => setDictionaryOpen(false)} />
+            <DictionaryPopover onClose={() => setDictionaryOpen(false)} />
           </div>
         ) : null}
       </header>
@@ -183,6 +161,11 @@ export default function MainLayout() {
                 <X size={20} />
               </Button>
             </div>
+            <nav className="mt-8 grid gap-2">
+              {navItems.map((item) => (
+                <HeaderNavLink item={item} key={item.to} onClick={() => setMobileOpen(false)} />
+              ))}
+            </nav>
             <div className="mt-auto border-t border-[#e6dfd8] pt-5">
               {user?.role === "admin" ? (
                 <Button className="w-full" onClick={handleLogout} type="button" variant="outline">

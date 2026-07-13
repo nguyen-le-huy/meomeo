@@ -1,5 +1,6 @@
-import { AlertTriangle, LoaderCircle, NotebookPen, Plus, Save, Trash2 } from "lucide-react";
+import { AlertTriangle, NotebookPen, Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Spinner } from "../../../components/ui/spinner.jsx";
 import { getMaskedWords } from "../utils/dictationText.js";
 
 export default function TranscriptPanel({
@@ -80,7 +81,7 @@ export default function TranscriptPanel({
               onClick={() => deleteSegments(selectedIds)}
               type="button"
             >
-              {isDeleting ? <LoaderCircle className="animate-spin" size={14} /> : <Trash2 size={14} />}
+              {isDeleting ? <Spinner size="sm" /> : <Trash2 size={14} />}
               Xoá {selectedIds.length || ""}
             </button>
           ) : null}
@@ -267,7 +268,8 @@ function TranscriptCreateForm({ className = "", isSaving, lastEndTime = 0, onCan
           disabled={isSaving}
           type="submit"
         >
-          <Save size={15} /> {isSaving ? "Đang lưu..." : "Lưu card"}
+          {isSaving ? <Spinner size="sm" /> : <Save size={15} />}
+          {isSaving ? "Đang lưu..." : "Lưu card"}
         </button>
         <button className="h-10 rounded-lg border border-[#e6dfd8] bg-white px-3 text-sm font-black text-coal" onClick={onCancel} type="button">
           Hủy

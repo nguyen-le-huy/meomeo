@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "../../../components/ui/button.jsx";
 import { Textarea } from "../../../components/ui/textarea.jsx";
+import { Spinner } from "../../../components/ui/spinner.jsx";
 import {
   Dialog,
   DialogContent,
@@ -149,6 +150,7 @@ export default function ManualVietsubDialog({ segments, onDone }) {
             <p className="text-sm font-bold text-red-600">{error}</p>
           ) : null}
           <Button disabled={saving || !text.trim()} onClick={handleSave} type="button">
+            {saving ? <Spinner size="sm" /> : null}
             {saving ? "Đang lưu..." : "Lưu Vietsub"}
           </Button>
         </div>

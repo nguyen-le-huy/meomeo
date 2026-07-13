@@ -24,7 +24,7 @@ function loadYouTubeIframeApi() {
 }
 
 const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
-  { continuous, disableInteraction = false, onPlayingChange, onReadyChange, onTimeChange, segment, title, youtubeVideoId },
+  { continuous, disableInteraction = false, onEndedChange, onPlayingChange, onReadyChange, onTimeChange, segment, title, youtubeVideoId },
   ref,
 ) {
   const hostRef = useRef(null);
@@ -73,9 +73,10 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
     stopTimeTracker();
     player.playVideo();
     setIsPlaying(true);
+    onEndedChange?.(false);
     onPlayingChange?.(true);
     if (continuous) startTimeTracker();
-  }, [continuous, onPlayingChange, startTimeTracker, stopBoundaryTimer, stopTimeTracker]);
+  }, [continuous, onEndedChange, onPlayingChange, startTimeTracker, stopBoundaryTimer, stopTimeTracker]);
 
   const playSegment = useCallback(
     (targetSegment = segment, options = {}) => {
@@ -90,6 +91,7 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
       player.seekTo(startTime, true);
       player.playVideo();
       setIsPlaying(true);
+      onEndedChange?.(false);
       onPlayingChange?.(true);
 
       if (continuous) {
@@ -103,7 +105,7 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
         }, 120);
       }
     },
-    [continuous, onPlayingChange, pauseVideo, segment, startTimeTracker, stopBoundaryTimer, stopTimeTracker],
+    [continuous, onEndedChange, onPlayingChange, pauseVideo, segment, startTimeTracker, stopBoundaryTimer, stopTimeTracker],
   );
 
   const playFrom = useCallback(
@@ -116,19 +118,21 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
       player.seekTo(Number(startTime || 0), true);
       player.playVideo();
       setIsPlaying(true);
+      onEndedChange?.(false);
       onPlayingChange?.(true);
 
       if (continuous) {
         startTimeTracker();
       }
     },
-    [continuous, onPlayingChange, startTimeTracker, stopBoundaryTimer, stopTimeTracker],
+    [continuous, onEndedChange, onPlayingChange, startTimeTracker, stopBoundaryTimer, stopTimeTracker],
   );
 
   useEffect(() => {
     let isMounted = true;
     setIsPlayerReady(false);
     setIsPlaying(false);
+    onEndedChange?.(false);
     onReadyChange?.(false);
     onPlayingChange?.(false);
     stopBoundaryTimer();
@@ -161,8 +165,13 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
               if (continuous) stopTimeTracker();
             }
 
+            if (event.data === YT.PlayerState.ENDED) {
+              onEndedChange?.(true);
+            }
+
             if (event.data === YT.PlayerState.PLAYING) {
               setIsPlaying(true);
+              onEndedChange?.(false);
               onPlayingChange?.(true);
               if (continuous) startTimeTracker();
             }
@@ -178,7 +187,7 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
       playerRef.current?.destroy?.();
       playerRef.current = null;
     };
-  }, [onPlayingChange, onReadyChange, startTimeTracker, stopBoundaryTimer, stopTimeTracker, youtubeVideoId]);
+  }, [continuous, onEndedChange, onPlayingChange, onReadyChange, startTimeTracker, stopBoundaryTimer, stopTimeTracker, youtubeVideoId]);
 
   useImperativeHandle(ref, () => ({ pauseVideo, playFrom, playSegment, playVideo }), [pauseVideo, playFrom, playSegment, playVideo]);
 

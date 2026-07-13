@@ -2,6 +2,7 @@ import { Edit3, FilePlus2, Heading2, ImagePlus, ListPlus, Plus, Quote, RemoveFor
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert } from "../../../components/ui/alert.jsx";
 import { Button } from "../../../components/ui/button.jsx";
+import { Spinner } from "../../../components/ui/spinner.jsx";
 import {
   Dialog,
   DialogContent,
@@ -587,7 +588,7 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
               Huỷ
             </Button>
             <Button disabled={isPending} type="submit">
-              {isEditing ? <Edit3 size={16} /> : <FilePlus2 size={16} />}
+              {isPending ? <Spinner size="sm" /> : isEditing ? <Edit3 size={16} /> : <FilePlus2 size={16} />}
               {isPending ? "Đang lưu..." : isEditing ? "Lưu bài đọc" : "Tạo bài đọc"}
             </Button>
           </div>

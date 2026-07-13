@@ -1,8 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
+import LatestReadingCard from "../../reading/components/LatestReadingCard.jsx";
+import { useReadings } from "../../reading/hooks/useReadings.js";
+import { normalizeReading } from "../../reading/utils/readingFormat.js";
+import LearningModeDialog from "../../videos/components/LearningModeDialog.jsx";
+import TopicVideoSection from "../../videos/components/TopicVideoSection.jsx";
+import VideoLibraryAdminActions from "../../videos/components/VideoLibraryAdminActions.jsx";
+import VideoLibraryEmptyState from "../../videos/components/VideoLibraryEmptyState.jsx";
+import VideoLibraryErrorState from "../../videos/components/VideoLibraryErrorState.jsx";
+import {
+  heroCatUrl,
+  homeTopicDesktopVideoLimit,
+  homeTopicMobileVideoLimit,
+  practiceCatUrl,
+} from "../../videos/constants/videoLibrary.constants.js";
 import {
   useCreateTopic,
   useCreateVideo,
@@ -15,14 +29,19 @@ import {
   useUpdateTopic,
   useUpdateVideo,
   useVideos,
-} from "../hooks/useVideoLearning.js";
-import LearningModeDialog from "../components/LearningModeDialog.jsx";
-import TopicVideoSection from "../components/TopicVideoSection.jsx";
-import VideoLibraryAdminActions from "../components/VideoLibraryAdminActions.jsx";
-import VideoLibraryEmptyState from "../components/VideoLibraryEmptyState.jsx";
-import VideoLibraryErrorState from "../components/VideoLibraryErrorState.jsx";
-import { homeTopicDesktopVideoLimit, homeTopicMobileVideoLimit } from "../constants/videoLibrary.constants.js";
-import { buildTopicSections, getNewestVideoIds } from "../utils/videoLibrary.js";
+} from "../../videos/hooks/useVideoLearning.js";
+import { buildTopicSections, getNewestVideoIds } from "../../videos/utils/videoLibrary.js";
+
+function getGreeting(date = new Date()) {
+  const hour = date.getHours();
+
+  if (hour >= 4 && hour < 12) return "chào buổi sáng";
+  if (hour >= 12 && hour < 14) return "chào buổi trưa";
+  if (hour >= 14 && hour < 18) return "chào buổi chiều";
+  if (hour >= 18) return "chào buổi tối";
+
+  return "chào buổi đêm";
+}
 
 function useIsDesktopTopicGrid() {
   const [isDesktop, setIsDesktop] = useState(() =>
@@ -41,10 +60,13 @@ function useIsDesktopTopicGrid() {
   return isDesktop;
 }
 
-export default function VideoLibraryPage() {
-  const { user } = useAuthStore();
+export default function HomePage() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
+  const [greeting, setGreeting] = useState(() => getGreeting());
+  const [modePickerVideo, setModePickerVideo] = useState(null);
+  const isDesktopTopicGrid = useIsDesktopTopicGrid();
   const {
     data: videos = [],
     error: videosError,
@@ -53,6 +75,7 @@ export default function VideoLibraryPage() {
     refetch: refetchVideos,
   } = useVideos({ includeUnpublished: isAdmin || undefined });
   const { data: topics = [], isLoading: isTopicsLoading } = useTopics({ includeUnpublished: isAdmin || undefined });
+  const { data: readings = [] } = useReadings({ includeUnpublished: isAdmin || undefined });
   const createVideoMutation = useCreateVideo();
   const createTopicMutation = useCreateTopic();
   const updateTopicMutation = useUpdateTopic();
@@ -61,10 +84,9 @@ export default function VideoLibraryPage() {
   const updateVideoMutation = useUpdateVideo();
   const publishVideoMutation = usePublishVideo();
   const deleteVideoMutation = useDeleteVideo();
-  const [modePickerVideo, setModePickerVideo] = useState(null);
-  const isDesktopTopicGrid = useIsDesktopTopicGrid();
   const sessionId = getGuestSessionId();
   const { data: myShadowingSessions = [] } = useMyShadowingSessions(sessionId);
+  const readingLessons = useMemo(() => readings.map(normalizeReading).filter(Boolean), [readings]);
   const visibleTopics = useMemo(() => topics.filter((topic) => topic.slug !== "all-videos"), [topics]);
   const topicSections = useMemo(
     () => buildTopicSections({ isAdmin, topics: visibleTopics, videos }),
@@ -75,6 +97,11 @@ export default function VideoLibraryPage() {
     [myShadowingSessions],
   );
   const homeTopicVideoLimit = isDesktopTopicGrid ? homeTopicDesktopVideoLimit : homeTopicMobileVideoLimit;
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setGreeting(getGreeting()), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   function startLearning(mode) {
     if (!modePickerVideo?._id) return;
@@ -87,9 +114,34 @@ export default function VideoLibraryPage() {
   }
 
   return (
-    <section className="min-h-full overflow-auto bg-canvas text-coal">
-      <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-8 sm:px-6 lg:px-10 lg:pt-12">
-        <div className="mb-8 flex items-end justify-between gap-4">
+    <section className="min-h-full bg-canvas px-4 py-8 text-coal sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-[1440px]">
+        <div className="grid gap-5 overflow-hidden border-b border-[#e6dfd8] pb-8 pt-8 sm:gap-7 sm:pb-10 sm:pt-12 lg:min-h-[340px] lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.78fr)] lg:items-center lg:gap-10 lg:overflow-visible lg:pb-14 lg:pt-4">
+          <div className="max-w-3xl">
+            <h1 className="display-heading max-w-[340px] text-[30px] leading-[0.96] tracking-normal sm:max-w-xl sm:text-5xl lg:max-w-none lg:text-[56px] lg:leading-[0.96] xl:text-[64px]">
+              meo meo {greeting}<br />Vào học ngay cho tớ.
+            </h1>
+            <p className="mt-2 max-w-xl text-sm font-semibold leading-5 text-ink-body sm:mt-6 sm:text-base sm:leading-7">
+              Chịu khó học vào con ranh này
+            </p>
+          </div>
+          <div className="flex items-end justify-between gap-3 overflow-hidden sm:gap-5 lg:justify-end lg:gap-4 lg:overflow-visible">
+            <img
+              alt=""
+              aria-hidden="true"
+              className="h-[112px] w-auto max-w-none object-contain sm:h-[190px] lg:h-60 xl:h-64"
+              src={heroCatUrl}
+            />
+            <img
+              alt=""
+              aria-hidden="true"
+              className="h-[112px] w-auto max-w-none object-contain sm:h-[182px] lg:h-56 xl:h-60"
+              src={practiceCatUrl}
+            />
+          </div>
+        </div>
+
+        <div className="mb-8 mt-10 flex items-end justify-between gap-4">
           <div>
             <p className="eyebrow">Thư viện theo topic</p>
             <h2 className="mt-2 font-display text-2xl font-normal tracking-tight sm:text-3xl">Chọn chủ đề hôm nay</h2>
@@ -99,8 +151,8 @@ export default function VideoLibraryPage() {
               createTopicMutation={createTopicMutation}
               createVideoMutation={createVideoMutation}
               deleteTopicMutation={deleteTopicMutation}
-              reorderTopicsMutation={reorderTopicsMutation}
               onVideoCreated={(video) => navigate(`/videos/${video._id}`)}
+              reorderTopicsMutation={reorderTopicsMutation}
               topics={visibleTopics}
               updateTopicMutation={updateTopicMutation}
             />
@@ -142,6 +194,12 @@ export default function VideoLibraryPage() {
             })}
           </div>
         ) : null}
+
+        <LatestReadingCard
+          lessons={readingLessons}
+          onManage={isAdmin ? () => navigate("/admin/readings") : undefined}
+          onOpen={(readingLesson) => navigate(`/reading/${readingLesson.slug}`)}
+        />
 
         <LearningModeDialog
           onOpenChange={(isOpen) => {

@@ -25,6 +25,9 @@ for (const key of requiredEnvVars) {
 }
 
 const port = Number(process.env.PORT);
+const cambridgeTimeoutMs = Number(process.env.CAMBRIDGE_DICTIONARY_TIMEOUT_MS || 1500);
+const dictionaryCacheTtlSeconds = Number(process.env.DICTIONARY_CACHE_TTL_SECONDS || 86400);
+const dictionaryCacheMaxEntries = Number(process.env.DICTIONARY_CACHE_MAX_ENTRIES || 1000);
 
 if (!Number.isInteger(port) || port <= 0) {
   throw new Error("PORT must be a positive integer");
@@ -54,6 +57,22 @@ export const config = {
     ttsVoice: process.env.OPENAI_TTS_VOICE || "alloy",
     translationModel: process.env.OPENAI_TRANSLATION_MODEL || "gpt-4o-mini",
     translationTargetLanguage: process.env.OPENAI_TRANSLATION_TARGET_LANGUAGE || "vi",
+    dictionaryModel: process.env.OPENAI_DICTIONARY_MODEL || process.env.OPENAI_TRANSLATION_MODEL || "gpt-4o-mini",
+  },
+  cambridgeDictionary: {
+    enabled: process.env.CAMBRIDGE_DICTIONARY_ENABLED !== "false",
+    baseUrl:
+      process.env.CAMBRIDGE_DICTIONARY_BASE_URL ||
+      "https://dictionary.cambridge.org/dictionary/english-vietnamese",
+    timeoutMs: Number.isInteger(cambridgeTimeoutMs) && cambridgeTimeoutMs > 0 ? cambridgeTimeoutMs : 1500,
+  },
+  dictionary: {
+    cacheTtlMs:
+      Number.isInteger(dictionaryCacheTtlSeconds) && dictionaryCacheTtlSeconds > 0
+        ? dictionaryCacheTtlSeconds * 1000
+        : 86400 * 1000,
+    cacheMaxEntries:
+      Number.isInteger(dictionaryCacheMaxEntries) && dictionaryCacheMaxEntries > 0 ? dictionaryCacheMaxEntries : 1000,
   },
   admin: {
     username: process.env.ADMIN_USERNAME || "admin",

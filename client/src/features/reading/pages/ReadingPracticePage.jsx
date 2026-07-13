@@ -1,18 +1,13 @@
-import { ArrowLeft, Bookmark, CheckCircle2, Share2, Trash2 } from "lucide-react";
+import { ArrowLeft, Bookmark, CheckCircle2, Eye, EyeOff, Share2, Trash2 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
+import { LoadingState, Spinner } from "../../../components/ui/spinner.jsx";
 import { readingLessons } from "../constants/readingLessons.js";
 import { useReading } from "../hooks/useReadings.js";
 import { useMyAttempt, useSubmitAttempt, useAttempts, useDeleteAttempt } from "../hooks/useAttempts.js";
 import { normalizeReading } from "../utils/readingFormat.js";
 import { useAuthStore } from "../../auth/stores/authStore.js";
-
-const highlightColors = [
-  { className: "border-yellow-500 bg-yellow-300", label: "Vàng", value: "yellow" },
-  { className: "border-emerald-500 bg-emerald-300", label: "Xanh", value: "green" },
-  { className: "border-violet-500 bg-violet-300", label: "Tím", value: "purple" },
-];
 
 const SAFE_TAGS = ["p", "div", "br", "img", "a", "strong", "em", "b", "i", "u", "h1", "h2", "h3", "h4", "h5", "h6", "figure", "figcaption", "blockquote", "ul", "ol", "li", "span", "hr", "pre", "code", "sub", "sup"];
 
@@ -277,7 +272,7 @@ function AdminAttemptsPanel({ attempts, deleteMutation, isAdmin, isLoading, read
   if (isLoading) {
     return (
       <div className="border-t border-[#d8d0c6] pt-6">
-        <p className="text-sm font-semibold text-ink-muted">Đang tải danh sách bài nộp...</p>
+        <LoadingState className="min-h-24" label="Đang tải danh sách bài nộp..." size="md" />
       </div>
     );
   }
@@ -374,16 +369,11 @@ export default function ReadingPracticePage() {
 
   const [localAnswers, setLocalAnswers] = useState({});
   const [showResult, setShowResult] = useState(false);
-  const articleTextRef = useRef(null);
+  const [showQuestions, setShowQuestions] = useState(true);
   const highlightStorageKey = `reading-highlights-${lesson?._id || slug}`;
-  const [selectionDraft, setSelectionDraft] = useState(null);
-  const [activeHighlight, setActiveHighlight] = useState(null);
   const [highlights, setHighlights] = useState([]);
   const skipNextHighlightSaveRef = useRef(false);
-  const toolbarState = activeHighlight || selectionDraft;
-  const visibleHighlights = selectionDraft?.text
-    ? [...highlights, { color: "draft", id: "__draft__", text: selectionDraft.text }]
-    : highlights;
+  const visibleHighlights = highlights;
 
   const submittedAttempt = existingAttempt || (submitMutation.data?.data?.data?.attempt);
 
@@ -392,8 +382,6 @@ export default function ReadingPracticePage() {
     document.querySelector("main")?.scrollTo?.({ top: 0, left: 0, behavior: "instant" });
     setLocalAnswers({});
     setShowResult(false);
-    setActiveHighlight(null);
-    setSelectionDraft(null);
     submitMutation.reset();
   }, [slug]);
 
@@ -424,7 +412,7 @@ export default function ReadingPracticePage() {
     return (
       <section className="min-h-full bg-canvas px-4 py-10 text-coal sm:px-6 lg:px-10">
         <div className="mx-auto max-w-3xl">
-          <p className="font-display text-3xl">Đang tải bài đọc...</p>
+          <LoadingState label="Đang tải bài đọc..." />
         </div>
       </section>
     );
@@ -445,6 +433,7 @@ export default function ReadingPracticePage() {
   }
 
   const paragraphs = lesson.paragraphs || [lesson.passage].filter(Boolean);
+  const hasQuestions = lesson.questions.length > 0;
 
   const answers = submittedAttempt
     ? Object.fromEntries(submittedAttempt.answers.map((a) => [a.questionIndex, a.selectedChoice]))
@@ -478,102 +467,18 @@ export default function ReadingPracticePage() {
     }
   };
 
-  function captureSelection() {
-    window.setTimeout(() => {
-      const selection = window.getSelection();
-      const root = articleTextRef.current;
-      if (!selection || selection.isCollapsed || !root || !selection.rangeCount) {
-        if (!activeHighlight) setSelectionDraft(null);
-        return;
-      }
-
-      const range = selection.getRangeAt(0);
-      const selectedText = selection.toString().replace(/\s+/g, " ").trim();
-      const anchorInside = root.contains(selection.anchorNode);
-      const focusInside = root.contains(selection.focusNode);
-      if (!anchorInside || !focusInside || selectedText.length < 2) {
-        setSelectionDraft(null);
-        return;
-      }
-
-      const rect = range.getBoundingClientRect();
-      setActiveHighlight(null);
-      setSelectionDraft({
-        left: Math.min(Math.max(rect.left, 12), window.innerWidth - 190),
-        text: selectedText,
-        top: Math.max(rect.top - 42, 12),
-      });
-    }, 0);
-  }
-
-  function openHighlightToolbar(event) {
-    const mark = event.target.closest?.("mark[data-highlight-id]");
-    if (!mark || !articleTextRef.current?.contains(mark)) return;
-
-    const id = mark.dataset.highlightId;
-    const highlight = highlights.find((item) => item.id === id);
-    if (!highlight) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-    window.getSelection()?.removeAllRanges();
-
-    const rect = mark.getBoundingClientRect();
-    setSelectionDraft(null);
-    setActiveHighlight({
-      id,
-      left: Math.min(Math.max(rect.left, 12), window.innerWidth - 230),
-      text: highlight.text,
-      top: Math.max(rect.top - 42, 12),
-    });
-  }
-
-  function addHighlight(color = "yellow") {
-    if (!selectionDraft?.text) return;
-
-    setHighlights((current) => {
-      if (current.some((item) => item.text === selectionDraft.text && (item.color || "yellow") === color)) return current;
-      return [
-        ...current,
-        {
-          color,
-          id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`,
-          questionIndex: null,
-          text: selectionDraft.text,
-        },
-      ];
-    });
-    setSelectionDraft(null);
-    window.getSelection()?.removeAllRanges();
-  }
-
-  function updateHighlightColor(color) {
-    if (!activeHighlight?.id) return;
-    setHighlights((current) =>
-      current.map((item) =>
-        item.id === activeHighlight.id ? { ...item, color } : item,
-      ),
-    );
-    setActiveHighlight(null);
-  }
-
-  function deleteActiveHighlight() {
-    if (!activeHighlight?.id) return;
-    setHighlights((current) => current.filter((item) => item.id !== activeHighlight.id));
-    setActiveHighlight(null);
-  }
-
   return (
     <section className="h-[calc(100dvh-3rem)] overflow-hidden bg-cream-soft text-coal md:h-[calc(100dvh-4rem)]">
-      <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,1fr)] gap-2 p-2 md:grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)] md:grid-rows-1 md:gap-3 md:p-4">
+      <div
+        className={[
+          "grid h-full min-h-0 gap-2 p-2 md:gap-3 md:p-4",
+          showQuestions && hasQuestions
+            ? "grid-rows-[minmax(0,1fr)_minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)] md:grid-rows-1"
+            : "grid-rows-1 md:grid-cols-1",
+        ].join(" ")}
+      >
         <article className="bbc-article min-h-0 min-w-0 overflow-y-auto overflow-x-hidden rounded-xl border border-[#d8d0c6] bg-canvas shadow-sm">
-          <div
-            className="mx-auto min-w-0 max-w-[700px] overflow-x-hidden px-3 py-4 sm:px-6 lg:py-8"
-            onClick={openHighlightToolbar}
-            onMouseUp={captureSelection}
-            onTouchEnd={captureSelection}
-            ref={articleTextRef}
-          >
+          <div className="mx-auto min-w-0 max-w-[700px] overflow-x-hidden px-3 py-4 sm:px-6 lg:py-8">
           <header>
             <h1 className="bbc-article-title">
               {lesson.title}
@@ -592,6 +497,17 @@ export default function ReadingPracticePage() {
             <button className="inline-flex items-center gap-2" type="button">
               Save <Bookmark size={16} />
             </button>
+            {hasQuestions ? (
+              <button
+                aria-pressed={!showQuestions}
+                className="ml-auto inline-flex items-center gap-2"
+                onClick={() => setShowQuestions((current) => !current)}
+                type="button"
+              >
+                {showQuestions ? "Ẩn câu hỏi" : "Hiện câu hỏi"}
+                {showQuestions ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            ) : null}
           </div>
 
           <figure className="mt-4">
@@ -638,14 +554,14 @@ export default function ReadingPracticePage() {
           </div>
         </article>
 
-        <section className="min-h-0 overflow-y-auto rounded-xl border border-[#d8d0c6] bg-canvas shadow-sm">
-          <div className="mx-auto max-w-[760px] px-3 py-4 sm:px-6 lg:py-8">
-        {lesson.questions.length ? (
-          <form
-            className="space-y-5"
-            onSubmit={handleSubmit}
-          >
-            <h2 className="bbc-article-title text-[28px] sm:text-[32px]">Questions</h2>
+        {showQuestions && hasQuestions ? (
+          <section className="min-h-0 overflow-y-auto rounded-xl border border-[#d8d0c6] bg-canvas shadow-sm">
+            <div className="mx-auto max-w-[760px] px-3 py-4 sm:px-6 lg:py-8">
+              <form
+                className="space-y-5"
+                onSubmit={handleSubmit}
+              >
+                <h2 className="bbc-article-title text-[28px] sm:text-[32px]">Questions</h2>
 
             {isLocked ? (
               <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
@@ -730,67 +646,23 @@ export default function ReadingPracticePage() {
                 disabled={submitMutation.isPending || Object.keys(localAnswers).length < lesson.questions.length}
                 type="submit"
               >
+                {submitMutation.isPending ? <Spinner size="sm" /> : null}
                 {submitMutation.isPending ? "Đang nộp..." : "Nộp bài đọc"}
               </Button>
             )}
-          </form>
-        ) : null}
+              </form>
 
-        <AdminAttemptsPanel
-          attempts={attemptsData}
-          deleteMutation={deleteAttemptMutation}
-          isAdmin={isAdmin}
-          isLoading={attemptsLoading}
-          readingId={lesson?._id}
-        />
-          </div>
-        </section>
+              <AdminAttemptsPanel
+                attempts={attemptsData}
+                deleteMutation={deleteAttemptMutation}
+                isAdmin={isAdmin}
+                isLoading={attemptsLoading}
+                readingId={lesson?._id}
+              />
+            </div>
+          </section>
+        ) : null}
       </div>
-      {toolbarState ? (
-        <div
-          className="fixed z-50 flex items-center gap-1 rounded-md border border-[#d8d0c6] bg-white px-2 py-1 shadow-xl"
-          onMouseDown={(event) => event.preventDefault()}
-          style={{ left: toolbarState.left, top: toolbarState.top }}
-        >
-          {highlightColors.map((color) => (
-            <button
-              aria-label={`Đánh dấu ${color.label}`}
-              className="flex h-7 w-7 items-center justify-center rounded border border-[#d8d0c6] hover:bg-cream-soft"
-              key={color.value}
-              onClick={() => activeHighlight ? updateHighlightColor(color.value) : addHighlight(color.value)}
-              title={`Đánh dấu ${color.label}`}
-              type="button"
-            >
-              <span className={`h-3 w-5 rounded-sm border ${color.className}`} />
-            </button>
-          ))}
-          <span className="mx-1 h-5 w-px bg-[#e6dfd8]" />
-          {activeHighlight ? (
-            <button
-              aria-label="Xoá bôi đen"
-              className="flex h-7 w-7 items-center justify-center rounded text-[#9a3412] hover:bg-red-50 hover:text-red-700"
-              onClick={deleteActiveHighlight}
-              title="Xoá bôi đen"
-              type="button"
-            >
-              <Trash2 size={15} />
-            </button>
-          ) : null}
-          <button
-            aria-label="Bỏ chọn"
-            className="flex h-7 w-7 items-center justify-center rounded text-sm font-black text-ink-muted hover:bg-cream-soft"
-            onClick={() => {
-              setActiveHighlight(null);
-              setSelectionDraft(null);
-              window.getSelection()?.removeAllRanges();
-            }}
-            title="Bỏ chọn"
-            type="button"
-          >
-            ×
-          </button>
-        </div>
-      ) : null}
     </section>
   );
 }

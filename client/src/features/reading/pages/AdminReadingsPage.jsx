@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "../../../components/ui/badge.jsx";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
+import { LoadingState } from "../../../components/ui/spinner.jsx";
 import ReadingEditorDialog from "../components/ReadingEditorDialog.jsx";
 import {
   useCreateReading,
@@ -44,7 +45,7 @@ export default function AdminReadingsPage() {
           />
         </div>
 
-        {isLoading ? <p className="mt-8 text-sm font-semibold text-ink-muted">Đang tải bài đọc...</p> : null}
+        {isLoading ? <LoadingState className="mt-8" label="Đang tải bài đọc..." /> : null}
         {isError ? <p className="mt-8 text-sm font-semibold text-red-700">{error?.response?.data?.message || "Không tải được bài đọc."}</p> : null}
 
         <div className="mt-8 grid gap-4">

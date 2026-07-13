@@ -5,7 +5,6 @@ import {
   ChevronRight,
   EyeOff,
   FilePenLine,
-  LoaderCircle,
   Mic,
   Pause,
   Play,
@@ -16,6 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import { Badge } from "../../../components/ui/badge.jsx";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
+import { Spinner } from "../../../components/ui/spinner.jsx";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { cn } from "../../../utils/cn.js";
 import {
@@ -579,7 +579,7 @@ export default function ShadowingPractice({
                       onClick={handleContinueAction}
                       type="button"
                     >
-                      {submitMutation.isPending ? <LoaderCircle className="animate-spin" size={16} /> : allCompleted ? <CheckCircle2 size={16} /> : <ChevronRight size={16} />}
+                      {submitMutation.isPending ? <Spinner size="sm" /> : allCompleted ? <CheckCircle2 size={16} /> : <ChevronRight size={16} />}
                       {allCompleted ? (submitMutation.isPending ? "Đang hoàn thành..." : "Hoàn thành") : "Tiếp tục"}
                     </Button>
                   </>
@@ -614,7 +614,7 @@ export default function ShadowingPractice({
                     onClick={isRecording ? stopRecording : startRecording}
                     type="button"
                   >
-                    {assessMutation.isPending ? <LoaderCircle className="animate-spin" size={16} /> : <Mic className={cn(isRecording && "animate-bounce")} size={16} />}
+                    {assessMutation.isPending ? <Spinner size="sm" /> : <Mic className={cn(isRecording && "animate-bounce")} size={16} />}
                     {assessMutation.isPending ? "Đang chấm..." : isRecording ? "Dừng ghi âm" : "Ghi âm"}
                   </Button>
                 </>
@@ -675,7 +675,7 @@ export default function ShadowingPractice({
                 onClick={handleSubmit}
                 type="button"
               >
-                {submitMutation.isPending ? <LoaderCircle className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
+                {submitMutation.isPending ? <Spinner size="sm" /> : <CheckCircle2 size={16} />}
                 {submitMutation.isPending ? "Đang nộp..." : "Nộp bài"}
               </Button>
               {submitMutation.isError ? (
@@ -753,7 +753,7 @@ export default function ShadowingPractice({
               onClick={handleContinueAction}
               type="button"
             >
-              {submitMutation.isPending ? <LoaderCircle className="animate-spin" size={17} /> : allCompleted ? <CheckCircle2 size={17} /> : <ChevronRight size={17} />}
+              {submitMutation.isPending ? <Spinner size="sm" /> : allCompleted ? <CheckCircle2 size={17} /> : <ChevronRight size={17} />}
               {allCompleted ? (submitMutation.isPending ? "Đang hoàn thành..." : "Hoàn thành") : "Tiếp tục"}
             </Button>
           </div>
@@ -769,7 +769,7 @@ export default function ShadowingPractice({
             type="button"
           >
             {assessMutation.isPending || submitMutation.isPending ? (
-              <LoaderCircle className="animate-spin" size={17} />
+              <Spinner size="sm" />
             ) : hasStarted ? (
               <Mic className={cn(isRecording && "animate-bounce")} size={17} />
             ) : (
