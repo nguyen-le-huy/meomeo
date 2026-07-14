@@ -12,7 +12,7 @@ export const lookupDictionarySchema = z.object({
 
 export const dictionaryHistoryQuerySchema = z.object({
   query: z.object({
-    sessionId: z.string().trim().min(1).max(120),
+    sessionId: z.string().trim().min(1).max(120).optional(),
     limit: z.coerce.number().int().min(1).max(50).default(30),
   }),
 });

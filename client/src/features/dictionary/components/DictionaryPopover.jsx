@@ -5,7 +5,6 @@ import { Button } from "../../../components/ui/button.jsx";
 import { Input } from "../../../components/ui/input.jsx";
 import { Spinner } from "../../../components/ui/spinner.jsx";
 import { clearDictionaryHistory, getDictionaryHistory, lookupDictionary, removeDictionaryHistory } from "../services/dictionaryApi.js";
-import { getGuestSessionId } from "../../../utils/sessionId.js";
 import PronunciationButton from "./PronunciationButton.jsx";
 
 const inputTypeLabels = {
@@ -35,7 +34,6 @@ function ResultList({ items, title }) {
 
 export default function DictionaryPopover({ onClose }) {
   const navigate = useNavigate();
-  const [sessionId] = useState(() => getGuestSessionId());
   const [query, setQuery] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -60,12 +58,12 @@ export default function DictionaryPopover({ onClose }) {
 
   useEffect(() => {
     let active = true;
-    getDictionaryHistory({ sessionId, limit: 4 })
+    getDictionaryHistory({ limit: 4 })
       .then((response) => { if (active) setHistory(response.data.data.history || []); })
       .catch(() => { if (active) setHistory([]); })
       .finally(() => { if (active) setHistoryLoading(false); });
     return () => { active = false; };
-  }, [sessionId]);
+  }, []);
 
   async function handleLookup(event) {
     event?.preventDefault();
@@ -76,10 +74,15 @@ export default function DictionaryPopover({ onClose }) {
     setError("");
 
     try {
-      const response = await lookupDictionary({ query: value, sessionId });
+      const response = await lookupDictionary({ query: value });
       const nextResult = response.data.data.result;
+      const savedHistoryItem = response.data.data.historyItem;
+      const nextHistoryItem = savedHistoryItem || { _id: `local-${Date.now()}`, query: value, result: nextResult };
       setResult(nextResult);
-      setHistory((current) => [{ _id: `local-${Date.now()}`, query: value, result: nextResult }, ...current.filter((item) => item.query.trim().toLowerCase() !== value.toLowerCase())].slice(0, 4));
+      setHistory((current) => [
+        nextHistoryItem,
+        ...current.filter((item) => item.query.trim().toLowerCase() !== value.toLowerCase()),
+      ].slice(0, 4));
     } catch (lookupError) {
       setError(lookupError?.response?.data?.message || "Không tra được từ điển lúc này.");
     } finally {
@@ -116,11 +119,11 @@ export default function DictionaryPopover({ onClose }) {
       <section className="border-b border-[#e6dfd8] bg-cream-soft px-3 py-2">
         <div className="flex items-center justify-between gap-2">
           <p className="flex items-center gap-1.5 text-xs font-black uppercase text-ink-muted"><Clock3 size={13} /> Lịch sử tra từ</p>
-          {history.length ? <Button aria-label="Xoá toàn bộ lịch sử tra từ" className="h-7 px-2 text-[11px]" onClick={async () => { await clearDictionaryHistory(sessionId); setHistory([]); }} size="sm" type="button" variant="ghost"><Trash2 size={13} /> Xoá hết</Button> : null}
+          {history.length ? <Button aria-label="Xoá toàn bộ lịch sử tra từ" className="h-7 px-2 text-[11px]" onClick={async () => { await clearDictionaryHistory(); setHistory([]); }} size="sm" type="button" variant="ghost"><Trash2 size={13} /> Xoá hết</Button> : null}
         </div>
         {historyLoading ? <p className="mt-2 text-xs text-ink-muted">Đang tải lịch sử...</p> : null}
         {!historyLoading && !history.length ? <p className="mt-2 text-xs text-ink-muted">Chưa có từ nào được tra.</p> : null}
-        {history.length ? <div className="mt-2 flex max-h-20 flex-wrap gap-1.5 overflow-y-auto">{history.map((item) => <div className="inline-flex max-w-full items-center overflow-hidden rounded-md border bg-canvas" key={item._id}><Button className="max-w-[18rem] truncate rounded-none border-0 px-2 text-xs" onClick={() => { setQuery(item.query); setResult(item.result); }} size="sm" type="button" variant="ghost">{item.query}</Button>{String(item._id).startsWith("local-") ? null : <Button aria-label={`Xoá lịch sử ${item.query}`} className="rounded-none border-l px-1.5" onClick={async () => { await removeDictionaryHistory(item._id, sessionId); setHistory((current) => current.filter((historyItem) => historyItem._id !== item._id)); }} size="sm" type="button" variant="ghost"><X size={12} /></Button>}</div>)}<Button className="h-8 px-2 text-xs" onClick={() => { onClose(); navigate("/dictionary/history"); }} size="sm" type="button" variant="ghost">Xem tất cả <ArrowRight size={13} /></Button></div> : null}
+        {history.length ? <div className="mt-2 flex max-h-20 flex-wrap gap-1.5 overflow-y-auto">{history.map((item) => <div className="inline-flex max-w-full items-center overflow-hidden rounded-md border bg-canvas" key={item._id}><Button className="max-w-[18rem] truncate rounded-none border-0 px-2 text-xs" onClick={() => { setQuery(item.query); setResult(item.result); }} size="sm" type="button" variant="ghost">{item.query}</Button>{String(item._id).startsWith("local-") ? null : <Button aria-label={`Xoá lịch sử ${item.query}`} className="rounded-none border-l px-1.5" onClick={async () => { await removeDictionaryHistory(item._id); setHistory((current) => current.filter((historyItem) => historyItem._id !== item._id)); }} size="sm" type="button" variant="ghost"><X size={12} /></Button>}</div>)}<Button className="h-8 px-2 text-xs" onClick={() => { onClose(); navigate("/dictionary/history"); }} size="sm" type="button" variant="ghost">Xem tất cả <ArrowRight size={13} /></Button></div> : null}
       </section>
 
       <div className="min-h-[280px] flex-1 overflow-y-auto p-4">

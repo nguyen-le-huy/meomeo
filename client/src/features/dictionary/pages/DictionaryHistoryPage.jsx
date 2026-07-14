@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
-import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { clearDictionaryHistory, getDictionaryHistory, removeDictionaryHistory } from "../services/dictionaryApi.js";
 import PronunciationButton from "../components/PronunciationButton.jsx";
 
@@ -53,7 +52,6 @@ function HistoryCard({ item, onRemove }) {
 }
 
 export default function DictionaryHistoryPage() {
-  const sessionId = useMemo(() => getGuestSessionId(), []);
   const listTopRef = useRef(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,12 +61,12 @@ export default function DictionaryHistoryPage() {
 
   useEffect(() => {
     let active = true;
-    getDictionaryHistory({ sessionId, limit: 50 })
+    getDictionaryHistory({ limit: 50 })
       .then((response) => { if (active) setHistory(response.data.data.history || []); })
       .catch(() => { if (active) setError("Không tải được lịch sử tra từ."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [sessionId]);
+  }, []);
 
   const groupedHistory = useMemo(() => history.reduce((groups, item) => {
     const key = getDayKey(item);
@@ -102,14 +100,14 @@ export default function DictionaryHistoryPage() {
   }
 
   async function handleRemove(item) {
-    await removeDictionaryHistory(item._id, sessionId);
+    await removeDictionaryHistory(item._id);
     const nextHistory = history.filter((historyItem) => historyItem._id !== item._id);
     setHistory(nextHistory);
     if (selectedDay && !nextHistory.some((historyItem) => getDayKey(historyItem) === selectedDay)) closeDay();
   }
 
   async function handleClear() {
-    await clearDictionaryHistory(sessionId);
+    await clearDictionaryHistory();
     setHistory([]);
     closeDay();
   }

@@ -1,5 +1,5 @@
-import { ArrowLeft, ArrowDown } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
@@ -23,6 +23,7 @@ const pageSize = 8;
 export default function TopicVideosPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const listTopRef = useRef(null);
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
   const { data: topics = [], isLoading: isTopicsLoading } = useTopics({ includeUnpublished: isAdmin || undefined });
@@ -37,7 +38,7 @@ export default function TopicVideosPage() {
   const deleteVideoMutation = useDeleteVideo();
   const sessionId = getGuestSessionId();
   const { data: myShadowingSessions = [] } = useMyShadowingSessions(sessionId);
-  const [visibleCount, setVisibleCount] = useState(pageSize);
+  const [currentPage, setCurrentPage] = useState(1);
   const [modePickerVideo, setModePickerVideo] = useState(null);
   const visibleTopics = useMemo(() => topics.filter((topic) => topic.slug !== "all-videos"), [topics]);
   const topic = useMemo(() => visibleTopics.find((item) => item.slug === slug), [slug, visibleTopics]);
@@ -46,8 +47,9 @@ export default function TopicVideosPage() {
     return videos.filter((video) => getTopicId(video) === topic._id);
   }, [topic?._id, videos]);
   const newestVideoIds = useMemo(() => getNewestVideoIds(topicVideos), [topicVideos]);
-  const visibleVideos = topicVideos.slice(0, visibleCount);
-  const hasMore = visibleCount < topicVideos.length;
+  const totalPages = Math.max(1, Math.ceil(topicVideos.length / pageSize));
+  const pageStart = (currentPage - 1) * pageSize;
+  const visibleVideos = topicVideos.slice(pageStart, pageStart + pageSize);
   const isLoading = isTopicsLoading || isVideosLoading;
   const shadowingSessionByVideoId = useMemo(
     () => new Map(myShadowingSessions.map((session) => [String(session.videoId), session])),
@@ -55,9 +57,19 @@ export default function TopicVideosPage() {
   );
 
   useEffect(() => {
-    setVisibleCount(pageSize);
+    setCurrentPage(1);
     setModePickerVideo(null);
   }, [slug]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
+  function changePage(nextPage) {
+    if (nextPage < 1 || nextPage > totalPages || nextPage === currentPage) return;
+    setCurrentPage(nextPage);
+    window.requestAnimationFrame(() => listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
 
   function startLearning(mode) {
     if (!modePickerVideo?._id) return;
@@ -101,7 +113,7 @@ export default function TopicVideosPage() {
 
         {topic ? (
           <>
-            <div className="mb-6 rounded-2xl border border-[#d8e1ed] bg-canvas px-5 py-4 shadow-[0_2px_0_rgba(20,20,19,0.08)]">
+            <div className="mb-6 scroll-mt-16 rounded-2xl border border-[#d8e1ed] bg-canvas px-5 py-4 shadow-[0_2px_0_rgba(20,20,19,0.08)] md:scroll-mt-20" ref={listTopRef}>
               <div className="flex min-w-0 items-center gap-3">
                 <span className="h-10 w-1.5 shrink-0 rounded-full bg-[#303866]" />
                 <div className="min-w-0">
@@ -139,16 +151,11 @@ export default function TopicVideosPage() {
               </Card>
             )}
 
-            {hasMore ? (
-              <div className="mt-10 flex justify-center">
-                <Button
-                  className="min-w-44"
-                  onClick={() => setVisibleCount((count) => Math.min(count + pageSize, topicVideos.length))}
-                  type="button"
-                  variant="outline"
-                >
-                  Tải thêm <ArrowDown size={16} />
-                </Button>
+            {topicVideos.length > pageSize ? (
+              <div className="mt-12 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-[#e6dfd8] pt-5">
+                <Button className="justify-self-start" disabled={currentPage === 1} onClick={() => changePage(currentPage - 1)} size="sm" type="button" variant="outline"><ArrowLeft size={15} /><span><span className="hidden sm:inline">Trang </span>trước</span></Button>
+                <p className="text-center text-xs font-semibold text-ink-muted">Trang {currentPage} / {totalPages}</p>
+                <Button className="justify-self-end" disabled={currentPage === totalPages} onClick={() => changePage(currentPage + 1)} size="sm" type="button" variant="outline"><span><span className="hidden sm:inline">Trang </span>sau</span><ArrowRight size={15} /></Button>
               </div>
             ) : null}
           </>

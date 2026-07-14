@@ -178,25 +178,32 @@ export async function lookupDictionary(data) {
   }
 }
 
-export async function saveDictionaryHistory({ sessionId, query, result }) {
-  if (!sessionId) return null;
-
-  const normalizedQuery = query.trim().toLowerCase();
+export async function saveDictionaryHistory({ query, result }) {
+  const normalizedQuery = normalizeQuery(query).toLowerCase();
   return DictionaryHistory.findOneAndUpdate(
-    { sessionId, normalizedQuery },
-    { $set: { query: query.trim(), result, updatedAt: new Date() }, $setOnInsert: { sessionId, normalizedQuery } },
+    { normalizedQuery },
+    {
+      $set: { query: normalizeQuery(query), result, updatedAt: new Date() },
+      $setOnInsert: { sessionId: "global", normalizedQuery },
+    },
     { new: true, upsert: true, runValidators: true },
   ).lean();
 }
 
-export async function listDictionaryHistory({ sessionId, limit = 30 }) {
-  return DictionaryHistory.find({ sessionId }).sort({ updatedAt: -1 }).limit(limit).lean();
+export async function listDictionaryHistory({ limit = 30 }) {
+  return DictionaryHistory.aggregate([
+    { $sort: { updatedAt: -1 } },
+    { $group: { _id: "$normalizedQuery", item: { $first: "$$ROOT" } } },
+    { $replaceRoot: { newRoot: "$item" } },
+    { $sort: { updatedAt: -1 } },
+    { $limit: limit },
+  ]);
 }
 
-export async function removeDictionaryHistory({ sessionId, id }) {
-  return DictionaryHistory.findOneAndDelete({ _id: id, sessionId }).lean();
+export async function removeDictionaryHistory({ id }) {
+  return DictionaryHistory.findOneAndDelete({ _id: id }).lean();
 }
 
-export async function clearDictionaryHistory(sessionId) {
-  return DictionaryHistory.deleteMany({ sessionId });
+export async function clearDictionaryHistory() {
+  return DictionaryHistory.deleteMany({});
 }

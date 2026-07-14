@@ -5,8 +5,8 @@ import { clearDictionaryHistory, listDictionaryHistory, removeDictionaryHistory,
 
 export const lookupDictionaryController = asyncHandler(async (req, res) => {
   const result = await lookupDictionary(req.validated.body);
-  await saveDictionaryHistory({ ...req.validated.body, result });
-  return successResponse(res, "Dictionary lookup completed successfully", { result });
+  const historyItem = await saveDictionaryHistory({ ...req.validated.body, result });
+  return successResponse(res, "Dictionary lookup completed successfully", { result, historyItem });
 });
 
 export const listDictionaryHistoryController = asyncHandler(async (req, res) => {
@@ -15,11 +15,11 @@ export const listDictionaryHistoryController = asyncHandler(async (req, res) => 
 });
 
 export const removeDictionaryHistoryController = asyncHandler(async (req, res) => {
-  await removeDictionaryHistory({ ...req.validated.params, sessionId: req.validated.query.sessionId });
+  await removeDictionaryHistory(req.validated.params);
   return successResponse(res, "Dictionary history item removed successfully", {});
 });
 
 export const clearDictionaryHistoryController = asyncHandler(async (req, res) => {
-  await clearDictionaryHistory(req.validated.query.sessionId);
+  await clearDictionaryHistory();
   return successResponse(res, "Dictionary history cleared successfully", {});
 });

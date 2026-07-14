@@ -8,10 +8,10 @@ export function getDictionaryHistory(params) {
   return apiClient.get("/dictionary/history", { params });
 }
 
-export function removeDictionaryHistory(id, sessionId) {
-  return apiClient.delete(`/dictionary/history/${id}`, { params: { sessionId } });
+export function removeDictionaryHistory(id) {
+  return apiClient.delete(`/dictionary/history/${id}`);
 }
 
-export function clearDictionaryHistory(sessionId) {
-  return apiClient.delete("/dictionary/history", { params: { sessionId } });
+export function clearDictionaryHistory() {
+  return apiClient.delete("/dictionary/history");
 }
