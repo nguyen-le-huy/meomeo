@@ -11,6 +11,10 @@ import BilingualWatchPage from "../features/bilingual/pages/BilingualWatchPage.j
 import AdminReadingsPage from "../features/reading/pages/AdminReadingsPage.jsx";
 import ReadingLibraryPage from "../features/reading/pages/ReadingLibraryPage.jsx";
 import ReadingPracticePage from "../features/reading/pages/ReadingPracticePage.jsx";
+import EbookLibraryPage from "../features/ebooks/pages/EbookLibraryPage.jsx";
+import EbookReaderPage from "../features/ebooks/pages/EbookReaderPage.jsx";
+import AdminEbooksPage from "../features/ebooks/pages/AdminEbooksPage.jsx";
+import DictionaryHistoryPage from "../features/dictionary/pages/DictionaryHistoryPage.jsx";
 
 function RouteShell() {
   return (
@@ -33,6 +37,9 @@ export const router = createBrowserRouter([
           { index: true, element: <HomePage /> },
           { path: "youtube", element: <VideoLibraryPage /> },
           { path: "readings", element: <ReadingLibraryPage /> },
+          { path: "ebooks", element: <EbookLibraryPage /> },
+          { path: "dictionary/history", element: <DictionaryHistoryPage /> },
+          { path: "ebooks/:slug", element: <EbookReaderPage /> },
           { path: "reading/:slug", element: <ReadingPracticePage /> },
           { path: "topics/:slug", element: <TopicVideosPage /> },
           { path: "videos/:id", element: <VideoLearningPage /> },
@@ -42,6 +49,7 @@ export const router = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={["admin"]} />,
             children: [
               { path: "admin/readings", element: <AdminReadingsPage /> },
+              { path: "admin/ebooks", element: <AdminEbooksPage /> },
             ],
           },
           { path: "admin", element: <Navigate to="/admin/readings" replace /> },

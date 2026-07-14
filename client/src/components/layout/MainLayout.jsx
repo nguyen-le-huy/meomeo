@@ -1,5 +1,5 @@
 import { LogIn, LogOut, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button.jsx";
 import { useAuthStore } from "../../features/auth/stores/authStore.js";
@@ -10,6 +10,8 @@ const navItems = [
   { label: "Trang chủ", to: "/" },
   { label: "Học qua YouTube", to: "/youtube" },
   { label: "Luyện đọc", to: "/readings" },
+  { label: "Ebook", to: "/ebooks" },
+  { label: "Từ đã tra", to: "/dictionary/history" },
 ];
 
 function Brand() {
@@ -50,12 +52,27 @@ function HeaderNavLink({ item, onClick }) {
 
 export default function MainLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileMenuMounted, setMobileMenuMounted] = useState(false);
+  const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
   const [dictionaryOpen, setDictionaryOpen] = useState(false);
   const [dictionaryMode, setDictionaryMode] = useState("desktop");
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuthStore();
   const isLearningPage = location.pathname.startsWith("/videos/");
+
+  useEffect(() => {
+    if (mobileOpen) {
+      setMobileMenuMounted(true);
+      const timeoutId = window.setTimeout(() => setMobileMenuVisible(true), 16);
+      return () => window.clearTimeout(timeoutId);
+    }
+
+    setMobileMenuVisible(false);
+    if (!mobileMenuMounted) return undefined;
+    const timeoutId = window.setTimeout(() => setMobileMenuMounted(false), 240);
+    return () => window.clearTimeout(timeoutId);
+  }, [mobileMenuMounted, mobileOpen]);
 
   function handleLogout() {
     logout();
@@ -151,10 +168,17 @@ export default function MainLayout() {
         <Outlet />
       </main>
 
-      {mobileOpen ? (
+      {mobileMenuMounted ? (
         <div className="fixed inset-0 z-50 md:hidden">
-          <button aria-label="Đóng menu" className="absolute inset-0 bg-coal/40" onClick={() => setMobileOpen(false)} type="button" />
-          <aside className="absolute right-0 top-0 flex h-full w-[290px] flex-col bg-canvas p-5 shadow-2xl">
+          <button
+            aria-label="Đóng menu"
+            className={`absolute inset-0 bg-coal/40 transition-opacity duration-250 ease-out ${mobileMenuVisible ? "opacity-100" : "opacity-0"}`}
+            onClick={() => setMobileOpen(false)}
+            type="button"
+          />
+          <aside
+            className={`absolute right-0 top-0 flex h-full w-[290px] transform-gpu flex-col bg-canvas p-5 shadow-2xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${mobileMenuVisible ? "translate-x-0 opacity-100" : "translate-x-[108%] opacity-0"}`}
+          >
             <div className="flex items-center justify-between">
               <Brand />
               <Button aria-label="Đóng menu" onClick={() => setMobileOpen(false)} size="icon" type="button" variant="ghost">

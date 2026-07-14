@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { config } from "../../config/env.js";
+import { DictionaryHistory } from "./dictionaryHistory.model.js";
 import { createHttpError } from "../../utils/createHttpError.js";
 import { lookupCambridgeDictionary } from "./cambridgeDictionary.service.js";
 
@@ -83,6 +84,7 @@ function normalizeResult(result, query) {
     sourceLabel: "OpenAI",
     partOfSpeech: result?.partOfSpeech || "",
     phonetic: result?.phonetic || "",
+    audioUrl: "",
     pronunciationHint: result?.pronunciationHint || "",
     vietnameseMeaning: result?.vietnameseMeaning || "",
     contextualMeaning: result?.contextualMeaning || "",
@@ -100,7 +102,7 @@ function buildSystemPrompt() {
   return [
     "You are an English-Vietnamese dictionary and learning assistant for Vietnamese students.",
     "Classify the user's input as word, phrase, idiom, sentence, or paragraph.",
-    "For a single word, provide dictionary-style Vietnamese meanings, part of speech, phonetic text if known, pronunciation hint, examples, collocations, and related terms.",
+    "For a single word, always provide IPA transcription, dictionary-style Vietnamese meanings, part of speech, pronunciation hint, examples, collocations, and related terms.",
     "For phrases, idioms, sentences, or paragraphs, translate naturally into Vietnamese, explain grammar/usage/nuance, and provide useful examples.",
     "Keep Vietnamese concise and learner-friendly. Do not invent source names such as Cambridge or Wordnik.",
     "Return only valid JSON that matches the requested schema.",
@@ -115,7 +117,7 @@ function buildUserPrompt(query, context) {
       normalizedQuery: "string",
       inputType: "word | phrase | idiom | sentence | paragraph",
       partOfSpeech: "string",
-      phonetic: "string",
+      phonetic: "IPA transcription wrapped in slashes, for example /həˈləʊ/",
       pronunciationHint: "Vietnamese pronunciation guidance, short",
       vietnameseMeaning: "string",
       contextualMeaning: "string",
@@ -174,4 +176,27 @@ export async function lookupDictionary(data) {
   } catch {
     throw createHttpError(502, "Dictionary lookup returned invalid JSON");
   }
+}
+
+export async function saveDictionaryHistory({ sessionId, query, result }) {
+  if (!sessionId) return null;
+
+  const normalizedQuery = query.trim().toLowerCase();
+  return DictionaryHistory.findOneAndUpdate(
+    { sessionId, normalizedQuery },
+    { $set: { query: query.trim(), result, updatedAt: new Date() }, $setOnInsert: { sessionId, normalizedQuery } },
+    { new: true, upsert: true, runValidators: true },
+  ).lean();
+}
+
+export async function listDictionaryHistory({ sessionId, limit = 30 }) {
+  return DictionaryHistory.find({ sessionId }).sort({ updatedAt: -1 }).limit(limit).lean();
+}
+
+export async function removeDictionaryHistory({ sessionId, id }) {
+  return DictionaryHistory.findOneAndDelete({ _id: id, sessionId }).lean();
+}
+
+export async function clearDictionaryHistory(sessionId) {
+  return DictionaryHistory.deleteMany({ sessionId });
 }

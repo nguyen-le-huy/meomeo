@@ -17,6 +17,7 @@ import youtubeRoutes from "../modules/youtube/youtube.routes.js";
 import bilingualRoutes from "../modules/bilingual/bilingual.routes.js";
 import readingRoutes from "../modules/readings/reading.routes.js";
 import dictionaryRoutes from "../modules/dictionary/dictionary.routes.js";
+import ebookRoutes from "../modules/ebooks/ebook.routes.js";
 
 const router = Router();
 
@@ -38,5 +39,6 @@ router.use("/shadowing", shadowingRoutes);
 router.use("/youtube", youtubeRoutes);
 router.use("/readings", readingRoutes);
 router.use("/dictionary", dictionaryRoutes);
+router.use("/ebooks", ebookRoutes);
 
 export default router;

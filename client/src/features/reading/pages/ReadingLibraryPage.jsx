@@ -1,5 +1,5 @@
-import { ArrowDown, BookOpenText, Clock3, Settings2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowLeft, ArrowRight, Settings2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
@@ -8,61 +8,61 @@ import { useAuthStore } from "../../auth/stores/authStore.js";
 import { useReadings } from "../hooks/useReadings.js";
 import { normalizeReading } from "../utils/readingFormat.js";
 
-const pageSize = 5;
+const pageSize = 9;
 
 function ReadingCard({ reading, onOpen }) {
+  const tags = [reading.level, reading.durationLabel].filter(Boolean);
+
   return (
-    <Card className="overflow-hidden shadow-sm transition hover:border-coral/45">
-      <CardContent className="grid gap-4 p-4 md:grid-cols-[220px_1fr] md:items-center">
-        <button
-          className="overflow-hidden rounded-lg bg-cream-soft text-left"
-          onClick={() => onOpen(reading)}
-          type="button"
-        >
-          <img
-            alt={reading.title}
-            className="aspect-[16/10] w-full object-cover transition duration-300 hover:scale-[1.03]"
-            src={reading.imageUrl}
-          />
-        </button>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-ink-muted">
-            <span className="inline-flex items-center gap-1 rounded-full bg-cream px-2.5 py-1 text-coal">
-              <BookOpenText size={14} />
-              {reading.level}
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-cream px-2.5 py-1 text-coal">
-              <Clock3 size={14} />
-              {reading.durationLabel}
-            </span>
-            <span>{reading.displayDate}</span>
-          </div>
-          <button className="mt-3 text-left" onClick={() => onOpen(reading)} type="button">
-            <h2 className="line-clamp-2 text-xl font-bold leading-snug text-coal transition hover:text-coral md:text-2xl">
-              {reading.title}
-            </h2>
-          </button>
-          <p className="mt-2 line-clamp-3 text-sm font-medium leading-6 text-ink-body">{reading.summary}</p>
+    <article className="group flex min-w-0 flex-col">
+      <button className="block w-full overflow-hidden bg-cream-soft text-left" onClick={() => onOpen(reading)} type="button">
+        <img alt={reading.title} className="aspect-[3/2] w-full object-cover transition duration-300 group-hover:scale-[1.025]" src={reading.imageUrl} />
+      </button>
+      <div className="flex flex-1 flex-col pt-4">
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs font-semibold text-ink-muted">
+          <span className="truncate text-coal">{reading.author || "Meo Meo English"}</span>
+          <span aria-hidden="true">•</span>
+          <span>{reading.displayDate}</span>
+          {!reading.isPublished ? <span className="ml-auto rounded-sm bg-coral px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">Bản nháp</span> : null}
         </div>
-      </CardContent>
-    </Card>
+        <button className="mt-2 text-left" onClick={() => onOpen(reading)} type="button">
+          <h2 className="line-clamp-2 text-xl font-bold leading-[1.2] text-coal transition group-hover:text-coral">{reading.title}</h2>
+        </button>
+        <p className="mt-2 line-clamp-3 text-sm font-medium leading-5 text-ink-body">{reading.summary}</p>
+        <div className="mt-auto flex flex-wrap gap-2 pt-4">
+          {tags.map((tag) => <span className="rounded-full border border-coal/65 px-2 py-0.5 text-[11px] font-semibold leading-4 text-coal" key={tag}>{tag}</span>)}
+        </div>
+      </div>
+    </article>
   );
 }
 
 export default function ReadingLibraryPage() {
   const navigate = useNavigate();
+  const listTopRef = useRef(null);
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
   const { data: readings = [], isLoading, isError, error } = useReadings({ includeUnpublished: isAdmin || undefined });
-  const [visibleCount, setVisibleCount] = useState(pageSize);
+  const [currentPage, setCurrentPage] = useState(1);
   const readingLessons = useMemo(() => readings.map(normalizeReading).filter(Boolean), [readings]);
-  const visibleReadings = readingLessons.slice(0, visibleCount);
-  const hasMore = visibleCount < readingLessons.length;
+  const totalPages = Math.max(1, Math.ceil(readingLessons.length / pageSize));
+  const pageStart = (currentPage - 1) * pageSize;
+  const visibleReadings = readingLessons.slice(pageStart, pageStart + pageSize);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
+
+  function changePage(nextPage) {
+    if (nextPage < 1 || nextPage > totalPages || nextPage === currentPage) return;
+    setCurrentPage(nextPage);
+    window.requestAnimationFrame(() => listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
 
   return (
     <section className="min-h-full bg-canvas px-4 py-8 text-coal sm:px-6 lg:px-10">
-      <div className="mx-auto max-w-5xl">
-        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#e6dfd8] pb-6">
+      <div className="mx-auto max-w-[1440px]">
+        <div className="scroll-mt-16 flex flex-wrap items-end justify-between gap-4 border-b border-[#e6dfd8] pb-6 md:scroll-mt-20" ref={listTopRef}>
           <div>
             <p className="eyebrow">Luyện đọc</p>
             <h1 className="mt-2 font-display text-3xl font-normal tracking-tight sm:text-4xl">Tất cả bài đọc</h1>
@@ -93,7 +93,7 @@ export default function ReadingLibraryPage() {
         ) : null}
 
         {visibleReadings.length ? (
-          <div className="mt-8 grid gap-4">
+          <div className="mt-8 grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-6 lg:gap-y-12">
             {visibleReadings.map((reading) => (
               <ReadingCard
                 key={reading._id || reading.slug}
@@ -104,16 +104,11 @@ export default function ReadingLibraryPage() {
           </div>
         ) : null}
 
-        {hasMore ? (
-          <div className="mt-8 flex justify-center">
-            <Button
-              className="min-w-44"
-              onClick={() => setVisibleCount((count) => Math.min(count + pageSize, readingLessons.length))}
-              type="button"
-              variant="outline"
-            >
-              Xem thêm <ArrowDown size={16} />
-            </Button>
+        {readingLessons.length > pageSize ? (
+          <div className="mt-12 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-[#e6dfd8] pt-5">
+            <Button className="justify-self-start" disabled={currentPage === 1} onClick={() => changePage(currentPage - 1)} size="sm" type="button" variant="outline"><ArrowLeft size={15} /><span><span className="hidden sm:inline">Trang </span>trước</span></Button>
+            <p className="text-center text-xs font-semibold text-ink-muted">Trang {currentPage} / {totalPages}</p>
+            <Button className="justify-self-end" disabled={currentPage === totalPages} onClick={() => changePage(currentPage + 1)} size="sm" type="button" variant="outline"><span><span className="hidden sm:inline">Trang </span>sau</span><ArrowRight size={15} /></Button>
           </div>
         ) : null}
       </div>

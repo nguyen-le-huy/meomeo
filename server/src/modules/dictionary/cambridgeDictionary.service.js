@@ -33,6 +33,11 @@ function parseCambridgeHtml(html, query) {
   const headword = cleanText($("h1").first().text()) || query;
   const partOfSpeech = uniqueItems($(".pos").map((_, element) => $(element).text()).get(), 4).join(", ");
   const phonetic = uniqueItems($(".ipa").map((_, element) => `/${$(element).text()}/`).get(), 2).join(" ");
+  const audioPath = $(".us.dpron-i source[type='audio/mpeg']").first().attr("src")
+    || $(".uk.dpron-i source[type='audio/mpeg']").first().attr("src")
+    || $("source[type='audio/mpeg']").first().attr("src")
+    || "";
+  const audioUrl = audioPath ? new URL(audioPath, "https://dictionary.cambridge.org").toString() : "";
 
   const definitions = [];
   const translations = [];
@@ -60,6 +65,7 @@ function parseCambridgeHtml(html, query) {
     sourceLabel: "Cambridge Dictionary",
     partOfSpeech,
     phonetic,
+    audioUrl,
     pronunciationHint: "",
     vietnameseMeaning: vietnameseMeanings.join("; "),
     contextualMeaning: "",

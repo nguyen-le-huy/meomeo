@@ -1,9 +1,12 @@
-import { useState } from "react";
-import { BookOpen, Brain, Search, Sparkles, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight, BookOpen, Brain, Clock3, Search, Sparkles, Trash2, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { Input } from "../../../components/ui/input.jsx";
 import { Spinner } from "../../../components/ui/spinner.jsx";
-import { lookupDictionary } from "../services/dictionaryApi.js";
+import { clearDictionaryHistory, getDictionaryHistory, lookupDictionary, removeDictionaryHistory } from "../services/dictionaryApi.js";
+import { getGuestSessionId } from "../../../utils/sessionId.js";
+import PronunciationButton from "./PronunciationButton.jsx";
 
 const inputTypeLabels = {
   word: "Từ đơn",
@@ -31,10 +34,38 @@ function ResultList({ items, title }) {
 }
 
 export default function DictionaryPopover({ onClose }) {
+  const navigate = useNavigate();
+  const [sessionId] = useState(() => getGuestSessionId());
   const [query, setQuery] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 767px)");
+    if (!mobileQuery.matches) return undefined;
+
+    const documentElementOverflow = document.documentElement.style.overflow;
+    const bodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.documentElement.style.overflow = documentElementOverflow;
+      document.body.style.overflow = bodyOverflow;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    getDictionaryHistory({ sessionId, limit: 4 })
+      .then((response) => { if (active) setHistory(response.data.data.history || []); })
+      .catch(() => { if (active) setHistory([]); })
+      .finally(() => { if (active) setHistoryLoading(false); });
+    return () => { active = false; };
+  }, [sessionId]);
 
   async function handleLookup(event) {
     event?.preventDefault();
@@ -45,8 +76,10 @@ export default function DictionaryPopover({ onClose }) {
     setError("");
 
     try {
-      const response = await lookupDictionary({ query: value });
-      setResult(response.data.data.result);
+      const response = await lookupDictionary({ query: value, sessionId });
+      const nextResult = response.data.data.result;
+      setResult(nextResult);
+      setHistory((current) => [{ _id: `local-${Date.now()}`, query: value, result: nextResult }, ...current.filter((item) => item.query.trim().toLowerCase() !== value.toLowerCase())].slice(0, 4));
     } catch (lookupError) {
       setError(lookupError?.response?.data?.message || "Không tra được từ điển lúc này.");
     } finally {
@@ -55,7 +88,7 @@ export default function DictionaryPopover({ onClose }) {
   }
 
   return (
-    <div className="pointer-events-auto absolute right-1/2 top-[calc(100%+0.5rem)] z-50 flex max-h-[min(78vh,720px)] w-[min(92vw,420px)] translate-x-1/2 flex-col overflow-hidden rounded-xl border border-[#d8d0c6] bg-canvas shadow-2xl md:right-auto md:left-1/2 md:-translate-x-1/2">
+    <div className="pointer-events-auto absolute left-0 top-[calc(100%+0.5rem)] z-50 flex max-h-[min(78vh,720px)] w-screen max-w-none translate-x-0 flex-col overflow-hidden border-y border-[#d8d0c6] bg-canvas shadow-2xl md:right-auto md:left-1/2 md:w-[min(92vw,420px)] md:max-w-none md:-translate-x-1/2 md:rounded-xl md:border">
       <div className="flex items-center justify-between border-b border-[#e6dfd8] bg-cream-soft px-4 py-3">
         <div>
           <p className="font-display text-sm font-semibold text-coal">Từ điển Anh-Việt</p>
@@ -79,6 +112,16 @@ export default function DictionaryPopover({ onClose }) {
           Tra
         </Button>
       </form>
+
+      <section className="border-b border-[#e6dfd8] bg-cream-soft px-3 py-2">
+        <div className="flex items-center justify-between gap-2">
+          <p className="flex items-center gap-1.5 text-xs font-black uppercase text-ink-muted"><Clock3 size={13} /> Lịch sử tra từ</p>
+          {history.length ? <Button aria-label="Xoá toàn bộ lịch sử tra từ" className="h-7 px-2 text-[11px]" onClick={async () => { await clearDictionaryHistory(sessionId); setHistory([]); }} size="sm" type="button" variant="ghost"><Trash2 size={13} /> Xoá hết</Button> : null}
+        </div>
+        {historyLoading ? <p className="mt-2 text-xs text-ink-muted">Đang tải lịch sử...</p> : null}
+        {!historyLoading && !history.length ? <p className="mt-2 text-xs text-ink-muted">Chưa có từ nào được tra.</p> : null}
+        {history.length ? <div className="mt-2 flex max-h-20 flex-wrap gap-1.5 overflow-y-auto">{history.map((item) => <div className="inline-flex max-w-full items-center overflow-hidden rounded-md border bg-canvas" key={item._id}><Button className="max-w-[18rem] truncate rounded-none border-0 px-2 text-xs" onClick={() => { setQuery(item.query); setResult(item.result); }} size="sm" type="button" variant="ghost">{item.query}</Button>{String(item._id).startsWith("local-") ? null : <Button aria-label={`Xoá lịch sử ${item.query}`} className="rounded-none border-l px-1.5" onClick={async () => { await removeDictionaryHistory(item._id, sessionId); setHistory((current) => current.filter((historyItem) => historyItem._id !== item._id)); }} size="sm" type="button" variant="ghost"><X size={12} /></Button>}</div>)}<Button className="h-8 px-2 text-xs" onClick={() => { onClose(); navigate("/dictionary/history"); }} size="sm" type="button" variant="ghost">Xem tất cả <ArrowRight size={13} /></Button></div> : null}
+      </section>
 
       <div className="min-h-[280px] flex-1 overflow-y-auto p-4">
         {!result && !error ? (
@@ -109,12 +152,8 @@ export default function DictionaryPopover({ onClose }) {
                   Nguồn: {result.sourceLabel}
                 </span>
               </div>
-              <h3 className="font-display text-xl font-semibold text-coal">{result.query}</h3>
-              {(result.partOfSpeech || result.phonetic) ? (
-                <p className="text-sm text-ink-muted">
-                  {[result.partOfSpeech, result.phonetic].filter(Boolean).join(" · ")}
-                </p>
-              ) : null}
+              <div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="break-words font-display text-xl font-semibold text-coal">{result.query}</h3>{result.partOfSpeech ? <p className="mt-1 text-sm text-ink-muted">{result.partOfSpeech}</p> : null}</div><PronunciationButton audioUrl={result.audioUrl} text={result.query} /></div>
+              {result.phonetic ? <p className="inline-flex rounded-md bg-canvas px-2.5 py-1.5 font-mono text-sm font-semibold text-coal"><span className="mr-2 text-xs font-black uppercase text-ink-muted">IPA</span>{result.phonetic}</p> : null}
             </div>
 
             {result.vietnameseMeaning ? (
