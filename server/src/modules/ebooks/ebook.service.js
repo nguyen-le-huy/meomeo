@@ -1,11 +1,15 @@
 import { Readable } from "node:stream";
 import path from "node:path";
+import { createRequire } from "node:module";
 import { cloudinary } from "../../config/cloudinary.js";
 import { createHttpError } from "../../utils/createHttpError.js";
 import { Ebook } from "./ebook.model.js";
 import { EbookBookmark } from "./ebookBookmark.model.js";
 import { EbookProgress } from "./ebookProgress.model.js";
 import { EbookReaderSetting } from "./ebookReaderSetting.model.js";
+
+const require = createRequire(import.meta.url);
+const cloudinaryUploader = require("cloudinary/lib/uploader.js");
 
 function slugify(value) {
   return String(value || "")
@@ -24,19 +28,60 @@ async function uniqueSlug(input, currentId) {
   return slug;
 }
 
-function uploadBuffer(file, options = {}) {
+function uploadStreamBuffer(file, uploadOptions) {
   return new Promise((resolve, reject) => {
-    const extension = path.extname(file.originalname).toLowerCase().replace(".", "");
-    const publicId = `${Date.now()}-${slugify(path.basename(file.originalname, path.extname(file.originalname))) || "ebook"}`;
     const stream = cloudinary.uploader.upload_stream(
-      { folder: options.folder || "meomeo/ebooks", public_id: publicId, resource_type: options.resourceType || "raw", format: extension, use_filename: false, unique_filename: false },
+      uploadOptions,
       (error, result) => {
-        if (error) return reject(createHttpError(502, "Ebook file upload failed"));
+        if (error) return reject(createHttpError(502, `Ebook file upload failed: ${error.message || "Cloudinary upload error"}`));
         return resolve(result);
       },
     );
     Readable.from(file.buffer).pipe(stream);
   });
+}
+
+function uploadLargeBuffer(file, uploadOptions) {
+  return new Promise((resolve, reject) => {
+    const chunkSize = 6_000_000;
+    const stream = cloudinaryUploader.upload_large_stream(
+      null,
+      (result) => {
+        if (result?.error) return reject(result.error);
+        return resolve(result);
+      },
+      {
+        ...uploadOptions,
+        chunk_size: chunkSize,
+        part_size: chunkSize,
+      },
+    );
+
+    stream.on("error", (error) => {
+      reject(error);
+    });
+
+    Readable.from(file.buffer).pipe(stream);
+  }).catch((error) => {
+    throw createHttpError(502, `Ebook file upload failed: ${error.message || "Cloudinary upload error"}`);
+  });
+}
+
+function uploadBuffer(file, options = {}) {
+  const extension = path.extname(file.originalname).toLowerCase().replace(".", "");
+  const publicId = `${Date.now()}-${slugify(path.basename(file.originalname, path.extname(file.originalname))) || "ebook"}`;
+  const resourceType = options.resourceType || "raw";
+  const uploadOptions = {
+    folder: options.folder || "meomeo/ebooks",
+    public_id: publicId,
+    resource_type: resourceType,
+    format: extension,
+    use_filename: false,
+    unique_filename: false,
+  };
+
+  if (resourceType === "raw") return uploadLargeBuffer(file, uploadOptions);
+  return uploadStreamBuffer(file, uploadOptions);
 }
 
 function buildFilter(query = {}, admin = false) {
