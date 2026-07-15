@@ -8,7 +8,7 @@ export default function EbookToolbar({ bookmarkCount = 0, settings, onSettings, 
       <div className="mx-auto flex h-full w-full max-w-[1440px] items-center justify-between gap-3 px-2 sm:px-4">
         <Button aria-label="Quay lại thư viện" className="h-9 px-2 sm:px-3" onClick={onBack} title="Quay lại thư viện" type="button" variant="ghost">
           <Library size={17} />
-          <span className="hidden text-xs sm:inline">Thư viện</span>
+          <span className="text-xs">Thư viện</span>
         </Button>
 
         <div className="flex min-w-0 items-center justify-end gap-1 rounded-xl border border-[#e8e0d7] bg-cream-soft/55 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] sm:gap-1.5">
