@@ -6,7 +6,7 @@ export const getEbookReaderSettings = () => apiClient.get("/ebooks/reader-settin
 export const getEbookProgresses = (sessionId) => apiClient.get("/ebooks/progresses", { params: { sessionId } });
 export const saveEbookReaderSettings = (data) => apiClient.put("/ebooks/reader-settings", data);
 export const createEbook = (formData) => apiClient.post("/ebooks", formData, { headers: { "Content-Type": "multipart/form-data" } });
-export const updateEbook = (id, data) => apiClient.patch(`/ebooks/${id}`, data);
+export const updateEbook = (id, data) => apiClient.patch(`/ebooks/${id}`, data, data instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined);
 export const deleteEbook = (id) => apiClient.delete(`/ebooks/${id}`);
 export const publishEbook = (id, isPublished) => apiClient.patch(`/ebooks/${id}/publish`, { isPublished });
 export const getEbookProgress = (id, sessionId) => apiClient.get(`/ebooks/${id}/progress`, { params: { sessionId } });

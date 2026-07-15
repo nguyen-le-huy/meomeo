@@ -4,14 +4,15 @@ import {
   createEbookBookmark, deleteEbookBookmark, getEbookBookmarks, getEbookProgress, getEbookReaderSettings, saveEbookProgress, saveEbookReaderSettings,
 } from "../services/ebookApi.js";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
+import { READER_FONT_IDS, READER_THEME_IDS } from "../config/readerAppearance.js";
 
 const defaults = { fontSize: 18, fontFamily: "serif", theme: "light", letterSpacing: 0, lineHeight: 1.65 };
 
 function normalizeSettings(value) {
   return {
     fontSize: Number.isFinite(value?.fontSize) ? value.fontSize : defaults.fontSize,
-    fontFamily: ["serif", "sans", "bbc"].includes(value?.fontFamily) ? value.fontFamily : defaults.fontFamily,
-    theme: ["light", "sepia", "dark"].includes(value?.theme) ? value.theme : defaults.theme,
+    fontFamily: READER_FONT_IDS.includes(value?.fontFamily) ? value.fontFamily : defaults.fontFamily,
+    theme: READER_THEME_IDS.includes(value?.theme) ? value.theme : defaults.theme,
     letterSpacing: Number.isFinite(value?.letterSpacing) ? value.letterSpacing : defaults.letterSpacing,
     lineHeight: Number.isFinite(value?.lineHeight) ? value.lineHeight : defaults.lineHeight,
   };

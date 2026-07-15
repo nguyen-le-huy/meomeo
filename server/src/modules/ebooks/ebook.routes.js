@@ -10,7 +10,7 @@ import {
 import {
   createBookmarkController, createEbookController, deleteBookmarkController, deleteEbookController, getEbookByIdController,
   getEbookController, getProgressController, getReaderSettingsController, listBookmarksController, listEbooksController, listProgressesController, publishEbookController,
-  saveProgressController, saveReaderSettingsController, updateEbookController,
+  saveProgressController, saveReaderSettingsController, streamEbookFileController, updateEbookController,
 } from "./ebook.controller.js";
 
 const router = Router();
@@ -25,9 +25,10 @@ router.put("/:id/progress", optionalAuth, validate(progressRequestSchema), saveP
 router.get("/:id/bookmarks", optionalAuth, validate(bookmarkQuerySchema), listBookmarksController);
 router.post("/:id/bookmarks", optionalAuth, validate(bookmarkRequestSchema), createBookmarkController);
 router.delete("/:id/bookmarks/:bookmarkId", optionalAuth, validate(bookmarkDeleteSchema), deleteBookmarkController);
+router.get("/:id/file", optionalAuth, validate(ebookIdParamSchema), streamEbookFileController);
 router.get("/:slug", optionalAuth, validate(ebookSlugParamSchema), getEbookController);
 router.post("/", requireAuth, requireRole("admin"), ebookUpload.fields([{ name: "file", maxCount: 1 }, { name: "cover", maxCount: 1 }]), validate(createEbookSchema), createEbookController);
-router.patch("/:id", requireAuth, requireRole("admin"), validate(updateEbookSchema), updateEbookController);
+router.patch("/:id", requireAuth, requireRole("admin"), ebookUpload.fields([{ name: "cover", maxCount: 1 }]), validate(updateEbookSchema), updateEbookController);
 router.delete("/:id", requireAuth, requireRole("admin"), validate(ebookIdParamSchema), deleteEbookController);
 router.patch("/:id/publish", requireAuth, requireRole("admin"), validate(publishEbookSchema), publishEbookController);
 

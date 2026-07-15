@@ -20,6 +20,7 @@ const ebookFields = z.object({
   language: z.string().trim().max(60).optional(),
   coverUrl: z.string().trim().url().max(1000).optional().or(z.literal("")),
   isPublished: z.preprocess(optionalBoolean, z.boolean().optional()),
+  removeCover: z.preprocess(optionalBoolean, z.boolean().optional()),
 }).strict();
 
 export const ebookIdParamSchema = z.object({ params: z.object({ id: z.string().regex(objectIdRegex) }) });
@@ -67,8 +68,8 @@ export const bookmarkDeleteSchema = z.object({
 
 export const readerSettingsSchema = z.object({
   fontSize: z.coerce.number().int().min(14).max(30),
-  fontFamily: z.enum(["serif", "sans", "bbc"]),
-  theme: z.enum(["light", "sepia", "dark"]),
+  fontFamily: z.enum(["serif", "bbc", "palatino", "bookman", "sans", "reithSans", "verdana"]),
+  theme: z.enum(["light", "paper", "sepia", "sage", "dark", "midnight"]),
   letterSpacing: z.coerce.number().min(0).max(0.12),
   lineHeight: z.coerce.number().min(1.2).max(2.2),
 }).strict();

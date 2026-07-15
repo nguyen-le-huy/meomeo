@@ -1,14 +1,16 @@
-import { ArrowLeft, ArrowRight, Settings2 } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
+import LatestReadingCard from "../components/LatestReadingCard.jsx";
 import { useReadings } from "../hooks/useReadings.js";
 import { normalizeReading } from "../utils/readingFormat.js";
 
 const pageSize = 9;
+const latestReadingCount = 4;
 
 function ReadingCard({ reading, onOpen }) {
   const tags = [reading.level, reading.durationLabel].filter(Boolean);
@@ -45,9 +47,11 @@ export default function ReadingLibraryPage() {
   const { data: readings = [], isLoading, isError, error } = useReadings({ includeUnpublished: isAdmin || undefined });
   const [currentPage, setCurrentPage] = useState(1);
   const readingLessons = useMemo(() => readings.map(normalizeReading).filter(Boolean), [readings]);
-  const totalPages = Math.max(1, Math.ceil(readingLessons.length / pageSize));
+  const latestReadingLessons = readingLessons.slice(0, latestReadingCount);
+  const remainingReadingLessons = readingLessons.slice(latestReadingCount);
+  const totalPages = Math.max(1, Math.ceil(remainingReadingLessons.length / pageSize));
   const pageStart = (currentPage - 1) * pageSize;
-  const visibleReadings = readingLessons.slice(pageStart, pageStart + pageSize);
+  const visibleReadings = remainingReadingLessons.slice(pageStart, pageStart + pageSize);
 
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages));
@@ -62,19 +66,22 @@ export default function ReadingLibraryPage() {
   return (
     <section className="min-h-full bg-canvas px-4 py-8 text-coal sm:px-6 lg:px-10">
       <div className="mx-auto max-w-[1440px]">
-        <div className="scroll-mt-16 flex flex-wrap items-end justify-between gap-4 border-b border-[#e6dfd8] pb-6 md:scroll-mt-20" ref={listTopRef}>
+        {!isLoading && !isError && (readingLessons.length || isAdmin) ? (
+          <LatestReadingCard
+            lessons={latestReadingLessons}
+            onManage={isAdmin ? () => navigate("/admin/readings") : undefined}
+            onOpen={(readingLesson) => navigate(`/reading/${readingLesson.slug}`)}
+          />
+        ) : null}
+
+        <div className="scroll-mt-16 flex flex-wrap items-end justify-between gap-4 pb-6 pt-8 md:scroll-mt-20" ref={listTopRef}>
           <div>
-            <p className="eyebrow">Luyện đọc</p>
+            <p className="eyebrow">Blog</p>
             <h1 className="mt-2 font-display text-3xl font-normal tracking-tight sm:text-4xl">Tất cả bài đọc</h1>
             <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-ink-muted">
               Chọn bài đọc, luyện hiểu nội dung và trả lời câu hỏi theo từng bài.
             </p>
           </div>
-          {isAdmin ? (
-            <Button onClick={() => navigate("/admin/readings")} type="button" variant="outline">
-              <Settings2 size={16} /> Quản lý bài đọc
-            </Button>
-          ) : null}
         </div>
 
         {isLoading ? <LoadingState className="mt-8" label="Đang tải bài đọc..." /> : null}
@@ -104,7 +111,15 @@ export default function ReadingLibraryPage() {
           </div>
         ) : null}
 
-        {readingLessons.length > pageSize ? (
+        {!isLoading && !isError && readingLessons.length > 0 && !remainingReadingLessons.length ? (
+          <Card className="mt-8 border-dashed bg-cream-soft">
+            <CardContent className="p-8 text-center text-sm font-semibold text-ink-muted">
+              Chưa có thêm bài đọc.
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {remainingReadingLessons.length > pageSize ? (
           <div className="mt-12 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-[#e6dfd8] pt-5">
             <Button className="justify-self-start" disabled={currentPage === 1} onClick={() => changePage(currentPage - 1)} size="sm" type="button" variant="outline"><ArrowLeft size={15} /><span><span className="hidden sm:inline">Trang </span>trước</span></Button>
             <p className="text-center text-xs font-semibold text-ink-muted">Trang {currentPage} / {totalPages}</p>

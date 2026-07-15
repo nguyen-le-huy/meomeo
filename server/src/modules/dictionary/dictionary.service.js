@@ -23,6 +23,15 @@ function normalizeQuery(value) {
   return String(value || "").trim().replace(/\s+/g, " ");
 }
 
+function getLookupDay(date = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+  }).format(date);
+}
+
 function buildCacheKey(query, context) {
   return `${query.toLowerCase()}\n${normalizeQuery(context || "").toLowerCase()}`;
 }
@@ -132,6 +141,41 @@ function buildUserPrompt(query, context) {
   });
 }
 
+async function translateCambridgeExamples(examples) {
+  if (!examples.length || !config.openAi.apiKey) return examples;
+
+  try {
+    const completion = await getOpenAIClient().chat.completions.create({
+      model: config.openAi.dictionaryModel,
+      response_format: { type: "json_object" },
+      temperature: 0.1,
+      messages: [
+        {
+          role: "system",
+          content: [
+            "Translate each complete English example sentence into natural Vietnamese for language learners.",
+            "Translate the meaning of the whole sentence in context, not only the dictionary headword.",
+            "Return only valid JSON with a translations array in the same order and with the same number of items.",
+          ].join("\n"),
+        },
+        { role: "user", content: JSON.stringify({ examples }) },
+      ],
+    });
+
+    const content = completion.choices?.[0]?.message?.content;
+    const translations = content ? JSON.parse(content).translations : [];
+    if (!Array.isArray(translations) || translations.length !== examples.length) return examples;
+
+    return examples.map((example, index) => {
+      const translation = normalizeQuery(translations[index]);
+      return translation ? `${example} - ${translation}` : example;
+    });
+  } catch (error) {
+    console.warn(`Cambridge example translation failed: ${error.message}`);
+    return examples;
+  }
+}
+
 export async function lookupDictionary(data) {
   const query = normalizeQuery(data.query);
   if (!query) throw createHttpError(400, "Query is required");
@@ -144,6 +188,7 @@ export async function lookupDictionary(data) {
     try {
       const cambridgeResult = await lookupCambridgeDictionary(query);
       if (cambridgeResult) {
+        cambridgeResult.examples = await translateCambridgeExamples(cambridgeResult.examples);
         setCachedResult(cacheKey, cambridgeResult);
         return cambridgeResult;
       }
@@ -180,24 +225,29 @@ export async function lookupDictionary(data) {
 
 export async function saveDictionaryHistory({ query, result }) {
   const normalizedQuery = normalizeQuery(query).toLowerCase();
+  const lookupDay = getLookupDay();
   return DictionaryHistory.findOneAndUpdate(
-    { normalizedQuery },
+    { sessionId: "global", normalizedQuery, lookupDay },
     {
       $set: { query: normalizeQuery(query), result, updatedAt: new Date() },
-      $setOnInsert: { sessionId: "global", normalizedQuery },
+      $setOnInsert: { sessionId: "global", normalizedQuery, lookupDay },
     },
     { new: true, upsert: true, runValidators: true },
   ).lean();
 }
 
-export async function listDictionaryHistory({ limit = 30 }) {
-  return DictionaryHistory.aggregate([
-    { $sort: { updatedAt: -1 } },
-    { $group: { _id: "$normalizedQuery", item: { $first: "$$ROOT" } } },
-    { $replaceRoot: { newRoot: "$item" } },
-    { $sort: { updatedAt: -1 } },
-    { $limit: limit },
-  ]);
+export async function listDictionaryHistory({ limit } = {}) {
+  if (limit) {
+    return DictionaryHistory.aggregate([
+      { $sort: { updatedAt: -1 } },
+      { $group: { _id: "$normalizedQuery", item: { $first: "$$ROOT" } } },
+      { $replaceRoot: { newRoot: "$item" } },
+      { $sort: { updatedAt: -1 } },
+      { $limit: limit },
+    ]);
+  }
+
+  return DictionaryHistory.find().sort({ lookupDay: -1, updatedAt: -1 }).lean();
 }
 
 export async function removeDictionaryHistory({ id }) {

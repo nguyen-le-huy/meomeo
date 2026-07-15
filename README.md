@@ -125,12 +125,22 @@ JWT_EXPIRES_IN=7d
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=meomeo
+R2_REGION=auto
+R2_ENDPOINT=https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com
+R2_EBOOK_PREFIX=ebooks
+R2_PUBLIC_BASE_URL=
 AZURE_SPEECH_KEY=
 AZURE_SPEECH_REGION=southeastasia
 ADMIN_USERNAME=admin
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=123456
 ```
+
+Ebook files are stored in Cloudflare R2 bucket `meomeo`; ebook covers still use Cloudinary. `R2_PUBLIC_BASE_URL` is optional because the backend can stream private R2 files through `/api/ebooks/:id/file`.
 
 Các biến OpenAI/Cambridge Dictionary trong `server/.env.example` chỉ cần cấu hình khi dùng những tính năng liên quan.
 

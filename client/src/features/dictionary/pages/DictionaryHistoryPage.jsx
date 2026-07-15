@@ -8,6 +8,7 @@ import PronunciationButton from "../components/PronunciationButton.jsx";
 
 const inputTypeLabels = { word: "Từ đơn", phrase: "Cụm từ", idiom: "Thành ngữ", sentence: "Câu", paragraph: "Đoạn văn" };
 const pageSize = 9;
+const dayPageSize = 20;
 
 function formatDay(value) {
   return new Intl.DateTimeFormat("vi-VN", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(value));
@@ -18,7 +19,18 @@ function formatTime(value) {
 }
 
 function getDayKey(item) {
-  return new Date(item.updatedAt || item.createdAt).toDateString();
+  return item.lookupDay || new Date(item.updatedAt || item.createdAt).toDateString();
+}
+
+function getDayValue(item) {
+  return item.lookupDay ? `${item.lookupDay}T00:00:00+07:00` : item.updatedAt || item.createdAt;
+}
+
+function getHistoryTime(item) {
+  if (!item.lookupDay) return item.updatedAt || item.createdAt;
+  if (item.updatedAt?.startsWith(item.lookupDay)) return item.updatedAt;
+  if (item.createdAt?.startsWith(item.lookupDay)) return item.createdAt;
+  return item.updatedAt || item.createdAt;
 }
 
 function ResultSection({ title, children }) {
@@ -32,7 +44,7 @@ function HistoryCard({ item, onRemove }) {
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-ink-muted">
           <span className="rounded-full bg-coral px-2.5 py-1 text-white">{inputTypeLabels[result.inputType] || result.inputType || "Tra từ"}</span>
-          <span className="inline-flex items-center gap-1"><Clock3 size={13} /> {formatTime(item.updatedAt || item.createdAt)}</span>
+          <span className="inline-flex items-center gap-1"><Clock3 size={13} /> {formatTime(getHistoryTime(item))}</span>
         </div>
         <h2 className="mt-3 break-words font-display text-2xl font-semibold text-coal">{result.query || item.query}</h2>
         {result.partOfSpeech ? <p className="mt-1 text-sm text-ink-muted">{result.partOfSpeech}</p> : null}
@@ -58,10 +70,11 @@ export default function DictionaryHistoryPage() {
   const [error, setError] = useState("");
   const [selectedDay, setSelectedDay] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentDayPage, setCurrentDayPage] = useState(1);
 
   useEffect(() => {
     let active = true;
-    getDictionaryHistory({ limit: 50 })
+    getDictionaryHistory()
       .then((response) => { if (active) setHistory(response.data.data.history || []); })
       .catch(() => { if (active) setError("Không tải được lịch sử tra từ."); })
       .finally(() => { if (active) setLoading(false); });
@@ -70,10 +83,20 @@ export default function DictionaryHistoryPage() {
 
   const groupedHistory = useMemo(() => history.reduce((groups, item) => {
     const key = getDayKey(item);
-    if (!groups[key]) groups[key] = { label: formatDay(item.updatedAt || item.createdAt), items: [] };
+    if (!groups[key]) {
+      const dayValue = getDayValue(item);
+      groups[key] = { label: formatDay(dayValue), items: [], timestamp: new Date(dayValue).getTime() };
+    }
     groups[key].items.push(item);
     return groups;
   }, {}), [history]);
+  const sortedDayGroups = useMemo(
+    () => Object.entries(groupedHistory).sort(([, firstGroup], [, secondGroup]) => secondGroup.timestamp - firstGroup.timestamp),
+    [groupedHistory],
+  );
+  const totalDayPages = Math.max(1, Math.ceil(sortedDayGroups.length / dayPageSize));
+  const dayPageStart = (currentDayPage - 1) * dayPageSize;
+  const visibleDayGroups = sortedDayGroups.slice(dayPageStart, dayPageStart + dayPageSize);
   const selectedGroup = selectedDay ? groupedHistory[selectedDay] : null;
   const totalPages = Math.max(1, Math.ceil((selectedGroup?.items.length || 0) / pageSize));
   const pageStart = (currentPage - 1) * pageSize;
@@ -82,6 +105,10 @@ export default function DictionaryHistoryPage() {
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages));
   }, [totalPages]);
+
+  useEffect(() => {
+    setCurrentDayPage((page) => Math.min(page, totalDayPages));
+  }, [totalDayPages]);
 
   function selectDay(dayKey) {
     setSelectedDay(dayKey);
@@ -99,6 +126,12 @@ export default function DictionaryHistoryPage() {
     window.requestAnimationFrame(() => listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
+  function changeDayPage(nextPage) {
+    if (nextPage < 1 || nextPage > totalDayPages || nextPage === currentDayPage) return;
+    setCurrentDayPage(nextPage);
+    window.requestAnimationFrame(() => listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
+
   async function handleRemove(item) {
     await removeDictionaryHistory(item._id);
     const nextHistory = history.filter((historyItem) => historyItem._id !== item._id);
@@ -109,6 +142,7 @@ export default function DictionaryHistoryPage() {
   async function handleClear() {
     await clearDictionaryHistory();
     setHistory([]);
+    setCurrentDayPage(1);
     closeDay();
   }
 
@@ -117,7 +151,7 @@ export default function DictionaryHistoryPage() {
     {loading ? <LoadingState className="mt-8" label="Đang tải lịch sử..." /> : null}
     {error ? <p className="mt-8 rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p> : null}
     {!loading && !history.length ? <Card className="mt-8 border-dashed"><CardContent className="flex flex-col items-center gap-3 p-10 text-center"><BookOpen className="text-coral" size={32} /><p className="font-semibold text-coal">Chưa có từ nào được tra.</p><p className="text-sm text-ink-muted">Mở từ điển ở thanh trên cùng để bắt đầu lưu từ mới.</p></CardContent></Card> : null}
-    {!loading && !selectedGroup && history.length ? <div className="mt-8 grid max-w-4xl gap-3">{Object.entries(groupedHistory).map(([key, group]) => <button className="flex w-full items-center gap-4 rounded-lg border border-[#e6dfd8] bg-canvas p-4 text-left transition hover:border-coral/40 hover:bg-cream-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/35 sm:p-5" key={key} onClick={() => selectDay(key)} type="button"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-cream-soft text-coral"><CalendarDays size={21} /></span><span className="min-w-0 flex-1"><span className="block font-display text-lg font-semibold capitalize text-coal">{group.label}</span><span className="mt-1 block text-sm text-ink-muted">{group.items.length} từ đã tra</span></span><ChevronRight className="shrink-0 text-ink-muted" size={20} /></button>)}</div> : null}
+    {!loading && !selectedGroup && history.length ? <><div className="mt-8 grid max-w-4xl gap-3">{visibleDayGroups.map(([key, group]) => <button className="flex w-full items-center gap-4 rounded-lg border border-[#e6dfd8] bg-canvas p-4 text-left transition hover:border-coral/40 hover:bg-cream-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/35 sm:p-5" key={key} onClick={() => selectDay(key)} type="button"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-cream-soft text-coral"><CalendarDays size={21} /></span><span className="min-w-0 flex-1"><span className="block font-display text-lg font-semibold capitalize text-coal">{group.label}</span><span className="mt-1 block text-sm text-ink-muted">{group.items.length} từ đã tra</span></span><ChevronRight className="shrink-0 text-ink-muted" size={20} /></button>)}</div>{sortedDayGroups.length > dayPageSize ? <div className="mt-12 grid max-w-4xl grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-[#e6dfd8] pt-5"><Button className="justify-self-start" disabled={currentDayPage === 1} onClick={() => changeDayPage(currentDayPage - 1)} size="sm" type="button" variant="outline"><ArrowLeft size={15} /><span><span className="hidden sm:inline">Trang </span>trước</span></Button><p className="text-center text-xs font-semibold text-ink-muted">Trang {currentDayPage} / {totalDayPages}</p><Button className="justify-self-end" disabled={currentDayPage === totalDayPages} onClick={() => changeDayPage(currentDayPage + 1)} size="sm" type="button" variant="outline"><span><span className="hidden sm:inline">Trang </span>sau</span><ArrowRight size={15} /></Button></div> : null}</> : null}
     {selectedGroup ? <><div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{visibleWords.map((item) => <HistoryCard item={item} key={item._id} onRemove={handleRemove} />)}</div>{selectedGroup.items.length > pageSize ? <div className="mt-12 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-[#e6dfd8] pt-5"><Button className="justify-self-start" disabled={currentPage === 1} onClick={() => changePage(currentPage - 1)} size="sm" type="button" variant="outline"><ArrowLeft size={15} /><span><span className="hidden sm:inline">Trang </span>trước</span></Button><p className="text-center text-xs font-semibold text-ink-muted">Trang {currentPage} / {totalPages}</p><Button className="justify-self-end" disabled={currentPage === totalPages} onClick={() => changePage(currentPage + 1)} size="sm" type="button" variant="outline"><span><span className="hidden sm:inline">Trang </span>sau</span><ArrowRight size={15} /></Button></div> : null}</> : null}
   </div></section>;
 }

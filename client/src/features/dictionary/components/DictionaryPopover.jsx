@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, BookOpen, Brain, Clock3, Search, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowRight, BookOpen, Brain, Clock3, Search, Trash2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { Input } from "../../../components/ui/input.jsx";
@@ -14,6 +14,8 @@ const inputTypeLabels = {
   sentence: "Câu",
   paragraph: "Đoạn văn",
 };
+
+const HISTORY_PREVIEW_LIMIT = 4;
 
 function ResultList({ items, title }) {
   if (!items?.length) return null;
@@ -32,7 +34,7 @@ function ResultList({ items, title }) {
   );
 }
 
-export default function DictionaryPopover({ onClose }) {
+export default function DictionaryPopover({ mobile = false, onClose }) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [result, setResult] = useState(null);
@@ -58,8 +60,10 @@ export default function DictionaryPopover({ onClose }) {
 
   useEffect(() => {
     let active = true;
-    getDictionaryHistory({ limit: 4 })
-      .then((response) => { if (active) setHistory(response.data.data.history || []); })
+    getDictionaryHistory({ limit: HISTORY_PREVIEW_LIMIT })
+      .then((response) => {
+        if (active) setHistory((response.data.data.history || []).slice(0, HISTORY_PREVIEW_LIMIT));
+      })
       .catch(() => { if (active) setHistory([]); })
       .finally(() => { if (active) setHistoryLoading(false); });
     return () => { active = false; };
@@ -82,7 +86,7 @@ export default function DictionaryPopover({ onClose }) {
       setHistory((current) => [
         nextHistoryItem,
         ...current.filter((item) => item.query.trim().toLowerCase() !== value.toLowerCase()),
-      ].slice(0, 4));
+      ].slice(0, HISTORY_PREVIEW_LIMIT));
     } catch (lookupError) {
       setError(lookupError?.response?.data?.message || "Không tra được từ điển lúc này.");
     } finally {
@@ -91,11 +95,16 @@ export default function DictionaryPopover({ onClose }) {
   }
 
   return (
-    <div className="pointer-events-auto absolute left-0 top-[calc(100%+0.5rem)] z-50 flex max-h-[min(78vh,720px)] w-screen max-w-none translate-x-0 flex-col overflow-hidden border-y border-[#d8d0c6] bg-canvas shadow-2xl md:right-auto md:left-1/2 md:w-[min(92vw,420px)] md:max-w-none md:-translate-x-1/2 md:rounded-xl md:border">
+    <div
+      className={`pointer-events-auto z-50 flex flex-col overflow-hidden border-[#d8d0c6] bg-canvas shadow-2xl ${
+        mobile
+          ? "fixed inset-x-4 top-14 max-h-[calc(100dvh-4.5rem)] w-auto rounded-xl border"
+          : "absolute left-1/2 top-[calc(100%+0.5rem)] max-h-[min(78vh,720px)] w-[min(92vw,420px)] -translate-x-1/2 rounded-xl border"
+      }`}
+    >
       <div className="flex items-center justify-between border-b border-[#e6dfd8] bg-cream-soft px-4 py-3">
         <div>
           <p className="font-display text-sm font-semibold text-coal">Từ điển Anh-Việt</p>
-          <p className="text-xs text-ink-muted">Phân loại và giải nghĩa bằng AI qua server</p>
         </div>
         <Button aria-label="Đóng từ điển" onClick={onClose} size="icon" type="button" variant="ghost">
           <X size={16} />
@@ -118,12 +127,43 @@ export default function DictionaryPopover({ onClose }) {
 
       <section className="border-b border-[#e6dfd8] bg-cream-soft px-3 py-2">
         <div className="flex items-center justify-between gap-2">
-          <p className="flex items-center gap-1.5 text-xs font-black uppercase text-ink-muted"><Clock3 size={13} /> Lịch sử tra từ</p>
-          {history.length ? <Button aria-label="Xoá toàn bộ lịch sử tra từ" className="h-7 px-2 text-[11px]" onClick={async () => { await clearDictionaryHistory(); setHistory([]); }} size="sm" type="button" variant="ghost"><Trash2 size={13} /> Xoá hết</Button> : null}
+          <p className="flex items-center gap-1.5 text-xs font-black uppercase text-ink-muted">
+            <Clock3 size={13} /> Lịch sử tra từ
+          </p>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <Button
+              className="h-7 border-coral/40 bg-canvas px-2 text-[11px] text-coral shadow-sm hover:border-coral/70 hover:bg-coral/10"
+              onClick={() => {
+                onClose();
+                navigate("/dictionary/history");
+              }}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              Xem tất cả <ArrowRight size={13} />
+            </Button>
+            {history.length ? (
+              <Button
+                aria-label="Xoá toàn bộ lịch sử tra từ"
+                className="h-7 w-7 p-0"
+                onClick={async () => {
+                  await clearDictionaryHistory();
+                  setHistory([]);
+                }}
+                size="icon"
+                title="Xoá hết"
+                type="button"
+                variant="ghost"
+              >
+                <Trash2 size={13} />
+              </Button>
+            ) : null}
+          </div>
         </div>
         {historyLoading ? <p className="mt-2 text-xs text-ink-muted">Đang tải lịch sử...</p> : null}
         {!historyLoading && !history.length ? <p className="mt-2 text-xs text-ink-muted">Chưa có từ nào được tra.</p> : null}
-        {history.length ? <div className="mt-2 flex max-h-20 flex-wrap gap-1.5 overflow-y-auto">{history.map((item) => <div className="inline-flex max-w-full items-center overflow-hidden rounded-md border bg-canvas" key={item._id}><Button className="max-w-[18rem] truncate rounded-none border-0 px-2 text-xs" onClick={() => { setQuery(item.query); setResult(item.result); }} size="sm" type="button" variant="ghost">{item.query}</Button>{String(item._id).startsWith("local-") ? null : <Button aria-label={`Xoá lịch sử ${item.query}`} className="rounded-none border-l px-1.5" onClick={async () => { await removeDictionaryHistory(item._id); setHistory((current) => current.filter((historyItem) => historyItem._id !== item._id)); }} size="sm" type="button" variant="ghost"><X size={12} /></Button>}</div>)}<Button className="h-8 px-2 text-xs" onClick={() => { onClose(); navigate("/dictionary/history"); }} size="sm" type="button" variant="ghost">Xem tất cả <ArrowRight size={13} /></Button></div> : null}
+        {history.length ? <div className="mt-2 flex flex-wrap gap-1.5">{history.slice(0, HISTORY_PREVIEW_LIMIT).map((item) => <div className="inline-flex max-w-full items-center overflow-hidden rounded-md border bg-canvas" key={item._id}><Button className="max-w-[18rem] truncate rounded-none border-0 px-2 text-xs" onClick={() => { setQuery(item.query); setResult(item.result); }} size="sm" type="button" variant="ghost">{item.query}</Button>{String(item._id).startsWith("local-") ? null : <Button aria-label={`Xoá lịch sử ${item.query}`} className="rounded-none border-l px-1.5" onClick={async () => { await removeDictionaryHistory(item._id); setHistory((current) => current.filter((historyItem) => historyItem._id !== item._id)); }} size="sm" type="button" variant="ghost"><X size={12} /></Button>}</div>)}</div> : null}
       </section>
 
       <div className="min-h-[280px] flex-1 overflow-y-auto p-4">
@@ -199,12 +239,6 @@ export default function DictionaryPopover({ onClose }) {
             <ResultList items={result.examples} title="Ví dụ" />
             <ResultList items={result.collocations} title="Collocation" />
             <ResultList items={result.relatedTerms} title="Từ liên quan" />
-            <ResultList items={result.notes} title="Ghi chú" />
-
-            <div className="flex items-start gap-2 rounded-lg border border-[#e6dfd8] bg-canvas p-3 text-xs leading-relaxed text-ink-muted">
-              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-coral" />
-              Tất cả yêu cầu được xử lý qua server để bảo mật API key. Từ đơn ưu tiên Cambridge, cụm/câu dùng AI.
-            </div>
           </div>
         ) : null}
       </div>

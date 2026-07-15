@@ -1,4 +1,4 @@
-import { ArrowLeft, BookmarkPlus, LoaderCircle } from "lucide-react";
+import { ArrowLeft, BookmarkPlus, ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
@@ -8,6 +8,7 @@ import { useEbookReader } from "../hooks/useEbookReader.js";
 import EbookToolbar, { EbookBookmarksPanel, EbookSettingsPanel } from "../components/EbookToolbar.jsx";
 import EpubReader from "../components/EpubReader.jsx";
 import PdfReader from "../components/PdfReader.jsx";
+import { getReaderTheme } from "../config/readerAppearance.js";
 
 export default function EbookReaderPage() {
   const { slug } = useParams();
@@ -39,11 +40,11 @@ export default function EbookReaderPage() {
     });
   }, []);
 
-  if (isLoading) return <LoadingState className="p-8" label="Đang mở ebook..." />;
+  if (isLoading) return <LoadingState className="h-full p-8" label="Đang mở ebook..." />;
 
   if (isError || !ebook) {
     return (
-      <div className="p-8">
+      <div className="h-full p-8">
         <p className="font-semibold text-red-700">Không tìm thấy ebook.</p>
         <Button className="mt-4" onClick={() => navigate("/ebooks")} type="button" variant="outline">
           <ArrowLeft size={16} /> Thư viện
@@ -102,39 +103,29 @@ export default function EbookReaderPage() {
     }
   };
 
-  const pageThemeClass = reader.settings.theme === "dark"
-    ? "bg-[#252320] text-[#f6f0e5]"
-    : reader.settings.theme === "sepia"
-      ? "bg-[#f4ead7] text-[#453b2b]"
-      : "bg-canvas text-coal";
-  const metaThemeClass = reader.settings.theme === "dark"
-    ? "text-[#d7ccbc]"
-    : reader.settings.theme === "sepia"
-      ? "text-[#7a6650]"
-      : "text-ink-muted";
-  const pageBadgeClass = reader.settings.theme === "dark"
-    ? "border-white/15 bg-white/10 text-[#f6f0e5]"
-    : reader.settings.theme === "sepia"
-      ? "border-[#c7b595] bg-[#eadcc3] text-[#453b2b]"
-      : "border-[#e6dfd8] bg-cream-soft text-coal";
+  const readerTheme = getReaderTheme(reader.settings.theme);
+  const readingProgress = Math.max(0, Math.min(1, Number(reader.progress?.progress) || 0));
   const pageLabel = pageInfo?.current
     ? `Trang ${pageInfo.current}${pageInfo.total ? ` / ${pageInfo.total}` : ""}${pageInfo.estimated ? " (ước tính)" : ""}`
     : "";
 
   return (
-    <section className={`min-h-full ${pageThemeClass}`}>
+    <section className="flex h-full min-h-0 flex-col overflow-hidden" style={{ backgroundColor: readerTheme.background, color: readerTheme.foreground }}>
       <EbookToolbar
+        bookmarkCount={reader.bookmarks.length}
         onBack={() => navigate("/ebooks")}
         onBookmark={() => setBookmarksOpen(true)}
         onNext={readerControls?.next}
         onPrev={readerControls?.prev}
         onSettings={(patch) => (patch.panel ? setSettingsOpen((current) => !current) : reader.updateSettings(patch))}
+        pageLabel={pageLabel}
+        progress={readingProgress}
         settings={reader.settings}
       />
-      <div className="h-12 md:h-16" />
+      <div className="h-14 shrink-0" />
 
       {bookmarkStatus ? (
-        <div className={`fixed right-3 top-28 z-40 rounded-md px-3 py-2 text-sm font-semibold shadow-lg md:top-36 ${bookmarkStatus.type === "success" ? "bg-green-700 text-white" : "bg-red-700 text-white"}`} role="status">
+        <div className={`fixed right-3 top-28 z-[70] rounded-md px-3 py-2 text-sm font-semibold shadow-lg md:top-36 ${bookmarkStatus.type === "success" ? "bg-green-700 text-white" : "bg-red-700 text-white"}`} role="status">
           {bookmarkStatus.message}
         </div>
       ) : null}
@@ -159,30 +150,70 @@ export default function EbookReaderPage() {
         />
       ) : null}
 
-      <div className={`mx-auto max-w-6xl px-3 ${pageThemeClass}`}>
-        <div className={`sticky top-12 z-20 -mx-3 mb-3 flex items-start gap-3 border-b px-3 py-3 backdrop-blur md:top-16 ${reader.settings.theme === "dark" ? "border-white/10 bg-[#252320]/95" : reader.settings.theme === "sepia" ? "border-[#d9cbb4] bg-[#f4ead7]/95" : "border-[#e6dfd8] bg-canvas/95"}`}>
+      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col px-3" style={{ backgroundColor: readerTheme.background, color: readerTheme.foreground }}>
+        <div className="z-20 -mx-3 mb-3 shrink-0 border-b px-3 pb-3 pt-3 sm:pb-4 sm:pt-4" style={{ backgroundColor: readerTheme.background, borderColor: readerTheme.border }}>
+          <div className="flex min-w-0 items-center gap-3">
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-lg font-bold">{ebook.title}</h1>
-            <div className={`mt-1 flex flex-wrap items-center gap-2 text-xs ${metaThemeClass}`}>
+            <h1 className="truncate text-base font-bold leading-tight sm:text-lg">{ebook.title}</h1>
+            <div className="mt-1 flex min-w-0 items-center text-[11px] sm:text-xs" style={{ color: readerTheme.muted }}>
               <span className="min-w-0 truncate">{ebook.author || ebook.originalFilename}</span>
-              {pageLabel ? <span className={`shrink-0 rounded-full border px-2 py-0.5 font-bold ${pageBadgeClass}`}>{pageLabel}</span> : null}
             </div>
           </div>
           {reader.isLoading ? <LoaderCircle className="mt-1 animate-spin" size={16} /> : null}
-          <Button aria-label="Lưu bookmark tại vị trí hiện tại" className="shrink-0 shadow-sm" disabled={!bookmarkGetter} onClick={onBookmark} size="icon" type="button" variant="outline">
+          <Button
+            aria-label="Lưu bookmark tại vị trí hiện tại"
+            className="h-9 w-9 shrink-0 border px-0 shadow-sm sm:w-auto sm:px-3"
+            disabled={!bookmarkGetter}
+            onClick={onBookmark}
+            style={{ backgroundColor: readerTheme.surface, borderColor: readerTheme.border, color: readerTheme.foreground }}
+            title="Lưu trang đang đọc"
+            type="button"
+            variant="ghost"
+          >
             <BookmarkPlus size={16} />
+            <span className="hidden text-xs sm:inline">Lưu trang</span>
           </Button>
+          </div>
         </div>
 
         {ebook.format === "epub" ? (
-          <EpubReader
-            ebook={ebook}
-            onBookmarkReady={(getter) => setBookmarkGetter(() => getter)}
-            onControlsReady={setReaderControls}
-            onProgress={saveProgress}
-            progress={reader.progress}
-            settings={reader.settings}
-          />
+          <>
+            <EpubReader
+              ebook={ebook}
+              onBookmarkReady={(getter) => setBookmarkGetter(() => getter)}
+              onControlsReady={setReaderControls}
+              onProgress={saveProgress}
+              progress={reader.progress}
+              settings={reader.settings}
+            />
+            <div className="-mx-3 shrink-0 px-3 pb-3 pt-2" style={{ backgroundColor: readerTheme.background }}>
+              <div className="mx-auto flex w-full max-w-md items-center justify-between gap-3 rounded-lg border p-2 shadow-sm" style={{ backgroundColor: readerTheme.surface, borderColor: readerTheme.border }}>
+                <Button
+                  className="min-w-0 flex-1 justify-center gap-2"
+                  disabled={!readerControls?.prev}
+                  onClick={readerControls?.prev}
+                  style={{ color: readerTheme.foreground }}
+                  type="button"
+                  variant="ghost"
+                >
+                  <ChevronLeft size={16} />
+                  <span>Trang trước</span>
+                </Button>
+                <div className="h-7 w-px shrink-0" style={{ backgroundColor: readerTheme.border }} />
+                <Button
+                  className="min-w-0 flex-1 justify-center gap-2"
+                  disabled={!readerControls?.next}
+                  onClick={readerControls?.next}
+                  style={{ color: readerTheme.foreground }}
+                  type="button"
+                  variant="ghost"
+                >
+                  <span>Trang sau</span>
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            </div>
+          </>
         ) : (
           <PdfReader
             ebook={ebook}

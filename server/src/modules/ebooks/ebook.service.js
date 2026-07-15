@@ -2,6 +2,8 @@ import { Readable } from "node:stream";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { cloudinary } from "../../config/cloudinary.js";
+import { config } from "../../config/env.js";
+import { deleteR2Object, getR2ObjectStream, putR2Object } from "../../config/r2.js";
 import { createHttpError } from "../../utils/createHttpError.js";
 import { Ebook } from "./ebook.model.js";
 import { EbookBookmark } from "./ebookBookmark.model.js";
@@ -84,6 +86,35 @@ function uploadBuffer(file, options = {}) {
   return uploadStreamBuffer(file, uploadOptions);
 }
 
+function buildR2Key(file) {
+  const extension = path.extname(file.originalname).toLowerCase();
+  const basename = slugify(path.basename(file.originalname, extension)) || "ebook";
+  const prefix = config.r2.ebookPrefix.replace(/^\/+|\/+$/g, "") || "ebooks";
+  return `${prefix}/${Date.now()}-${basename}${extension}`;
+}
+
+async function uploadEbookToR2(file) {
+  const key = buildR2Key(file);
+  try {
+    const result = await putR2Object({
+      key,
+      body: file.buffer,
+      contentType: file.mimetype || "application/octet-stream",
+      contentLength: file.size,
+    });
+    const publicUrl = config.r2.publicBaseUrl
+      ? `${config.r2.publicBaseUrl.replace(/\/+$/g, "")}/${encodeURI(key)}`
+      : "";
+    return {
+      bucket: result.bucket,
+      key: result.key,
+      url: publicUrl || `/api/ebooks/file/${encodeURIComponent(result.key)}`,
+    };
+  } catch (error) {
+    throw createHttpError(502, `R2 ebook upload failed: ${error.message || "Cloudflare R2 error"}`);
+  }
+}
+
 function buildFilter(query = {}, admin = false) {
   const filter = {};
   if (!admin || !query.includeUnpublished) filter.isPublished = true;
@@ -117,12 +148,12 @@ export async function getEbookById(id, options = {}) {
 export async function createEbook(data, file, coverFile, adminUser) {
   if (!file) throw createHttpError(400, "Ebook file is required");
   const extension = path.extname(file.originalname).toLowerCase().slice(1);
-  const result = await uploadBuffer(file);
+  const result = await uploadEbookToR2(file);
   let coverResult = null;
   try {
     if (coverFile) coverResult = await uploadBuffer(coverFile, { folder: "meomeo/ebook-covers", resourceType: "image" });
   } catch (error) {
-    try { await cloudinary.uploader.destroy(result.public_id, { resource_type: "raw" }); } catch { /* best effort cleanup */ }
+    try { await deleteR2Object(result.key); } catch { /* best effort cleanup */ }
     throw error;
   }
   const isPublished = data.isPublished ?? false;
@@ -130,8 +161,11 @@ export async function createEbook(data, file, coverFile, adminUser) {
     ...data,
     slug: await uniqueSlug(data.slug || data.title),
     format: extension,
-    fileUrl: result.secure_url,
-    filePublicId: result.public_id,
+    fileUrl: result.url,
+    filePublicId: result.key,
+    fileStorageProvider: "r2",
+    fileStorageBucket: result.bucket,
+    fileStorageKey: result.key,
     fileSize: file.size,
     originalFilename: file.originalname,
     coverUrl: coverResult?.secure_url || "",
@@ -142,18 +176,41 @@ export async function createEbook(data, file, coverFile, adminUser) {
   });
 }
 
-export async function updateEbook(id, data) {
+export async function updateEbook(id, data, coverFile) {
   const ebook = await getEbookById(id, { admin: true });
-  Object.assign(ebook, data);
+  const { removeCover, ...fields } = data;
+  Object.assign(ebook, fields);
   if (data.slug !== undefined) ebook.slug = await uniqueSlug(data.slug, id);
   if (data.isPublished !== undefined) ebook.publishedAt = data.isPublished ? (ebook.publishedAt || new Date()) : null;
+
+  if (coverFile) {
+    const nextCover = await uploadBuffer(coverFile, { folder: "meomeo/ebook-covers", resourceType: "image" });
+    const oldCoverPublicId = ebook.coverPublicId;
+    ebook.coverUrl = nextCover.secure_url;
+    ebook.coverPublicId = nextCover.public_id;
+    if (oldCoverPublicId) {
+      try { await cloudinary.uploader.destroy(oldCoverPublicId, { resource_type: "image" }); } catch { /* best effort cleanup */ }
+    }
+  } else if (removeCover) {
+    const oldCoverPublicId = ebook.coverPublicId;
+    ebook.coverUrl = "";
+    ebook.coverPublicId = "";
+    if (oldCoverPublicId) {
+      try { await cloudinary.uploader.destroy(oldCoverPublicId, { resource_type: "image" }); } catch { /* best effort cleanup */ }
+    }
+  }
+
   await ebook.save();
   return ebook;
 }
 
 export async function deleteEbook(id) {
   const ebook = await getEbookById(id, { admin: true });
-  try { await cloudinary.uploader.destroy(ebook.filePublicId, { resource_type: "raw" }); } catch { /* metadata deletion should still complete */ }
+  if (ebook.fileStorageProvider === "r2") {
+    try { await deleteR2Object(ebook.fileStorageKey || ebook.filePublicId); } catch { /* metadata deletion should still complete */ }
+  } else {
+    try { await cloudinary.uploader.destroy(ebook.filePublicId, { resource_type: "raw" }); } catch { /* metadata deletion should still complete */ }
+  }
   if (ebook.coverPublicId) {
     try { await cloudinary.uploader.destroy(ebook.coverPublicId, { resource_type: "image" }); } catch { /* best effort cleanup */ }
   }
@@ -163,6 +220,21 @@ export async function deleteEbook(id) {
     EbookBookmark.deleteMany({ ebookId: id }),
   ]);
   return { id };
+}
+
+export async function getEbookFile(id, range, options = {}) {
+  const ebook = await getEbookById(id, options);
+  if (ebook.fileStorageProvider !== "r2") {
+    return { ebook, redirectUrl: ebook.fileUrl };
+  }
+
+  const normalizedRange = /^bytes=\d*-\d*$/.test(range || "") ? range : undefined;
+  try {
+    const object = await getR2ObjectStream(ebook.fileStorageKey || ebook.filePublicId, normalizedRange);
+    return { ebook, object, isPartial: Boolean(normalizedRange && object.ContentRange) };
+  } catch (error) {
+    throw createHttpError(502, `Could not read ebook file from R2: ${error.message || "Cloudflare R2 error"}`);
+  }
 }
 
 export async function publishEbook(id, isPublished) {

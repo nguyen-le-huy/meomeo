@@ -48,7 +48,7 @@ export default function LatestReadingCard({ lesson, lessons = [], onManage, onOp
     <section className="border-b border-[#e6dfd8] py-8 sm:py-10">
       <div className="mb-4 flex items-end justify-between gap-4">
         <div>
-          <p className="eyebrow">Luyện đọc hôm nay</p>
+          <p className="eyebrow">Blog hôm nay</p>
           <h2 className="mt-2 font-display text-2xl font-normal tracking-normal text-coal sm:text-3xl">
             Bài đọc mới nhất
           </h2>
@@ -59,20 +59,20 @@ export default function LatestReadingCard({ lesson, lessons = [], onManage, onOp
             onClick={onManage}
             type="button"
           >
-            <Settings2 size={16} /> Quản lý bài đọc
+            <Settings2 size={16} /> Quản lý blog
           </button>
         ) : null}
       </div>
 
       {!primaryLesson ? (
         <div className="rounded-lg border border-dashed border-[#d8d0c6] bg-cream-soft p-5">
-          <p className="text-sm font-semibold text-ink-muted">Chưa có bài đọc public trên home.</p>
+          <p className="text-sm font-semibold text-ink-muted">Chưa có bài viết nào được xuất bản.</p>
           <button
             className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg border border-[#d8d0c6] bg-canvas px-4 text-sm font-semibold transition hover:bg-white"
             onClick={onManage}
             type="button"
           >
-            <Settings2 size={16} /> Quản lý bài đọc
+            <Settings2 size={16} /> Quản lý blog
           </button>
         </div>
       ) : (
@@ -150,7 +150,7 @@ export default function LatestReadingCard({ lesson, lessons = [], onManage, onOp
             <article className="rounded-lg border border-dashed border-[#d8d0c6] bg-cream-soft p-5 lg:col-span-2 lg:row-span-3">
               <ReadingMeta lesson={primaryLesson} />
               <p className="mt-4 text-sm font-semibold leading-6 text-ink-muted">
-                Thêm bài đọc public để home hiển thị grid nhiều bài như thư viện.
+                Xuất bản thêm bài viết để hiển thị đầy đủ danh sách mới nhất.
               </p>
             </article>
           )}
@@ -161,7 +161,7 @@ export default function LatestReadingCard({ lesson, lessons = [], onManage, onOp
               onClick={onManage}
               type="button"
             >
-              Quản lý bài đọc
+              Quản lý blog
               <Settings2 size={16} />
             </button>
           ) : null}

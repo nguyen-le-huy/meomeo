@@ -9,7 +9,7 @@ const logoUrl = "https://res.cloudinary.com/dknin0hhf/image/upload/v1781682627/B
 const navItems = [
   { label: "Trang chủ", to: "/" },
   { label: "Học qua YouTube", to: "/youtube" },
-  { label: "Luyện đọc", to: "/readings" },
+  { label: "Blog", to: "/reading" },
   { label: "Ebook", to: "/ebooks" },
   { label: "Từ đã tra", to: "/dictionary/history" },
 ];
@@ -24,7 +24,7 @@ function Brand() {
 
 function HeaderNavLink({ item, onClick }) {
   const location = useLocation();
-  const isReadingActive = item.to === "/readings" && location.pathname.startsWith("/reading");
+  const isReadingActive = item.to === "/reading" && location.pathname.startsWith("/reading");
   const isYoutubeActive =
     item.to === "/youtube" &&
     (location.pathname.startsWith("/youtube") ||
@@ -59,7 +59,7 @@ export default function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuthStore();
-  const isLearningPage = location.pathname.startsWith("/videos/");
+  const isImmersivePage = location.pathname.startsWith("/videos/") || location.pathname.startsWith("/reading/") || location.pathname.startsWith("/ebooks/");
 
   useEffect(() => {
     if (mobileOpen) {
@@ -88,8 +88,8 @@ export default function MainLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-canvas text-coal">
-      <header className="sticky relative top-0 z-40 border-b bg-canvas/95 backdrop-blur">
+    <div className={`${isImmersivePage ? "h-[100dvh] overflow-hidden" : "min-h-screen"} flex flex-col bg-canvas text-coal`}>
+      <header className="sticky relative top-0 z-40 shrink-0 border-b bg-canvas/95 backdrop-blur">
         <div className="relative mx-auto flex h-12 max-w-[1440px] items-center justify-between gap-6 px-4 sm:px-6 md:h-16 lg:px-10">
           <Brand />
 
@@ -156,15 +156,24 @@ export default function MainLayout() {
             </Button>
           </div>
         </div>
-
-        {dictionaryOpen && dictionaryMode === "mobile" ? (
-          <div className="md:hidden">
-            <DictionaryPopover onClose={() => setDictionaryOpen(false)} />
-          </div>
-        ) : null}
       </header>
 
-      <main className={isLearningPage ? "h-[calc(100vh-3rem)] overflow-hidden md:h-[calc(100vh-4rem)]" : "min-h-[calc(100vh-3rem)] md:min-h-[calc(100vh-4rem)]"}>
+      {dictionaryOpen && dictionaryMode === "mobile" ? (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <button
+            aria-label="Đóng từ điển"
+            className="absolute inset-0 bg-coal/55 backdrop-blur-[1px]"
+            onClick={() => setDictionaryOpen(false)}
+            type="button"
+          />
+          <DictionaryPopover
+            mobile
+            onClose={() => setDictionaryOpen(false)}
+          />
+        </div>
+      ) : null}
+
+      <main className={isImmersivePage ? "min-h-0 flex-1 overflow-hidden" : "flex-1"}>
         <Outlet />
       </main>
 

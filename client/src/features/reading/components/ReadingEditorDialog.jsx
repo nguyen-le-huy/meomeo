@@ -26,7 +26,7 @@ const emptyForm = {
   slug: "",
   summary: "",
   author: "Meo Meo English",
-  authorRole: "Reading Practice Editor",
+  authorRole: "Biên tập viên",
   level: "TOEIC A2",
   publishedAt: new Date().toISOString().slice(0, 10),
   imageUrl: "",
@@ -79,7 +79,7 @@ function toForm(reading) {
     slug: reading.slug || "",
     summary: reading.summary || "",
     author: reading.author || "Meo Meo English",
-    authorRole: reading.authorRole || "Reading Practice Editor",
+    authorRole: reading.authorRole || "Biên tập viên",
     level: reading.level || "TOEIC A2",
     publishedAt: reading.publishedAt ? new Date(reading.publishedAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
     imageUrl: reading.imageUrl || "",
@@ -167,7 +167,7 @@ function extractValidationMessages(error) {
 export default function ReadingEditorDialog({ createReadingMutation, reading, trigger, updateReadingMutation }) {
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
-  const [questions, setQuestions] = useState([emptyQuestion]);
+  const [questions, setQuestions] = useState([]);
   const [draftReading, setDraftReading] = useState(null);
   const getEditorBodyFromReading = (r) => r?.bodyHtml || (r?.paragraphs || []).map((p) => `<p>${p}</p>`).join("") || "";
   const [editorBody, setEditorBody] = useState(() => getEditorBodyFromReading(reading));
@@ -182,7 +182,7 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
   useEffect(() => {
     if (!isOpen) return;
     setForm(toForm(activeReading));
-    setQuestions(activeReading?.questions?.length ? activeReading.questions.map(toQuestionForm) : [emptyQuestion]);
+    setQuestions(activeReading?.questions?.length ? activeReading.questions.map(toQuestionForm) : []);
     setEditorBody(getEditorBodyFromReading(activeReading));
     hydrationDoneRef.current = false;
   }, [activeReading, isOpen, reading]);
@@ -315,14 +315,14 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
       <DialogTrigger asChild>
         {trigger || (
           <Button type="button">
-            <FilePlus2 size={16} /> Thêm bài đọc
+            <FilePlus2 size={16} /> Viết bài mới
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="bottom-2 left-2 right-2 top-2 max-h-none w-auto max-w-none translate-x-0 translate-y-0 gap-0 overflow-y-auto overflow-x-hidden rounded-2xl p-0 sm:bottom-4 sm:left-4 sm:right-4 sm:top-4">
+      <DialogContent className="bottom-2 left-2 right-2 top-2 max-h-none w-auto max-w-none translate-x-0 translate-y-0 gap-0 overflow-y-auto overflow-x-hidden rounded-xl p-0 sm:bottom-4 sm:left-4 sm:right-4 sm:top-4">
         <DialogHeader className="sticky top-0 z-20 border-b border-[#e6dfd8] bg-canvas px-5 py-4 pr-12">
-          <DialogTitle>{isEditing ? "Sửa bài đọc" : "Tạo bài đọc"}</DialogTitle>
-          <DialogDescription>Viết nội dung như blog. Câu hỏi đọc hiểu được tạo ở phần riêng phía dưới.</DialogDescription>
+          <DialogTitle>{isEditing ? "Chỉnh sửa bài viết" : "Viết bài mới"}</DialogTitle>
+          <DialogDescription>Soạn nội dung blog, thiết lập thông tin xuất bản và tạo câu hỏi đọc hiểu trong cùng một nơi.</DialogDescription>
         </DialogHeader>
 
         <form className="mx-auto w-full max-w-[1320px] space-y-6 p-4 sm:p-5" onSubmit={submitReading}>
@@ -340,16 +340,16 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
             </Alert>
           ) : null}
 
-          <section className="overflow-hidden rounded-[1.6rem] border border-[#d8d0c6] bg-[#fbfaf6] shadow-[0_18px_60px_rgba(20,20,19,0.06)]">
+          <section className="overflow-hidden rounded-xl border border-[#d8d0c6] bg-[#fbfaf6] shadow-[0_18px_60px_rgba(20,20,19,0.06)]">
             <div className="border-b border-[#e6dfd8] bg-canvas px-5 py-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-[0.12em] text-ink-muted">Story workspace</h3>
-                  <p className="mt-1 text-sm font-medium text-ink-muted">Quản lý metadata, media và nội dung bài viết trong một workflow giống newsroom.</p>
+                  <h3 className="text-sm font-black uppercase tracking-[0.12em] text-ink-muted">Studio biên tập</h3>
+                  <p className="mt-1 text-sm font-medium text-ink-muted">Quản lý thông tin, hình ảnh và nội dung bài viết trước khi xuất bản.</p>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs font-black text-ink-muted">
-                  <span className="rounded-full bg-cream px-3 py-1">{readingStats.wordCount} words</span>
-                  <span className="rounded-full bg-cream px-3 py-1">{readingStats.paragraphs.length} paragraphs</span>
+                  <span className="rounded-full bg-cream px-3 py-1">{readingStats.wordCount} từ</span>
+                  <span className="rounded-full bg-cream px-3 py-1">{readingStats.paragraphs.length} đoạn</span>
                   <span className="rounded-full bg-cream px-3 py-1">{readingStats.minutes} phút đọc</span>
                 </div>
               </div>
@@ -357,55 +357,55 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
 
             <div className="grid min-w-0 gap-0 xl:grid-cols-[minmax(0,1fr)_340px]">
               <div className="min-w-0 space-y-4 p-4 sm:p-5">
-                <div className="rounded-2xl border border-[#e6dfd8] bg-canvas p-4 shadow-sm">
+                <div className="rounded-lg border border-[#e6dfd8] bg-canvas p-4 shadow-sm">
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-xs font-black uppercase tracking-[0.12em] text-ink-muted">Publishing</p>
-                    <span className="rounded-full bg-cream-soft px-3 py-1 text-xs font-bold text-ink-muted">Draft settings</span>
+                    <p className="text-xs font-black uppercase tracking-[0.12em] text-ink-muted">Thông tin xuất bản</p>
+                    <span className="rounded-full bg-cream-soft px-3 py-1 text-xs font-bold text-ink-muted">Cài đặt bài viết</span>
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
-                    <Input onChange={(event) => updateField("title", event.target.value)} placeholder="Headline" required value={form.title} />
-                    <Input onChange={(event) => updateField("slug", event.target.value)} placeholder="slug-tu-dong-neu-bo-trong" value={form.slug} />
+                    <Input onChange={(event) => updateField("title", event.target.value)} placeholder="Tiêu đề bài viết" required value={form.title} />
+                    <Input onChange={(event) => updateField("slug", event.target.value)} placeholder="duong-dan-bai-viet" value={form.slug} />
                     <Input onChange={(event) => updateField("level", event.target.value)} placeholder="IELTS / TOEIC A2" value={form.level} />
                     <div className="flex h-10 items-center rounded-lg border border-[#d8d0c6] bg-cream-soft px-3.5 text-sm font-semibold text-ink-muted">
                       {readingStats.minutes} phút đọc, tự tính theo số từ
                     </div>
-                    <Input onChange={(event) => updateField("author", event.target.value)} placeholder="Author" value={form.author} />
-                    <Input onChange={(event) => updateField("authorRole", event.target.value)} placeholder="Author role" value={form.authorRole} />
+                    <Input onChange={(event) => updateField("author", event.target.value)} placeholder="Tên tác giả" value={form.author} />
+                    <Input onChange={(event) => updateField("authorRole", event.target.value)} placeholder="Vai trò tác giả" value={form.authorRole} />
                     <Input onChange={(event) => updateField("publishedAt", event.target.value)} type="date" value={form.publishedAt} />
                     <label className="flex items-center gap-2 rounded-lg border border-[#d8d0c6] px-3 text-sm font-semibold">
                       <input checked={form.isPublished} onChange={(event) => updateField("isPublished", event.target.checked)} type="checkbox" />
-                      Public bài đọc
+                      Xuất bản bài viết
                     </label>
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-[#e6dfd8] bg-canvas p-4 shadow-sm">
+                <div className="rounded-lg border border-[#e6dfd8] bg-canvas p-4 shadow-sm">
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-xs font-black uppercase tracking-[0.12em] text-ink-muted">Dek / summary</p>
+                    <p className="text-xs font-black uppercase tracking-[0.12em] text-ink-muted">Mô tả ngắn</p>
                     <Button onClick={generateSummary} size="sm" type="button" variant="outline">
                       Tạo từ đoạn đầu
                     </Button>
                   </div>
-                  <Textarea className="min-h-24 text-base leading-7" onChange={(event) => updateField("summary", event.target.value)} placeholder="Lead summary for the article" required value={form.summary} />
+                  <Textarea className="min-h-24 text-base leading-7" onChange={(event) => updateField("summary", event.target.value)} placeholder="Tóm tắt nội dung hiển thị trên danh sách bài viết" required value={form.summary} />
                 </div>
 
-                <div className="rounded-2xl border border-[#e6dfd8] bg-canvas p-4 shadow-sm">
-                  <p className="mb-3 text-xs font-black uppercase tracking-[0.12em] text-ink-muted">Media</p>
+                <div className="rounded-lg border border-[#e6dfd8] bg-canvas p-4 shadow-sm">
+                  <p className="mb-3 text-xs font-black uppercase tracking-[0.12em] text-ink-muted">Hình ảnh</p>
                   <div className="grid gap-3 md:grid-cols-2">
-                    <Input onChange={(event) => updateField("imageUrl", event.target.value)} placeholder="Main image URL" required value={form.imageUrl} />
-                    <Input onChange={(event) => updateField("imageCredit", event.target.value)} placeholder="Main image credit" value={form.imageCredit} />
-                    <Input onChange={(event) => updateField("secondaryImageUrl", event.target.value)} placeholder="Secondary image URL" value={form.secondaryImageUrl} />
-                    <Input onChange={(event) => updateField("secondaryImageCredit", event.target.value)} placeholder="Secondary image credit" value={form.secondaryImageCredit} />
+                    <Input onChange={(event) => updateField("imageUrl", event.target.value)} placeholder="URL ảnh đại diện" required value={form.imageUrl} />
+                    <Input onChange={(event) => updateField("imageCredit", event.target.value)} placeholder="Nguồn ảnh đại diện" value={form.imageCredit} />
+                    <Input onChange={(event) => updateField("secondaryImageUrl", event.target.value)} placeholder="URL ảnh phụ" value={form.secondaryImageUrl} />
+                    <Input onChange={(event) => updateField("secondaryImageCredit", event.target.value)} placeholder="Nguồn ảnh phụ" value={form.secondaryImageCredit} />
                   </div>
-                  <Textarea className="mt-3" onChange={(event) => updateField("imageCaption", event.target.value)} placeholder="Main image caption" value={form.imageCaption} />
-                  <Textarea className="mt-3" onChange={(event) => updateField("secondaryImageCaption", event.target.value)} placeholder="Secondary image caption" value={form.secondaryImageCaption} />
+                  <Textarea className="mt-3" onChange={(event) => updateField("imageCaption", event.target.value)} placeholder="Chú thích ảnh đại diện" value={form.imageCaption} />
+                  <Textarea className="mt-3" onChange={(event) => updateField("secondaryImageCaption", event.target.value)} placeholder="Chú thích ảnh phụ" value={form.secondaryImageCaption} />
                 </div>
 
-                <div className="flex h-[620px] min-w-0 flex-col overflow-hidden rounded-[1.75rem] border border-[#ded8ce] bg-[#fffdf8] shadow-[0_18px_60px_rgba(20,20,19,0.08)] sm:h-[680px] xl:h-[calc(100vh-14rem)] xl:min-h-[560px]">
+                <div className="flex h-[620px] min-w-0 flex-col overflow-hidden rounded-xl border border-[#ded8ce] bg-[#fffdf8] shadow-[0_18px_60px_rgba(20,20,19,0.08)] sm:h-[680px] xl:h-[calc(100vh-14rem)] xl:min-h-[560px]">
                   <div className="z-10 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[#eee8df] bg-[#fffdf8]/95 px-4 py-3 backdrop-blur">
                     <div className="flex min-w-0 items-center gap-2">
                       <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#d8d0c6] text-lg font-light text-ink-muted">+</span>
-                      <span className="truncate text-xs font-black uppercase tracking-[0.14em] text-ink-muted">Medium style editor</span>
+                      <span className="truncate text-xs font-black uppercase tracking-[0.14em] text-ink-muted">Nội dung bài viết</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button onClick={formatSelectionAsNormalText} size="sm" type="button" variant="ghost">
@@ -420,7 +420,7 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
                           event.target.value = "";
                         }}
                       >
-                        <option value="">Size</option>
+                        <option value="">Cỡ chữ</option>
                         {editorFontSizes.map((item) => (
                           <option key={item.value} value={item.value}>
                             {item.label}
@@ -428,16 +428,16 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
                         ))}
                       </select>
                       <Button onClick={() => appendParagraphTemplate("New paragraph...")} size="sm" type="button" variant="ghost">
-                        <ListPlus size={15} /> Paragraph
+                        <ListPlus size={15} /> Đoạn văn
                       </Button>
                       <Button onClick={() => appendParagraphTemplate("Subheading")} size="sm" type="button" variant="ghost">
-                        <Heading2 size={15} /> Subhead
+                        <Heading2 size={15} /> Tiêu đề phụ
                       </Button>
                       <Button onClick={() => appendParagraphTemplate("“Pull quote or important idea.”")} size="sm" type="button" variant="ghost">
-                        <Quote size={15} /> Quote
+                        <Quote size={15} /> Trích dẫn
                       </Button>
                       <Button onClick={() => appendParagraphTemplate("![Image caption](https://example.com/image.jpg)")} size="sm" type="button" variant="ghost">
-                        <ImagePlus size={15} /> Image note
+                        <ImagePlus size={15} /> Ghi chú ảnh
                       </Button>
                     </div>
                   </div>
@@ -447,10 +447,10 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
                       <div className="mb-8 border-b border-[#eee8df] pb-6">
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8b8176]">{form.level || "Reading"}</p>
                         <h2 className="mt-3 font-serif text-4xl font-medium leading-[1.08] tracking-[-0.03em] text-[#242424] sm:text-5xl">
-                          {form.title || "Title"}
+                          {form.title || "Tiêu đề bài viết"}
                         </h2>
                         <p className="mt-4 text-xl leading-8 text-[#6b6b6b]">
-                          {form.summary || "Write a short subtitle or summary above, then draft your article below."}
+                          {form.summary || "Viết mô tả ngắn ở phía trên, sau đó bắt đầu soạn nội dung bên dưới."}
                         </p>
                       </div>
 
@@ -458,7 +458,7 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
                         aria-label="Article body editor"
                         className="medium-editor-body min-h-[420px] whitespace-pre-wrap pb-24 font-serif text-[21px] leading-[1.72] text-[#242424] outline-none empty:before:pointer-events-none empty:before:text-[#a8a29a] empty:before:content-[attr(data-placeholder)]"
                         contentEditable
-                        data-placeholder="Tell your story..."
+                        data-placeholder="Bắt đầu viết nội dung..."
                         key={editorHydrationKey}
                         onInput={(event) => {
                           const nextHtml = event.currentTarget.innerHTML || "";
@@ -494,9 +494,9 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
               <aside className="hidden border-t border-[#e6dfd8] bg-canvas p-4 xl:block xl:border-l xl:border-t-0">
                 <div className="sticky top-4 space-y-4">
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.12em] text-ink-muted">Live article preview</p>
-                    <h4 className="mt-2 line-clamp-3 text-2xl font-black leading-tight">{form.title || "Untitled article"}</h4>
-                    <p className="mt-2 line-clamp-4 text-sm leading-6 text-ink-muted">{form.summary || "Summary will appear here."}</p>
+                    <p className="text-xs font-black uppercase tracking-[0.12em] text-ink-muted">Xem trước bài viết</p>
+                    <h4 className="mt-2 line-clamp-3 text-2xl font-black leading-tight">{form.title || "Bài viết chưa có tiêu đề"}</h4>
+                    <p className="mt-2 line-clamp-4 text-sm leading-6 text-ink-muted">{form.summary || "Mô tả ngắn sẽ hiển thị tại đây."}</p>
                   </div>
                   {form.imageUrl ? (
                     <figure className="overflow-hidden rounded-xl border border-[#e6dfd8]">
@@ -505,21 +505,21 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
                     </figure>
                   ) : (
                     <div className="flex aspect-[16/10] items-center justify-center rounded-xl border border-dashed border-[#d8d0c6] bg-cream-soft text-sm font-bold text-ink-muted">
-                      Main image preview
+                      Xem trước ảnh đại diện
                     </div>
                   )}
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className="rounded-xl bg-cream-soft p-3">
                       <p className="text-lg font-black">{readingStats.wordCount}</p>
-                      <p className="text-[11px] font-bold uppercase text-ink-muted">Words</p>
+                      <p className="text-[11px] font-bold uppercase text-ink-muted">Từ</p>
                     </div>
                     <div className="rounded-xl bg-cream-soft p-3">
                       <p className="text-lg font-black">{readingStats.paragraphs.length}</p>
-                      <p className="text-[11px] font-bold uppercase text-ink-muted">Paras</p>
+                      <p className="text-[11px] font-bold uppercase text-ink-muted">Đoạn</p>
                     </div>
                     <div className="rounded-xl bg-cream-soft p-3">
                       <p className="text-lg font-black">{readingStats.minutes}</p>
-                      <p className="text-[11px] font-bold uppercase text-ink-muted">Mins</p>
+                      <p className="text-[11px] font-bold uppercase text-ink-muted">Phút</p>
                     </div>
                   </div>
                 </div>
@@ -527,10 +527,10 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
             </div>
           </section>
 
-          <section className="rounded-[1.6rem] border border-[#d8d0c6] bg-canvas p-4 shadow-[0_12px_36px_rgba(20,20,19,0.05)] sm:p-5">
+          <section className="rounded-xl border border-[#d8d0c6] bg-canvas p-4 shadow-[0_12px_36px_rgba(20,20,19,0.05)] sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e6dfd8] pb-4">
               <div>
-                <h3 className="text-sm font-black uppercase tracking-[0.12em] text-ink-muted">Reading questions</h3>
+                <h3 className="text-sm font-black uppercase tracking-[0.12em] text-ink-muted">Câu hỏi đọc hiểu</h3>
                 <p className="mt-1 text-sm font-medium text-ink-muted">Tạo câu hỏi đọc hiểu riêng, mỗi đáp án một dòng và chọn đáp án đúng bằng số thứ tự.</p>
               </div>
               <Button onClick={() => setQuestions((current) => [...current, emptyQuestion])} size="sm" type="button" variant="outline">
@@ -539,19 +539,24 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
             </div>
 
             <div className="mt-5 grid gap-4">
+              {!questions.length ? (
+                <div className="rounded-lg border border-dashed border-[#d8d0c6] bg-[#fbfaf6] px-4 py-8 text-center">
+                  <p className="text-sm font-bold text-coal">Chưa có câu hỏi nào</p>
+                  <p className="mt-1 text-sm font-medium text-ink-muted">Blog sẽ mặc định không hiển thị phần câu hỏi đọc hiểu.</p>
+                </div>
+              ) : null}
               {questions.map((question, index) => {
                 const choiceCount = question.choicesText.split("\n").filter((choice) => choice.trim()).length || 1;
                 return (
-                  <div className="rounded-2xl border border-[#e6dfd8] bg-[#fbfaf6] p-4 shadow-sm" key={index}>
+                  <div className="rounded-lg border border-[#e6dfd8] bg-[#fbfaf6] p-4 shadow-sm" key={index}>
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-coal px-2 text-xs font-black text-white">
                           {index + 1}
                         </span>
-                        <p className="text-sm font-black">Question block</p>
+                        <p className="text-sm font-black">Câu hỏi {index + 1}</p>
                       </div>
                       <Button
-                        disabled={questions.length === 1}
                         onClick={() => setQuestions((current) => current.filter((_, questionIndex) => questionIndex !== index))}
                         size="sm"
                         type="button"
@@ -560,7 +565,7 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
                         <Trash2 size={14} /> Xoá
                       </Button>
                     </div>
-                    <Textarea className="mt-4 min-h-20 bg-canvas text-base font-semibold leading-7" onChange={(event) => updateQuestion(index, "prompt", event.target.value)} placeholder="Question prompt" value={question.prompt} />
+                    <Textarea className="mt-4 min-h-20 bg-canvas text-base font-semibold leading-7" onChange={(event) => updateQuestion(index, "prompt", event.target.value)} placeholder="Nội dung câu hỏi" value={question.prompt} />
                     <Textarea
                       className="mt-3 min-h-32 bg-canvas font-mono text-sm leading-6"
                       onChange={(event) => updateQuestion(index, "choicesText", event.target.value)}
@@ -575,7 +580,7 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
                         type="number"
                         value={Number(question.answerIndex) + 1}
                       />
-                      <Input onChange={(event) => updateQuestion(index, "explanation", event.target.value)} placeholder="Explanation optional" value={question.explanation} />
+                      <Input onChange={(event) => updateQuestion(index, "explanation", event.target.value)} placeholder="Giải thích đáp án (không bắt buộc)" value={question.explanation} />
                     </div>
                   </div>
                 );
@@ -589,7 +594,7 @@ export default function ReadingEditorDialog({ createReadingMutation, reading, tr
             </Button>
             <Button disabled={isPending} type="submit">
               {isPending ? <Spinner size="sm" /> : isEditing ? <Edit3 size={16} /> : <FilePlus2 size={16} />}
-              {isPending ? "Đang lưu..." : isEditing ? "Lưu bài đọc" : "Tạo bài đọc"}
+              {isPending ? "Đang lưu..." : isEditing ? "Lưu bài viết" : "Xuất bản bài viết"}
             </Button>
           </div>
         </form>

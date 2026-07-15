@@ -47,6 +47,18 @@ export const config = {
     apiKey: process.env.CLOUDINARY_API_KEY,
     apiSecret: process.env.CLOUDINARY_API_SECRET,
   },
+  r2: {
+    accountId: process.env.R2_ACCOUNT_ID || "",
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+    bucketName: process.env.R2_BUCKET_NAME || "",
+    endpoint:
+      process.env.R2_ENDPOINT ||
+      (process.env.R2_ACCOUNT_ID ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : ""),
+    region: process.env.R2_REGION || "auto",
+    ebookPrefix: process.env.R2_EBOOK_PREFIX || "ebooks",
+    publicBaseUrl: process.env.R2_PUBLIC_BASE_URL || "",
+  },
   azureSpeech: {
     key: process.env.AZURE_SPEECH_KEY || "",
     region: process.env.AZURE_SPEECH_REGION || "",

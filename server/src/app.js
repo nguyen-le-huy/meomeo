@@ -26,6 +26,7 @@ app.use(
       }
     },
     credentials: true,
+    exposedHeaders: ["Accept-Ranges", "Content-Length", "Content-Range", "Content-Disposition", "ETag"],
   })
 );
 

@@ -3,9 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
-import LatestReadingCard from "../../reading/components/LatestReadingCard.jsx";
-import { useReadings } from "../../reading/hooks/useReadings.js";
-import { normalizeReading } from "../../reading/utils/readingFormat.js";
 import LearningModeDialog from "../../videos/components/LearningModeDialog.jsx";
 import TopicVideoSection from "../../videos/components/TopicVideoSection.jsx";
 import VideoLibraryAdminActions from "../../videos/components/VideoLibraryAdminActions.jsx";
@@ -75,7 +72,6 @@ export default function HomePage() {
     refetch: refetchVideos,
   } = useVideos({ includeUnpublished: isAdmin || undefined });
   const { data: topics = [], isLoading: isTopicsLoading } = useTopics({ includeUnpublished: isAdmin || undefined });
-  const { data: readings = [] } = useReadings({ includeUnpublished: isAdmin || undefined });
   const createVideoMutation = useCreateVideo();
   const createTopicMutation = useCreateTopic();
   const updateTopicMutation = useUpdateTopic();
@@ -86,7 +82,6 @@ export default function HomePage() {
   const deleteVideoMutation = useDeleteVideo();
   const sessionId = getGuestSessionId();
   const { data: myShadowingSessions = [] } = useMyShadowingSessions(sessionId);
-  const readingLessons = useMemo(() => readings.map(normalizeReading).filter(Boolean), [readings]);
   const visibleTopics = useMemo(() => topics.filter((topic) => topic.slug !== "all-videos"), [topics]);
   const topicSections = useMemo(
     () => buildTopicSections({ isAdmin, topics: visibleTopics, videos }),
@@ -194,12 +189,6 @@ export default function HomePage() {
             })}
           </div>
         ) : null}
-
-        <LatestReadingCard
-          lessons={readingLessons}
-          onManage={isAdmin ? () => navigate("/admin/readings") : undefined}
-          onOpen={(readingLesson) => navigate(`/reading/${readingLesson.slug}`)}
-        />
 
         <LearningModeDialog
           onOpenChange={(isOpen) => {

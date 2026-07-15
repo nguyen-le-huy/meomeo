@@ -369,7 +369,7 @@ export default function ReadingPracticePage() {
 
   const [localAnswers, setLocalAnswers] = useState({});
   const [showResult, setShowResult] = useState(false);
-  const [showQuestions, setShowQuestions] = useState(true);
+  const [showQuestions, setShowQuestions] = useState(false);
   const highlightStorageKey = `reading-highlights-${lesson?._id || slug}`;
   const [highlights, setHighlights] = useState([]);
   const skipNextHighlightSaveRef = useRef(false);
@@ -382,6 +382,7 @@ export default function ReadingPracticePage() {
     document.querySelector("main")?.scrollTo?.({ top: 0, left: 0, behavior: "instant" });
     setLocalAnswers({});
     setShowResult(false);
+    setShowQuestions(false);
     submitMutation.reset();
   }, [slug]);
 
@@ -468,7 +469,7 @@ export default function ReadingPracticePage() {
   };
 
   return (
-    <section className="h-[calc(100dvh-3rem)] overflow-hidden bg-cream-soft text-coal md:h-[calc(100dvh-4rem)]">
+    <section className="h-full overflow-hidden bg-cream-soft text-coal">
       <div
         className={[
           "grid h-full min-h-0 gap-2 p-2 md:gap-3 md:p-4",

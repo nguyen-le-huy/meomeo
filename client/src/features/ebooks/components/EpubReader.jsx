@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import ePub from "epubjs";
+import { getReaderFont, READER_THEMES } from "../config/readerAppearance.js";
+import reithSansBoldUrl from "../../../bbcreith_v2.300/BBCReithSans_V2.300/Web/WOFF2/BBCReithSans_W_Bd.woff2?url";
+import reithSansUrl from "../../../bbcreith_v2.300/BBCReithSans_V2.300/Web/WOFF2/BBCReithSans_W_Rg.woff2?url";
+import reithSerifBoldUrl from "../../../bbcreith_v2.300/BBCReithSerif_V2.300/Web/WOFF2/BBCReithSerif_W_Bd.woff2?url";
+import reithSerifUrl from "../../../bbcreith_v2.300/BBCReithSerif_V2.300/Web/WOFF2/BBCReithSerif_W_Rg.woff2?url";
 
 export default function EpubReader({
   ebook,
@@ -23,6 +28,21 @@ export default function EpubReader({
     container.querySelectorAll(".epub-container, .epub-view, .epub-contents").forEach((node) => {
       if (!(node instanceof HTMLElement)) return;
       node.scrollTop = 0;
+    });
+  };
+
+  const sanitizeEpubDocument = (doc) => {
+    if (!doc?.querySelectorAll) return;
+
+    doc.querySelectorAll("script").forEach((node) => node.remove());
+    doc.querySelectorAll("*").forEach((node) => {
+      Array.from(node.attributes || []).forEach((attribute) => {
+        const name = attribute.name.toLowerCase();
+        const value = String(attribute.value || "").trim().toLowerCase();
+        if (name.startsWith("on") || value.startsWith("javascript:")) {
+          node.removeAttribute(attribute.name);
+        }
+      });
     });
   };
 
@@ -56,21 +76,31 @@ export default function EpubReader({
       });
     };
 
-    const book = ePub(ebook.fileUrl);
+    // R2 ebooks are served through an extensionless API proxy. Without this
+    // hint, epub.js treats the URL as an unpacked directory and requests
+    // `/META-INF/container.xml` from the API route instead of opening the zip.
+    const book = ePub(ebook.fileUrl, { openAs: "epub" });
+    book.spine.hooks.content.register(sanitizeEpubDocument);
     const rendition = book.renderTo(frameRef.current, {
       width: "100%",
       height: "100%",
       spread: "none",
       flow: "scrolled-doc",
       manager: "default",
+      method: "blobUrl",
     });
 
     bookRef.current = book;
     renditionRef.current = rendition;
 
-    rendition.themes.register("light", { body: { color: "#202224", background: "#faf9f5" } });
-    rendition.themes.register("sepia", { body: { color: "#453b2b", background: "#f4ead7" } });
-    rendition.themes.register("dark", { body: { color: "#f6f0e5", background: "#252320" } });
+    READER_THEMES.forEach((theme) => {
+      rendition.themes.register(theme.id, {
+        html: { background: `${theme.background} !important` },
+        body: { color: `${theme.foreground} !important`, background: `${theme.background} !important` },
+        "p, div, span, li, h1, h2, h3, h4, h5, h6": { color: "inherit !important" },
+        a: { color: `${theme.accent} !important` },
+      });
+    });
     constrainRenderedLayout();
 
     rendition.hooks.content.register((contents) => {
@@ -82,6 +112,34 @@ export default function EpubReader({
       contents.document.body.style.boxSizing = "border-box";
       const style = contents.document.createElement("style");
       style.textContent = `
+        @font-face {
+          font-display: swap;
+          font-family: "BBC Reith Serif";
+          font-style: normal;
+          font-weight: 400;
+          src: url("${reithSerifUrl}") format("woff2");
+        }
+        @font-face {
+          font-display: swap;
+          font-family: "BBC Reith Serif";
+          font-style: normal;
+          font-weight: 700;
+          src: url("${reithSerifBoldUrl}") format("woff2");
+        }
+        @font-face {
+          font-display: swap;
+          font-family: "BBC Reith Sans";
+          font-style: normal;
+          font-weight: 400;
+          src: url("${reithSansUrl}") format("woff2");
+        }
+        @font-face {
+          font-display: swap;
+          font-family: "BBC Reith Sans";
+          font-style: normal;
+          font-weight: 700;
+          src: url("${reithSansBoldUrl}") format("woff2");
+        }
         html, body {
           max-width: 100%;
           overflow-x: hidden !important;
@@ -98,7 +156,7 @@ export default function EpubReader({
 
     rendition.themes.default({
       body: {
-        "font-family": settings.fontFamily === "bbc" ? "BBC Reith Serif, Georgia, serif" : settings.fontFamily === "sans" ? "Arial, sans-serif" : "Georgia, serif",
+        "font-family": getReaderFont(settings.fontFamily).css,
         "font-size": `${settings.fontSize}px`,
         "line-height": `${settings.lineHeight}`,
         "letter-spacing": `${settings.letterSpacing}em`,
@@ -157,7 +215,7 @@ export default function EpubReader({
     const rendition = renditionRef.current;
     if (!rendition) return;
     rendition.themes.fontSize(`${settings.fontSize}px`);
-    rendition.themes.override("font-family", settings.fontFamily === "bbc" ? "BBC Reith Serif, Georgia, serif" : settings.fontFamily === "sans" ? "Arial, sans-serif" : "Georgia, serif");
+    rendition.themes.override("font-family", getReaderFont(settings.fontFamily).css);
     rendition.themes.override("line-height", `${settings.lineHeight}`);
     rendition.themes.override("letter-spacing", `${settings.letterSpacing}em`);
   }, [settings.fontSize, settings.fontFamily, settings.letterSpacing, settings.lineHeight]);
@@ -184,8 +242,8 @@ export default function EpubReader({
   useEffect(() => {
     if (!ready) return;
     const rendition = renditionRef.current;
-    rendition?.themes.select(settings.theme === "dark" ? "dark" : settings.theme === "sepia" ? "sepia" : "light");
+    rendition?.themes.select(settings.theme);
   }, [ready, settings.theme]);
 
-  return <div className="h-[calc(100vh-7rem)] min-h-[520px] w-full scroll-mt-28 overflow-x-hidden overflow-y-auto overscroll-contain pb-24 md:scroll-mt-32" ref={frameRef} />;
+  return <div className="min-h-0 flex-1 w-full overflow-x-hidden overflow-y-auto overscroll-contain pb-24" ref={frameRef} />;
 }

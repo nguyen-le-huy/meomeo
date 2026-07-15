@@ -46,12 +46,15 @@ function parseCambridgeHtml(html, query) {
   $(".def-block").each((_, block) => {
     const definition = cleanText($(block).find(".def").first().text());
     const translation = cleanText($(block).find(".trans").first().text());
-    const example = cleanText($(block).find(".examp").first().text());
 
     if (definition) definitions.push(definition);
     if (translation) translations.push(translation);
-    if (example && translation) examples.push(`${example} - ${translation}`);
-    if (example && !translation) examples.push(example);
+
+    $(block).find(".examp").each((__, exampleElement) => {
+      const example = cleanText($(exampleElement).find(".eg").first().text())
+        || cleanText($(exampleElement).text());
+      if (example) examples.push(example);
+    });
   });
 
   const vietnameseMeanings = uniqueItems(translations, 10);

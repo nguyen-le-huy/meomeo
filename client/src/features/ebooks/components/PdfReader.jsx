@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import workerSrc from "pdfjs-dist/build/pdf.worker.mjs?url";
 import { Button } from "../../../components/ui/button.jsx";
+import { getReaderTheme } from "../config/readerAppearance.js";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 
@@ -10,6 +11,7 @@ export default function PdfReader({ ebook, settings, progress, onProgress, onPag
   const [pdf, setPdf] = useState(null);
   const [page, setPage] = useState(() => Math.max(1, progress?.page || 1));
   const [numPages, setNumPages] = useState(0);
+  const theme = getReaderTheme(settings.theme);
 
   useEffect(() => {
     let active = true;
@@ -57,7 +59,7 @@ export default function PdfReader({ ebook, settings, progress, onProgress, onPag
   }, [pdf, page, numPages, onProgress, onPageChange]);
 
   return (
-    <div className={`grid justify-items-center gap-3 overflow-auto p-4 ${settings.theme === "dark" ? "bg-[#252320]" : settings.theme === "sepia" ? "bg-[#f4ead7]" : "bg-cream-soft"}`}>
+    <div className="grid min-h-0 flex-1 justify-items-center gap-3 overflow-auto p-4" style={{ backgroundColor: theme.background, color: theme.foreground }}>
       <canvas className="max-w-full shadow-md" ref={canvasRef} />
       <div className="flex items-center gap-3">
         <Button disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} size="sm" type="button" variant="outline">

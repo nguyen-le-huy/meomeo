@@ -36,7 +36,8 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <HomePage /> },
           { path: "youtube", element: <VideoLibraryPage /> },
-          { path: "readings", element: <ReadingLibraryPage /> },
+          { path: "reading", element: <ReadingLibraryPage /> },
+          { path: "readings", element: <Navigate to="/reading" replace /> },
           { path: "ebooks", element: <EbookLibraryPage /> },
           { path: "dictionary/history", element: <DictionaryHistoryPage /> },
           { path: "ebooks/:slug", element: <EbookReaderPage /> },
