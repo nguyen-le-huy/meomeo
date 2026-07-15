@@ -1,5 +1,6 @@
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { successResponse } from "../../utils/apiResponse.js";
+import { config } from "../../config/env.js";
 import {
   createBookmark, createEbook, deleteBookmark, deleteEbook, getEbookById, getEbookBySlug,
   getEbookFile, getProgress, getReaderSettings, listBookmarks, listEbooks, listProgresses, publishEbook, saveProgress, saveReaderSettings, updateEbook,
@@ -8,7 +9,13 @@ import {
 const isAdmin = (req) => req.user?.role === "admin";
 
 function getApiOrigin(req) {
-  return `${req.protocol}://${req.get("host")}`;
+  if (config.apiPublicUrl) return config.apiPublicUrl.replace(/\/+$/g, "");
+
+  const forwardedProto = String(req.get("x-forwarded-proto") || "").split(",")[0].trim();
+  const forwardedHost = String(req.get("x-forwarded-host") || "").split(",")[0].trim();
+  const proto = forwardedProto || req.protocol;
+  const host = forwardedHost || req.get("host");
+  return `${proto}://${host}`;
 }
 
 function serializeEbook(ebook, req) {

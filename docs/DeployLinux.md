@@ -16,6 +16,7 @@ Việc quan trọng đầu tiên là chuyển các callback và URL về domain 
 PORT=5000
 NODE_ENV=production
 CLIENT_URL=https://meomeo.devenir.shop
+API_PUBLIC_URL=https://meomeo-api.devenir.shop
 MONGODB_URI=your_mongodb_uri
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=7d
@@ -27,11 +28,21 @@ AZURE_SPEECH_REGION=southeastasia
 ADMIN_USERNAME=admin
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=123456
+
+# Cloudflare R2 dùng cho file ebook; ảnh bìa vẫn dùng Cloudinary.
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=meomeo
+R2_REGION=auto
+R2_ENDPOINT=
+R2_EBOOK_PREFIX=ebooks
+R2_PUBLIC_BASE_URL=
 ```
 
 **B. Tạo/Sửa file `client/.env.production`:**
 ```env
-VITE_API_URL=https://api.meomeo.devenir.shop/api
+VITE_API_URL=https://meomeo-api.devenir.shop/api
 ```
 
 ## 3. Cập nhật CORS Backend
@@ -45,6 +56,8 @@ const allowedOrigins = [
 ];
 ```
 
+> Khi backend chạy sau Cloudflare Tunnel/Nginx, `API_PUBLIC_URL` phải là HTTPS URL public của API. Nếu không, URL file ebook R2 có thể bị build thành `http://.../api/ebooks/:id/file` và trình duyệt sẽ chặn vì Mixed Content.
+
 ## 4. Build & Khởi động Docker
 
 Chạy lệnh sau tại thư mục gốc của project (nơi chứa file `docker-compose.yml`):
@@ -52,7 +65,7 @@ Chạy lệnh sau tại thư mục gốc của project (nơi chứa file `docker
 # Build và chạy ngầm (Detached mode)
 docker compose up -d --build
 
-# Kiểm tra đảm bảo Server (port 5000) và Client (port 5173/80) đang Up
+# Kiểm tra đảm bảo Server (port 5000) và Client (port 5180/80) đang Up
 docker compose ps
 ```
 
@@ -81,7 +94,7 @@ cloudflared tunnel create meomeo
 ### 5.3. Trỏ Map Domains (DNS)
 ```bash
 cloudflared tunnel route dns meomeo meomeo.devenir.shop
-cloudflared tunnel route dns meomeo api.meomeo.devenir.shop
+cloudflared tunnel route dns meomeo meomeo-api.devenir.shop
 ```
 
 ### 5.4. Tạo file cấu hình Routing Config
@@ -92,12 +105,12 @@ credentials-file: /etc/cloudflared/<Thay-Bằng-TUNNEL_UUID>.json
 
 ingress:
   # API Backend -> Server Container Port 5000
-  - hostname: api.meomeo.devenir.shop
+  - hostname: meomeo-api.devenir.shop
     service: http://localhost:5000
     
-  # Main Frontend App -> Client Container Port 5173
+  # Main Frontend App -> Client Container Port 5180
   - hostname: meomeo.devenir.shop
-    service: http://localhost:5173
+    service: http://localhost:5180
 
   # Bắt buộc: Catch-all rule cho 404
   - service: http_status:404
@@ -120,7 +133,7 @@ sudo systemctl enable cloudflared
 ## 6. Kiểm tra Hậu kiểm deployment
 Mọi thứ lúc này sẽ đã online và sẵn sàng sử dụng:
 🌐 **Web App:** [https://meomeo.devenir.shop](https://meomeo.devenir.shop)
-🔌 **API/Server:** [https://api.meomeo.devenir.shop](https://api.meomeo.devenir.shop)
+🔌 **API/Server:** [https://meomeo-api.devenir.shop](https://meomeo-api.devenir.shop)
 
 ### Các câu lệnh Useful Tracking Log:
 ```bash

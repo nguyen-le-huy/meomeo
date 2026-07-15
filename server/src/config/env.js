@@ -36,6 +36,7 @@ if (!Number.isInteger(port) || port <= 0) {
 export const config = {
   nodeEnv: process.env.NODE_ENV || "development",
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
+  apiPublicUrl: process.env.API_PUBLIC_URL || "",
   port,
   mongoUri: process.env.MONGODB_URI || process.env.MONGO_URI,
   jwt: {
