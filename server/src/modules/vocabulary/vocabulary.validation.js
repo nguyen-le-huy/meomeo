@@ -29,8 +29,13 @@ const itemBodySchema = z
     meaningEn: z.string().optional(),
     example: z.string().optional(),
     exampleMeaningVi: z.string().optional(),
+    collocations: z.array(z.string().trim().min(1)).max(12).optional(),
     imageUrl: z.string().optional(),
     audioUrl: z.string().optional(),
+    audioProvider: z.enum(["openai", "elevenlabs", "manual", ""]).optional(),
+    exampleAudioUrl: z.string().optional(),
+    exampleAudioProvider: z.enum(["openai", "elevenlabs", "manual", ""]).optional(),
+    generatedByAi: z.boolean().optional(),
     order: z.coerce.number().min(0).optional(),
     difficulty: difficultySchema.optional(),
     isPublished: z.preprocess(optionalBoolean, z.boolean().optional()),
@@ -87,7 +92,18 @@ export const generateAudioForItemSchema = z.object({
   body: z
     .object({
       force: z.preprocess(optionalBoolean, z.boolean().optional()).default(false),
+      includeExample: z.preprocess(optionalBoolean, z.boolean().optional()).default(true),
       voice: z.string().optional(),
+      provider: z.enum(["openai", "elevenlabs"]).default("openai"),
+      elevenLabs: z
+        .object({
+          apiKey: z.string().optional(),
+          voiceId: z.string().optional(),
+          model: z.string().optional(),
+          stability: z.coerce.number().min(0).max(1).optional(),
+          similarityBoost: z.coerce.number().min(0).max(1).optional(),
+        })
+        .optional(),
     })
     .default({}),
 });
@@ -97,8 +113,85 @@ export const generateAudioForCourseSchema = z.object({
   body: z
     .object({
       force: z.preprocess(optionalBoolean, z.boolean().optional()).default(false),
+      includeExample: z.preprocess(optionalBoolean, z.boolean().optional()).default(true),
       voice: z.string().optional(),
+      provider: z.enum(["openai", "elevenlabs"]).default("openai"),
+      elevenLabs: z
+        .object({
+          apiKey: z.string().optional(),
+          voiceId: z.string().optional(),
+          model: z.string().optional(),
+        })
+        .optional(),
       limit: z.coerce.number().int().min(1).max(100).default(100),
     })
     .default({}),
+});
+
+const lessonKeySchema = z.enum(["match-meaning", "listening-fill", "cloze-quiz"]);
+
+export const generateVocabularyWithAiSchema = z.object({
+  params: z.object({ courseId: z.string().regex(objectIdRegex, "Invalid course id") }),
+  body: z.object({
+    words: z.array(z.string().trim().min(1)).min(1).max(40),
+    generateAudio: z.boolean().default(true),
+    audioProvider: z.enum(["openai", "elevenlabs"]).default("openai"),
+    openAiVoice: z.string().default("coral"),
+    elevenLabs: z
+      .object({
+        apiKey: z.string().optional(),
+        voiceId: z.string().optional(),
+        model: z.string().optional(),
+      })
+      .optional(),
+    startOrder: z.coerce.number().int().min(0).default(0),
+    isPublished: z.boolean().default(true),
+  }),
+});
+
+export const vocabularyExerciseParamsSchema = z.object({
+  params: z.object({
+    courseId: z.string().regex(objectIdRegex, "Invalid course id"),
+    lessonKey: lessonKeySchema.optional(),
+  }),
+});
+
+const exerciseBodySchema = z.object({
+  title: z.string().trim().min(2).max(120),
+  instructions: z.string().max(500).optional(),
+  questions: z.array(z.record(z.unknown())).max(200).default([]),
+  settings: z.record(z.unknown()).optional(),
+  generatedByAi: z.boolean().optional(),
+  isPublished: z.boolean().default(true),
+});
+
+export const upsertVocabularyExerciseSchema = z.object({
+  params: z.object({
+    courseId: z.string().regex(objectIdRegex, "Invalid course id"),
+    lessonKey: lessonKeySchema,
+  }),
+  body: exerciseBodySchema,
+});
+
+export const generateVocabularyExerciseSchema = z.object({
+  params: z.object({
+    courseId: z.string().regex(objectIdRegex, "Invalid course id"),
+    lessonKey: lessonKeySchema,
+  }),
+  body: z.object({
+    questionCount: z.coerce.number().int().min(1).max(500).optional(),
+    audioProvider: z.enum(["openai", "elevenlabs"]).default("openai"),
+    openAiVoice: z.string().default("coral"),
+    elevenLabs: z
+      .object({
+        apiKey: z.string().optional(),
+        voiceId: z.string().optional(),
+        model: z.string().optional(),
+      })
+      .optional(),
+    title: z.string().trim().min(2).max(120).optional(),
+    instructions: z.string().max(500).optional(),
+    settings: z.record(z.unknown()).optional(),
+    isPublished: z.boolean().default(true),
+  }),
 });

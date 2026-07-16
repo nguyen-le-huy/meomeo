@@ -295,6 +295,187 @@
     padding: 0.1em 0.35em;
   }
 
+  .ebook-reader-shell button {
+    -webkit-tap-highlight-color: transparent;
+    transition: none !important;
+  }
+
+  .ebook-reader-shell button:active,
+  .ebook-reader-shell button:focus {
+    box-shadow: none !important;
+    filter: none !important;
+    outline: none !important;
+    transform: none !important;
+  }
+
+  .ebook-reader-shell .reader-static-button:hover,
+  .ebook-reader-shell .reader-static-button:active,
+  .ebook-reader-shell .reader-static-button:focus,
+  .ebook-reader-shell .reader-static-button:focus-visible {
+    background-color: var(--reader-static-button-bg, transparent) !important;
+    border-color: var(--reader-static-button-border, transparent) !important;
+    box-shadow: var(--reader-static-button-shadow, none) !important;
+    filter: none !important;
+    outline: none !important;
+    transform: none !important;
+  }
+
+  .vocabulary-flip-card {
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    perspective: 1400px;
+  }
+
+  .vocabulary-flip-card-inner {
+    display: block;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 620ms cubic-bezier(0.2, 0.72, 0.18, 1);
+    width: 100%;
+  }
+
+  .vocabulary-flip-card-inner.is-flipped {
+    transform: rotateY(180deg);
+  }
+
+  .vocabulary-flip-card-face {
+    align-items: center;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border: 1px solid rgba(230, 223, 216, 0.95);
+    border-radius: 0.75rem;
+    box-shadow: 0 22px 52px rgba(20, 20, 19, 0.08), 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    left: 0;
+    overflow: hidden;
+    padding: 2rem;
+    position: absolute;
+    text-align: center;
+    top: 0;
+    width: 100%;
+  }
+
+  .vocabulary-flip-card-front {
+    background:
+      radial-gradient(circle at 18% 16%, rgba(204, 120, 92, 0.12), transparent 30%),
+      radial-gradient(circle at 86% 18%, rgba(232, 165, 90, 0.1), transparent 28%),
+      linear-gradient(135deg, #fffdf8 0%, #f7f1e9 100%);
+  }
+
+  .vocabulary-flip-card-back {
+    background:
+      radial-gradient(circle at 82% 18%, rgba(93, 184, 166, 0.14), transparent 30%),
+      radial-gradient(circle at 14% 84%, rgba(204, 120, 92, 0.1), transparent 26%),
+      linear-gradient(135deg, #f8f3ec 0%, #fffdf8 100%);
+    transform: rotateY(180deg);
+  }
+
+  .lesson-category-card {
+    isolation: isolate;
+    transition:
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      transform 180ms ease;
+  }
+
+  .lesson-category-card:hover {
+    box-shadow: 0 14px 28px rgba(20, 20, 19, 0.12);
+    transform: translateY(-2px);
+  }
+
+  .lesson-category-card:active {
+    transform: translateY(0);
+  }
+
+  .lesson-category-gif {
+    pointer-events: none;
+  }
+
+  .lesson-answer-feedback {
+    overflow: hidden;
+    position: relative;
+  }
+
+  .lesson-answer-feedback.is-correct {
+    animation: lesson-feedback-pop 1600ms cubic-bezier(0.2, 0.72, 0.18, 1) infinite;
+  }
+
+  .lesson-fireworks {
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+  }
+
+  .lesson-firework-particle {
+    --angle: 0deg;
+    --distance: 3.25rem;
+    animation: lesson-firework-burst 1200ms ease-out infinite;
+    background: #58cc02;
+    border-radius: 999px;
+    height: 0.42rem;
+    left: 50%;
+    opacity: 0;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(0) scale(0.45);
+    width: 0.42rem;
+  }
+
+  .lesson-firework-particle:nth-child(2n) {
+    background: #1cb0f6;
+  }
+
+  .lesson-firework-particle:nth-child(3n) {
+    background: #ffb020;
+  }
+
+  .lesson-firework-particle:nth-child(4n) {
+    background: #ff4b4b;
+  }
+
+  .lesson-firework-particle:nth-child(1) { --angle: 0deg; --distance: 4rem; }
+  .lesson-firework-particle:nth-child(2) { --angle: 30deg; --distance: 3.4rem; animation-delay: 80ms; }
+  .lesson-firework-particle:nth-child(3) { --angle: 60deg; --distance: 4.2rem; animation-delay: 160ms; }
+  .lesson-firework-particle:nth-child(4) { --angle: 90deg; --distance: 3.15rem; animation-delay: 240ms; }
+  .lesson-firework-particle:nth-child(5) { --angle: 120deg; --distance: 4rem; animation-delay: 320ms; }
+  .lesson-firework-particle:nth-child(6) { --angle: 150deg; --distance: 3.45rem; animation-delay: 400ms; }
+  .lesson-firework-particle:nth-child(7) { --angle: 180deg; --distance: 4.25rem; animation-delay: 480ms; }
+  .lesson-firework-particle:nth-child(8) { --angle: 210deg; --distance: 3.35rem; animation-delay: 560ms; }
+  .lesson-firework-particle:nth-child(9) { --angle: 240deg; --distance: 4.1rem; animation-delay: 640ms; }
+  .lesson-firework-particle:nth-child(10) { --angle: 270deg; --distance: 3.25rem; animation-delay: 720ms; }
+  .lesson-firework-particle:nth-child(11) { --angle: 300deg; --distance: 4rem; animation-delay: 800ms; }
+  .lesson-firework-particle:nth-child(12) { --angle: 330deg; --distance: 3.5rem; animation-delay: 880ms; }
+
+  @keyframes lesson-feedback-pop {
+    0% {
+      transform: scale(0.985);
+    }
+    55% {
+      transform: scale(1.012);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes lesson-firework-burst {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -50%) rotate(var(--angle)) translateX(0) scale(0.35);
+    }
+    18% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -50%) rotate(var(--angle)) translateX(var(--distance)) scale(1);
+    }
+  }
+
   @media (min-width: 640px) {
     .bbc-article-title {
       font-size: 2.75rem;

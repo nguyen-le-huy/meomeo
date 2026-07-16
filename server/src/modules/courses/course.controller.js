@@ -7,6 +7,7 @@ import {
   getVocabularyCourses,
   togglePublishVocabularyCourse,
   updateVocabularyCourse,
+  getPublishedVocabularyCourseById,
 } from "./course.service.js";
 import { successResponse } from "../../utils/apiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
@@ -33,6 +34,11 @@ export const getPublishedVocabularyCoursesController = asyncHandler(async (req, 
 
 export const getVocabularyCourseDetailController = asyncHandler(async (req, res) => {
   const course = await getVocabularyCourseById(req.validated.params.id);
+  return successResponse(res, "Vocabulary course fetched successfully", { course });
+});
+
+export const getPublishedVocabularyCourseDetailController = asyncHandler(async (req, res) => {
+  const course = await getPublishedVocabularyCourseById(req.validated.params.id);
   return successResponse(res, "Vocabulary course fetched successfully", { course });
 });
 

@@ -71,6 +71,12 @@ export const config = {
     translationModel: process.env.OPENAI_TRANSLATION_MODEL || "gpt-4o-mini",
     translationTargetLanguage: process.env.OPENAI_TRANSLATION_TARGET_LANGUAGE || "vi",
     dictionaryModel: process.env.OPENAI_DICTIONARY_MODEL || process.env.OPENAI_TRANSLATION_MODEL || "gpt-4o-mini",
+    vocabularyModel: process.env.OPENAI_VOCABULARY_MODEL || process.env.OPENAI_DICTIONARY_MODEL || "gpt-4o-mini",
+  },
+  elevenLabs: {
+    apiKey: process.env.ELEVENLABS_API_KEY || "",
+    model: process.env.ELEVENLABS_MODEL || "eleven_multilingual_v2",
+    voiceId: process.env.ELEVENLABS_VOICE_ID || "JBFqnCBsd6RMkjVDRZzb",
   },
   cambridgeDictionary: {
     enabled: process.env.CAMBRIDGE_DICTIONARY_ENABLED !== "false",

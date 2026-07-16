@@ -15,6 +15,10 @@ import EbookLibraryPage from "../features/ebooks/pages/EbookLibraryPage.jsx";
 import EbookReaderPage from "../features/ebooks/pages/EbookReaderPage.jsx";
 import AdminEbooksPage from "../features/ebooks/pages/AdminEbooksPage.jsx";
 import DictionaryHistoryPage from "../features/dictionary/pages/DictionaryHistoryPage.jsx";
+import VocabularyDailyPage from "../features/vocabulary/pages/VocabularyDailyPage.jsx";
+import VocabularyDayPathPage from "../features/vocabulary/pages/VocabularyDayPathPage.jsx";
+import VocabularyLessonPage from "../features/vocabulary/pages/VocabularyLessonPage.jsx";
+import AdminVocabularyPage from "../features/vocabulary/pages/AdminVocabularyPage.jsx";
 
 function RouteShell() {
   return (
@@ -37,6 +41,9 @@ export const router = createBrowserRouter([
           { index: true, element: <HomePage /> },
           { path: "youtube", element: <VideoLibraryPage /> },
           { path: "reading", element: <ReadingLibraryPage /> },
+          { path: "vocabulary", element: <VocabularyDailyPage /> },
+          { path: "vocabulary/:dayId", element: <VocabularyDayPathPage /> },
+          { path: "vocabulary/:dayId/:lessonId", element: <VocabularyLessonPage /> },
           { path: "readings", element: <Navigate to="/reading" replace /> },
           { path: "ebooks", element: <EbookLibraryPage /> },
           { path: "dictionary/history", element: <DictionaryHistoryPage /> },
@@ -51,6 +58,7 @@ export const router = createBrowserRouter([
             children: [
               { path: "admin/readings", element: <AdminReadingsPage /> },
               { path: "admin/ebooks", element: <AdminEbooksPage /> },
+              { path: "admin/vocabulary", element: <AdminVocabularyPage /> },
             ],
           },
           { path: "admin", element: <Navigate to="/admin/readings" replace /> },

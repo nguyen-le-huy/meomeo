@@ -8,6 +8,7 @@ import {
   getVocabularyCoursesController,
   togglePublishVocabularyCourseController,
   updateVocabularyCourseController,
+  getPublishedVocabularyCourseDetailController,
 } from "./course.controller.js";
 import {
   courseIdParamSchema,
@@ -24,10 +25,13 @@ const router = Router();
 router.get("/health", getCourseHealth);
 router.get(
   "/vocabulary/published",
-  requireAuth,
-  requireRole("admin", "student"),
   validate(courseQuerySchema),
   getPublishedVocabularyCoursesController,
+);
+router.get(
+  "/vocabulary/published/:id",
+  validate(courseIdParamSchema),
+  getPublishedVocabularyCourseDetailController,
 );
 router.get(
   "/vocabulary",

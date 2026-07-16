@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
+import { ArrowUpRight } from "lucide-react";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
@@ -28,6 +29,45 @@ import {
   useVideos,
 } from "../../videos/hooks/useVideoLearning.js";
 import { buildTopicSections, getNewestVideoIds } from "../../videos/utils/videoLibrary.js";
+
+const lessonCategories = [
+  {
+    title: "Học qua YouTube",
+    description: "Shadowing, dictation, vietsub song ngữ",
+    to: "/youtube",
+    gifUrl: "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdDdvNG44emNxbTl2NWg5ZDJpYTAyd2dxN2d1N3c5Z2RjNzl2dXhoZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/3eZRwwX91t7xSaNkaE/giphy.gif",
+    className: "border-[#f4c7b0] bg-[#fff4ed] text-[#35231c]",
+    badgeClassName: "bg-[#ffe1d2] text-[#a84420]",
+    layerClassName: "bg-[#f2a17d]",
+  },
+  {
+    title: "Từ vựng mỗi ngày",
+    description: "Bài đọc ngắn để học từ mới",
+    to: "/vocabulary",
+    gifUrl: "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExYWtlMzdneWtnZDJqajA0OXlsYTZlcjVmNjBodTBwZmtsMnJzZ2JmOCZlcD12MV9pbnRlcm5hbF9naWQmY3Q9cw/ggpoVsIg0LwtHfTBEY/giphy.gif",
+    className: "border-[#a9ddd3] bg-[#eafaf6] text-[#153b35]",
+    badgeClassName: "bg-[#ccefe7] text-[#117064]",
+    layerClassName: "bg-[#62c6b4]",
+  },
+  {
+    title: "Ebook",
+    description: "Đọc sách",
+    to: "/ebooks",
+    gifUrl: "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExenhqbHFkMHQyZ285b2libW52YnptYnRvY21sM25pd21tbGo3cmZsNiZlcD12MV9pbnRlcm5hbF9naWQmY3Q9cw/RXG7XYXYV4JQBt2i7h/giphy.gif",
+    className: "border-[#cfc1ef] bg-[#f4f0ff] text-[#30264d]",
+    badgeClassName: "bg-[#e4dcfa] text-[#6546a5]",
+    layerClassName: "bg-[#a995df]",
+  },
+  {
+    title: "Từ đã tra",
+    description: "Xem lại lịch sử tra từ",
+    to: "/dictionary/history",
+    gifUrl: "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExM2xmNWM1c3lhbXFmdm1yMmZ3cmN0MHl0ajJiaXFuZXkwNXJkNGY1OSZlcD12MV9pbnRlcm5hbF9naWQmY3Q9cw/H2Uj3lf7jVd62AAivr/giphy.gif",
+    className: "border-[#efd38b] bg-[#fff8df] text-[#443711]",
+    badgeClassName: "bg-[#ffebad] text-[#7a5b00]",
+    layerClassName: "bg-[#e9bd45]",
+  },
+];
 
 function getGreeting(date = new Date()) {
   const hour = date.getHours();
@@ -136,10 +176,35 @@ export default function HomePage() {
           </div>
         </div>
 
+        <div className="border-b border-[#e6dfd8] py-8 sm:py-10">
+          <div className="mb-5">
+            <h2 className="mt-2 font-display text-2xl font-normal tracking-tight sm:text-3xl">Chọn loại bài học</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
+            {lessonCategories.map((category) => {
+              return (
+                <button
+                  className={`lesson-category-card group relative h-[188px] overflow-hidden rounded-lg border p-3 pb-5 text-left shadow-[0_8px_22px_rgba(20,20,19,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/35 sm:h-[184px] sm:p-5 sm:pb-7 lg:h-[200px] ${category.className}`}
+                  key={category.to}
+                  onClick={() => navigate(category.to)}
+                  type="button"
+                >
+                  <span aria-hidden="true" className={`absolute inset-x-0 bottom-0 h-3 sm:h-4 ${category.layerClassName}`} />
+                  <img alt="" aria-hidden="true" className="lesson-category-gif absolute bottom-3 right-0 z-[1] h-[72%] w-[48%] object-contain object-right-bottom sm:bottom-4 sm:h-[78%] sm:w-[50%]" loading="lazy" src={category.gifUrl} />
+                  <span className={`relative z-10 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-black uppercase sm:px-2.5 sm:text-[10px] ${category.badgeClassName}`}>
+                    Mở <ArrowUpRight size={12} strokeWidth={2.8} />
+                  </span>
+                  <span className="relative z-10 mt-8 block max-w-[58%] text-[15px] font-black leading-[1.15] sm:mt-10 sm:text-xl">{category.title}</span>
+                  <span className="relative z-10 mt-2 block max-w-[58%] text-[10px] font-semibold leading-[1.35] opacity-75 sm:text-xs sm:leading-4">{category.description}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="mb-8 mt-10 flex items-end justify-between gap-4">
           <div>
-            <p className="eyebrow">Thư viện theo topic</p>
-            <h2 className="mt-2 font-display text-2xl font-normal tracking-tight sm:text-3xl">Chọn chủ đề hôm nay</h2>
+            <h2 className="mt-2 font-display text-2xl font-normal tracking-tight sm:text-3xl">Học qua Youtube</h2>
           </div>
           {isAdmin ? (
             <VideoLibraryAdminActions

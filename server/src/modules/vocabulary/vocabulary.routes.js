@@ -11,6 +11,12 @@ import {
   getVocabularyItemsByCourseController,
   togglePublishVocabularyItemController,
   updateVocabularyItemController,
+  generateVocabularyCourseWithAiController,
+  getVocabularyExercisesController,
+  upsertVocabularyExerciseController,
+  deleteVocabularyExerciseController,
+  generateVocabularyExerciseController,
+  getPublishedVocabularyExercisesController,
 } from "./vocabulary.controller.js";
 import {
   bulkImportVocabularyItemsSchema,
@@ -21,6 +27,10 @@ import {
   updateVocabularyItemSchema,
   vocabularyItemIdParamSchema,
   vocabularyItemQuerySchema,
+  generateVocabularyWithAiSchema,
+  vocabularyExerciseParamsSchema,
+  upsertVocabularyExerciseSchema,
+  generateVocabularyExerciseSchema,
 } from "./vocabulary.validation.js";
 import { requireAuth } from "../../middlewares/auth.middleware.js";
 import { requireRole } from "../../middlewares/role.middleware.js";
@@ -31,10 +41,13 @@ const router = Router();
 router.get("/health", getVocabularyHealth);
 router.get(
   "/student/courses/:courseId/items",
-  requireAuth,
-  requireRole("admin", "student"),
   validate(vocabularyItemQuerySchema),
   getStudentVocabularyItemsByCourseController,
+);
+router.get(
+  "/public/courses/:courseId/exercises",
+  validate(vocabularyExerciseParamsSchema),
+  getPublishedVocabularyExercisesController,
 );
 router.get(
   "/courses/:courseId/items",
@@ -58,11 +71,46 @@ router.post(
   bulkImportVocabularyItemsController,
 );
 router.post(
+  "/courses/:courseId/generate-ai",
+  requireAuth,
+  requireRole("admin"),
+  validate(generateVocabularyWithAiSchema),
+  generateVocabularyCourseWithAiController,
+);
+router.post(
   "/courses/:courseId/generate-audio",
   requireAuth,
   requireRole("admin"),
   validate(generateAudioForCourseSchema),
   generateAudioForVocabularyCourseController,
+);
+router.get(
+  "/courses/:courseId/exercises",
+  requireAuth,
+  requireRole("admin"),
+  validate(vocabularyExerciseParamsSchema),
+  getVocabularyExercisesController,
+);
+router.put(
+  "/courses/:courseId/exercises/:lessonKey",
+  requireAuth,
+  requireRole("admin"),
+  validate(upsertVocabularyExerciseSchema),
+  upsertVocabularyExerciseController,
+);
+router.delete(
+  "/courses/:courseId/exercises/:lessonKey",
+  requireAuth,
+  requireRole("admin"),
+  validate(vocabularyExerciseParamsSchema),
+  deleteVocabularyExerciseController,
+);
+router.post(
+  "/courses/:courseId/exercises/:lessonKey/generate-ai",
+  requireAuth,
+  requireRole("admin"),
+  validate(generateVocabularyExerciseSchema),
+  generateVocabularyExerciseController,
 );
 router.get(
   "/items/:itemId",

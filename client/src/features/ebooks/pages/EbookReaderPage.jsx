@@ -110,7 +110,7 @@ export default function EbookReaderPage() {
     : "";
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden" style={{ backgroundColor: readerTheme.background, color: readerTheme.foreground }}>
+    <section className="ebook-reader-shell flex h-full min-h-0 flex-col overflow-hidden" style={{ backgroundColor: readerTheme.background, color: readerTheme.foreground }}>
       <EbookToolbar
         bookmarkCount={reader.bookmarks.length}
         onBack={() => navigate("/ebooks")}
@@ -162,34 +162,40 @@ export default function EbookReaderPage() {
           {reader.isLoading ? <LoaderCircle className="mt-1 animate-spin" size={16} /> : null}
           <Button
             aria-label="Lưu bookmark tại vị trí hiện tại"
-            className="h-9 w-9 shrink-0 border px-0 shadow-sm sm:w-auto sm:px-3"
+            className="reader-static-button h-8 w-8 shrink-0 rounded-md border-0 p-0 shadow-none"
             disabled={!bookmarkGetter}
             onClick={onBookmark}
-            style={{ backgroundColor: readerTheme.surface, borderColor: readerTheme.border, color: readerTheme.foreground }}
+            style={{
+              "--reader-static-button-bg": "transparent",
+              "--reader-static-button-border": "transparent",
+              "--reader-static-button-shadow": "none",
+              color: readerTheme.foreground,
+            }}
             title="Lưu trang đang đọc"
             type="button"
             variant="ghost"
           >
-            <BookmarkPlus size={16} />
-            <span className="hidden text-xs sm:inline">Lưu trang</span>
+            <BookmarkPlus size={19} />
           </Button>
           </div>
         </div>
 
         {ebook.format === "epub" ? (
           <>
-            <EpubReader
-              ebook={ebook}
-              onBookmarkReady={(getter) => setBookmarkGetter(() => getter)}
-              onControlsReady={setReaderControls}
-              onProgress={saveProgress}
-              progress={reader.progress}
-              settings={reader.settings}
-            />
-            <div className="-mx-3 shrink-0 px-3 pb-3 pt-2" style={{ backgroundColor: readerTheme.background }}>
-              <div className="mx-auto flex w-full max-w-md items-center justify-between gap-3 rounded-lg border p-2 shadow-sm" style={{ backgroundColor: readerTheme.surface, borderColor: readerTheme.border }}>
+            <div className="-mx-3 flex min-h-0 flex-1 border-b px-3" style={{ borderColor: readerTheme.border }}>
+              <EpubReader
+                ebook={ebook}
+                onBookmarkReady={(getter) => setBookmarkGetter(() => getter)}
+                onControlsReady={setReaderControls}
+                onProgress={saveProgress}
+                progress={reader.progress}
+                settings={reader.settings}
+              />
+            </div>
+            <div className="-mx-3 shrink-0 px-3 pb-2 pt-1.5" style={{ backgroundColor: readerTheme.background }}>
+              <div className="mx-auto flex h-11 w-full max-w-md items-center justify-between gap-2 rounded-md border px-1.5 py-1" style={{ backgroundColor: readerTheme.surface, borderColor: readerTheme.border }}>
                 <Button
-                  className="min-w-0 flex-1 justify-center gap-2"
+                  className="reader-static-button h-9 min-w-0 flex-1 justify-center gap-2 rounded-md px-2 text-xs"
                   disabled={!readerControls?.prev}
                   onClick={readerControls?.prev}
                   style={{ color: readerTheme.foreground }}
@@ -199,9 +205,9 @@ export default function EbookReaderPage() {
                   <ChevronLeft size={16} />
                   <span>Trang trước</span>
                 </Button>
-                <div className="h-7 w-px shrink-0" style={{ backgroundColor: readerTheme.border }} />
+                <div className="h-6 w-px shrink-0" style={{ backgroundColor: readerTheme.border }} />
                 <Button
-                  className="min-w-0 flex-1 justify-center gap-2"
+                  className="reader-static-button h-9 min-w-0 flex-1 justify-center gap-2 rounded-md px-2 text-xs"
                   disabled={!readerControls?.next}
                   onClick={readerControls?.next}
                   style={{ color: readerTheme.foreground }}

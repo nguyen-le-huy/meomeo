@@ -4,13 +4,13 @@ const generatedAudioSchema = new mongoose.Schema(
   {
     text: { type: String, required: true, trim: true },
     voice: { type: String, default: "alloy" },
-    provider: { type: String, enum: ["openai", "azure"], default: "openai" },
+    provider: { type: String, enum: ["openai", "elevenlabs", "azure"], default: "openai" },
     audioUrl: { type: String, required: true },
     publicId: { type: String, default: "" },
     type: { type: String, enum: ["word", "sentence", "paragraph"], default: "word" },
     relatedModel: {
       type: String,
-      enum: ["VocabularyItem", "GrammarLesson"],
+      enum: ["VocabularyItem", "VocabularyExercise", "GrammarLesson"],
       default: "VocabularyItem",
     },
     relatedId: { type: mongoose.Schema.Types.ObjectId, required: true },

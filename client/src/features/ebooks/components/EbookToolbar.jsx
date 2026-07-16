@@ -6,13 +6,13 @@ export default function EbookToolbar({ bookmarkCount = 0, settings, onSettings, 
   return (
     <div className="fixed inset-x-0 top-12 z-30 h-14 border-b border-[#e6dfd8] bg-canvas/95 text-coal shadow-[0_1px_8px_rgba(20,20,19,0.04)] backdrop-blur-md md:top-16">
       <div className="mx-auto flex h-full w-full max-w-[1440px] items-center justify-between gap-3 px-2 sm:px-4">
-        <Button aria-label="Quay lại thư viện" className="h-9 px-2 sm:px-3" onClick={onBack} title="Quay lại thư viện" type="button" variant="ghost">
+        <Button aria-label="Quay lại thư viện" className="reader-static-button h-9 px-2 sm:px-3" onClick={onBack} title="Quay lại thư viện" type="button" variant="ghost">
           <Library size={17} />
           <span className="text-xs">Thư viện</span>
         </Button>
 
         <div className="flex min-w-0 items-center justify-end gap-1 rounded-xl border border-[#e8e0d7] bg-cream-soft/55 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] sm:gap-1.5">
-          <Button aria-label="Mở danh sách bookmark" className="relative" onClick={onBookmark} size="icon" title="Danh sách bookmark" type="button" variant="ghost">
+          <Button aria-label="Mở danh sách bookmark" className="reader-static-button relative" onClick={onBookmark} size="icon" title="Danh sách bookmark" type="button" variant="ghost">
             <BookMarked size={17} />
             {bookmarkCount ? <span className="absolute right-0.5 top-0.5 min-w-3.5 rounded-full bg-coral px-1 text-[9px] font-bold leading-3.5 text-white">{bookmarkCount > 99 ? "99+" : bookmarkCount}</span> : null}
           </Button>
@@ -20,14 +20,14 @@ export default function EbookToolbar({ bookmarkCount = 0, settings, onSettings, 
           <div className="mx-0.5 h-6 w-px bg-[#ddd5cc]" />
 
           <div className="flex h-8 items-center rounded-lg border border-[#e3dcd3] bg-canvas shadow-sm">
-            <Button aria-label="Giảm cỡ chữ" className="h-8 w-8 rounded-md" onClick={() => onSettings({ fontSize: Math.max(14, settings.fontSize - 1) })} size="icon" title="Giảm cỡ chữ" type="button" variant="ghost"><Minus size={14} /></Button>
+            <Button aria-label="Giảm cỡ chữ" className="reader-static-button h-8 w-8 rounded-md" onClick={() => onSettings({ fontSize: Math.max(14, settings.fontSize - 1) })} size="icon" title="Giảm cỡ chữ" type="button" variant="ghost"><Minus size={14} /></Button>
             <span className="min-w-9 text-center text-[11px] font-bold tabular-nums sm:min-w-11">{settings.fontSize}<span className="hidden sm:inline"> px</span></span>
-            <Button aria-label="Tăng cỡ chữ" className="h-8 w-8 rounded-md" onClick={() => onSettings({ fontSize: Math.min(30, settings.fontSize + 1) })} size="icon" title="Tăng cỡ chữ" type="button" variant="ghost"><Plus size={14} /></Button>
+            <Button aria-label="Tăng cỡ chữ" className="reader-static-button h-8 w-8 rounded-md" onClick={() => onSettings({ fontSize: Math.min(30, settings.fontSize + 1) })} size="icon" title="Tăng cỡ chữ" type="button" variant="ghost"><Plus size={14} /></Button>
           </div>
 
           <div className="mx-0.5 h-6 w-px bg-[#ddd5cc]" />
 
-          <Button aria-label="Mở cài đặt đọc" onClick={() => onSettings({ panel: true })} size="icon" title="Cài đặt đọc" type="button" variant="ghost"><Settings2 size={17} /></Button>
+          <Button aria-label="Mở cài đặt đọc" className="reader-static-button" onClick={() => onSettings({ panel: true })} size="icon" title="Cài đặt đọc" type="button" variant="ghost"><Settings2 size={17} /></Button>
         </div>
       </div>
     </div>

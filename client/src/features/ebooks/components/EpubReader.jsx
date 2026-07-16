@@ -108,7 +108,7 @@ export default function EpubReader({
       contents.document.documentElement.style.overflowX = "hidden";
       contents.document.body.style.maxWidth = "100%";
       contents.document.body.style.overflowX = "hidden";
-      contents.document.body.style.paddingBottom = "6rem";
+      contents.document.body.style.paddingBottom = "1.25rem";
       contents.document.body.style.boxSizing = "border-box";
       const style = contents.document.createElement("style");
       style.textContent = `
@@ -245,5 +245,5 @@ export default function EpubReader({
     rendition?.themes.select(settings.theme);
   }, [ready, settings.theme]);
 
-  return <div className="min-h-0 flex-1 w-full overflow-x-hidden overflow-y-auto overscroll-contain pb-24" ref={frameRef} />;
+  return <div className="min-h-0 flex-1 w-full overflow-x-hidden overflow-y-auto overscroll-contain pb-2" ref={frameRef} />;
 }

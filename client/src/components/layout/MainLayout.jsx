@@ -9,7 +9,7 @@ const logoUrl = "https://res.cloudinary.com/dknin0hhf/image/upload/v1781682627/B
 const navItems = [
   { label: "Trang chủ", to: "/" },
   { label: "Học qua YouTube", to: "/youtube" },
-  { label: "Blog", to: "/reading" },
+  { label: "Từ vựng mỗi ngày", to: "/vocabulary" },
   { label: "Ebook", to: "/ebooks" },
   { label: "Từ đã tra", to: "/dictionary/history" },
 ];
@@ -25,6 +25,7 @@ function Brand() {
 function HeaderNavLink({ item, onClick }) {
   const location = useLocation();
   const isReadingActive = item.to === "/reading" && location.pathname.startsWith("/reading");
+  const isVocabularyActive = item.to === "/vocabulary" && location.pathname.startsWith("/vocabulary");
   const isYoutubeActive =
     item.to === "/youtube" &&
     (location.pathname.startsWith("/youtube") ||
@@ -36,7 +37,7 @@ function HeaderNavLink({ item, onClick }) {
       className={({ isActive }) =>
         [
           "rounded-lg px-3 py-2 text-sm font-semibold transition",
-          isActive || isReadingActive || isYoutubeActive
+          isActive || isReadingActive || isVocabularyActive || isYoutubeActive
             ? "bg-cream text-coal"
             : "text-ink-muted hover:bg-cream-soft hover:text-coal",
         ].join(" ")

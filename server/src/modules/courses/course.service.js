@@ -1,5 +1,6 @@
 import { Course } from "./course.model.js";
 import { VocabularyItem } from "../vocabulary/vocabulary.model.js";
+import { VocabularyExercise } from "../vocabulary/vocabularyExercise.model.js";
 import { createHttpError } from "../../utils/createHttpError.js";
 
 function escapeRegExp(value) {
@@ -105,6 +106,12 @@ export async function getVocabularyCourseById(id) {
   return course;
 }
 
+export async function getPublishedVocabularyCourseById(id) {
+  const course = await Course.findOne({ _id: id, type: "vocabulary", isPublished: true });
+  if (!course) throw createHttpError(404, "Vocabulary course not found");
+  return course;
+}
+
 export async function updateVocabularyCourse(id, data) {
   const course = await getVocabularyCourseById(id);
 
@@ -127,6 +134,7 @@ export async function deleteVocabularyCourse(id) {
   const course = await getVocabularyCourseById(id);
 
   await VocabularyItem.deleteMany({ courseId: course._id });
+  await VocabularyExercise.deleteMany({ courseId: course._id });
   await course.deleteOne();
   return { id };
 }

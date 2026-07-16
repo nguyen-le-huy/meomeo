@@ -9,6 +9,11 @@ import {
   getVocabularyItemsByCourse,
   togglePublishVocabularyItem,
   updateVocabularyItem,
+  generateVocabularyCourseWithAi,
+  getVocabularyExercises,
+  upsertVocabularyExercise,
+  deleteVocabularyExercise,
+  generateVocabularyExerciseWithAi,
 } from "./vocabulary.service.js";
 import { successResponse } from "../../utils/apiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
@@ -75,4 +80,51 @@ export const generateAudioForVocabularyCourseController = asyncHandler(async (re
     req.validated.body,
   );
   return successResponse(res, "Vocabulary course audio generation completed", data);
+});
+
+export const generateVocabularyCourseWithAiController = asyncHandler(async (req, res) => {
+  const data = await generateVocabularyCourseWithAi(
+    req.validated.params.courseId,
+    req.validated.body,
+    req.user,
+  );
+  return successResponse(res, "Vocabulary flashcards generated successfully", data, 201);
+});
+
+export const getVocabularyExercisesController = asyncHandler(async (req, res) => {
+  const exercises = await getVocabularyExercises(req.validated.params.courseId);
+  return successResponse(res, "Vocabulary exercises fetched successfully", { exercises });
+});
+
+export const getPublishedVocabularyExercisesController = asyncHandler(async (req, res) => {
+  const exercises = await getVocabularyExercises(req.validated.params.courseId, { publishedOnly: true });
+  return successResponse(res, "Vocabulary exercises fetched successfully", { exercises });
+});
+
+export const upsertVocabularyExerciseController = asyncHandler(async (req, res) => {
+  const exercise = await upsertVocabularyExercise(
+    req.validated.params.courseId,
+    req.validated.params.lessonKey,
+    req.validated.body,
+    req.user,
+  );
+  return successResponse(res, "Vocabulary exercise saved successfully", { exercise });
+});
+
+export const deleteVocabularyExerciseController = asyncHandler(async (req, res) => {
+  const data = await deleteVocabularyExercise(
+    req.validated.params.courseId,
+    req.validated.params.lessonKey,
+  );
+  return successResponse(res, "Vocabulary exercise deleted successfully", data);
+});
+
+export const generateVocabularyExerciseController = asyncHandler(async (req, res) => {
+  const exercise = await generateVocabularyExerciseWithAi(
+    req.validated.params.courseId,
+    req.validated.params.lessonKey,
+    req.validated.body,
+    req.user,
+  );
+  return successResponse(res, "Vocabulary exercise generated successfully", { exercise }, 201);
 });

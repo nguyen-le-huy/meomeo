@@ -21,7 +21,7 @@ export async function generateSpeechAudioBuffer(text, options = {}) {
     model: config.openAi.ttsModel,
     voice: options.voice || config.openAi.ttsVoice,
     input,
-    format: "mp3",
+    response_format: "mp3",
   });
 
   const arrayBuffer = await response.arrayBuffer();
