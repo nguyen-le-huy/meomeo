@@ -393,7 +393,7 @@ function ChoiceLesson({ day, lesson, onProgressChange }) {
   }
 
   function pairButtonClass(state) {
-    const base = "group flex min-h-[4.35rem] items-start gap-2 rounded-lg border px-2.5 py-3 text-left transition sm:min-h-[4.15rem] sm:items-center sm:gap-3 sm:px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/35 disabled:cursor-default";
+    const base = "group relative grid min-h-[5.35rem] grid-cols-[auto_1fr] content-start gap-x-2 gap-y-2 rounded-lg border px-2 py-2.5 text-left transition sm:flex sm:min-h-[4.15rem] sm:items-center sm:gap-3 sm:px-4 sm:py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/35 disabled:cursor-default";
     if (state === "matched") return `${base} border-[#95dc7b] bg-[#f0ffe9] text-[#2d7b00] shadow-[0_2px_0_#95dc7b]`;
     if (state === "wrong") return `${base} border-red-300 bg-red-50 text-red-700`;
     if (state === "selected") return `${base} border-coral bg-[#fff4eb] text-coal shadow-[0_2px_0_#d6795d] ring-1 ring-coral/20`;
@@ -403,11 +403,11 @@ function ChoiceLesson({ day, lesson, onProgressChange }) {
   return (
     <div className="mt-6 sm:mt-8">
       <p className="mb-3 text-sm font-black text-ink-muted">Câu {roundIndex + 1} / {rounds.length}</p>
-      <div className="rounded-lg border border-[#e6dfd8] bg-[#fffdf9] p-3 shadow-sm sm:p-5">
-        <p className="mb-4 text-base font-black leading-6 text-coal sm:text-lg">Chọn các cặp tương ứng</p>
+      <div className="rounded-lg border border-[#e6dfd8] bg-[#fffdf9] p-2.5 shadow-sm sm:p-5">
+        <p className="mb-3 px-1 text-base font-black leading-6 text-coal sm:mb-4 sm:px-0 sm:text-lg">Chọn các cặp tương ứng</p>
 
         <div className="grid grid-cols-2 gap-2 sm:gap-4">
-          <div className="grid gap-3">
+          <div className="grid gap-2 sm:gap-3">
             {englishOptions.map((option, optionIndex) => {
               const state = getWordState(option);
               return (
@@ -419,16 +419,16 @@ function ChoiceLesson({ day, lesson, onProgressChange }) {
                   type="button"
                 >
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-current/15 bg-white/60 text-[11px] font-black sm:h-8 sm:w-8 sm:text-xs">{optionIndex + 1}</span>
-                  <span className="min-w-0 flex-1 break-words text-sm font-black leading-5 sm:text-base">{option.text}</span>
+                  <span className="min-w-0 break-words pr-5 text-[13px] font-black leading-5 sm:flex-1 sm:pr-0 sm:text-base">{option.text}</span>
                   {state === "matched" ? <Check className="shrink-0" size={17} strokeWidth={3} /> : null}
                   {state === "wrong" ? <X className="shrink-0" size={17} strokeWidth={3} /> : null}
-                  {state === "idle" || state === "selected" ? <Volume2 className="mt-0.5 shrink-0 text-coral/80" size={15} /> : null}
+                  {state === "idle" || state === "selected" ? <Volume2 className="absolute right-2 top-3 shrink-0 text-coral/80 sm:static sm:mt-0.5" size={15} /> : null}
                 </button>
               );
             })}
           </div>
 
-          <div className="grid gap-3">
+          <div className="grid gap-2 sm:gap-3">
             {meaningOptions.map((option, optionIndex) => {
               const state = getMeaningState(option);
               return (
@@ -440,7 +440,7 @@ function ChoiceLesson({ day, lesson, onProgressChange }) {
                   type="button"
                 >
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-current/15 bg-white/60 text-[11px] font-black sm:h-8 sm:w-8 sm:text-xs">{optionIndex + 1 + englishOptions.length}</span>
-                  <span className="min-w-0 flex-1 break-words text-sm font-bold leading-5 sm:text-base">{option.meaning}</span>
+                  <span className="min-w-0 break-words text-[13px] font-bold leading-5 sm:flex-1 sm:text-base">{option.meaning}</span>
                   {state === "matched" ? <Check className="shrink-0" size={17} strokeWidth={3} /> : null}
                   {state === "wrong" ? <X className="shrink-0" size={17} strokeWidth={3} /> : null}
                 </button>
