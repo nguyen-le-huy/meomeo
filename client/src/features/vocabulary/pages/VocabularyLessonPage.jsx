@@ -393,7 +393,7 @@ function ChoiceLesson({ day, lesson, onProgressChange }) {
   }
 
   function pairButtonClass(state) {
-    const base = "group relative grid min-h-[5.35rem] grid-cols-[auto_1fr] content-start gap-x-2 gap-y-2 rounded-lg border px-2 py-2.5 text-left transition sm:flex sm:min-h-[4.15rem] sm:items-center sm:gap-3 sm:px-4 sm:py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/35 disabled:cursor-default";
+    const base = "group relative flex min-h-[5.35rem] items-start rounded-lg border px-3 py-3 text-left transition sm:min-h-[4.15rem] sm:items-center sm:gap-3 sm:px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/35 disabled:cursor-default";
     if (state === "matched") return `${base} border-[#95dc7b] bg-[#f0ffe9] text-[#2d7b00] shadow-[0_2px_0_#95dc7b]`;
     if (state === "wrong") return `${base} border-red-300 bg-red-50 text-red-700`;
     if (state === "selected") return `${base} border-coral bg-[#fff4eb] text-coal shadow-[0_2px_0_#d6795d] ring-1 ring-coral/20`;
@@ -418,8 +418,7 @@ function ChoiceLesson({ day, lesson, onProgressChange }) {
                   onClick={() => selectWord(option)}
                   type="button"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-current/15 bg-white/60 text-[11px] font-black sm:h-8 sm:w-8 sm:text-xs">{optionIndex + 1}</span>
-                  <span className="min-w-0 break-words pr-5 text-[13px] font-black leading-5 sm:flex-1 sm:pr-0 sm:text-base">{option.text}</span>
+                  <span className="min-w-0 flex-1 break-words pr-5 text-[13px] font-black leading-5 sm:pr-0 sm:text-base">{option.text}</span>
                   {state === "matched" ? <Check className="shrink-0" size={17} strokeWidth={3} /> : null}
                   {state === "wrong" ? <X className="shrink-0" size={17} strokeWidth={3} /> : null}
                   {state === "idle" || state === "selected" ? <Volume2 className="absolute right-2 top-3 shrink-0 text-coral/80 sm:static sm:mt-0.5" size={15} /> : null}
@@ -439,8 +438,7 @@ function ChoiceLesson({ day, lesson, onProgressChange }) {
                   onClick={() => selectMeaning(option)}
                   type="button"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-current/15 bg-white/60 text-[11px] font-black sm:h-8 sm:w-8 sm:text-xs">{optionIndex + 1 + englishOptions.length}</span>
-                  <span className="min-w-0 break-words text-[13px] font-bold leading-5 sm:flex-1 sm:text-base">{option.meaning}</span>
+                  <span className="min-w-0 flex-1 break-words text-[13px] font-bold leading-5 sm:text-base">{option.meaning}</span>
                   {state === "matched" ? <Check className="shrink-0" size={17} strokeWidth={3} /> : null}
                   {state === "wrong" ? <X className="shrink-0" size={17} strokeWidth={3} /> : null}
                 </button>
