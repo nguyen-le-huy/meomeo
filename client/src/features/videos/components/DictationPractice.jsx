@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Eye, Keyboard, Mic, Pause, Play, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, Pause, Play, RotateCcw } from "lucide-react";
 import {
   compactActiveButtonClass,
   compactButtonClass,
@@ -37,10 +37,29 @@ export default function DictationPractice({
   segment,
   segmentsCount,
 }) {
+  const currentStep = segmentsCount ? Math.min(currentIndex + 1, segmentsCount) : 0;
+
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
+    <form className="space-y-5" onSubmit={onSubmit}>
+      <div className="rounded-xl border border-[#e6dfd8] bg-canvas p-3 shadow-sm shadow-coal/[0.03] xl:hidden">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">Tiến độ</span>
+            <p className="mt-0.5 text-sm font-semibold text-coal">
+              {currentStep || 0}/{segmentsCount || 0}
+            </p>
+          </div>
+          <span className="rounded-full bg-cream-soft px-2.5 py-1 text-xs font-semibold text-ink-body">
+            {progressPercent}%
+          </span>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-cream-soft">
+          <div className="h-full rounded-full bg-coral transition-all" style={{ width: `${progressPercent}%` }} />
+        </div>
+      </div>
+
       <div className="flex items-center justify-between gap-2">
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 rounded-lg border border-[#e6dfd8] bg-cream-soft p-1">
           {difficulties.map((item) => (
             <button
               className={difficulty === item ? compactActiveButtonClass : compactButtonClass}
@@ -52,15 +71,10 @@ export default function DictationPractice({
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-cream px-3 py-1.5 text-xs font-semibold text-ink-body">
-            {progressPercent}%
-          </span>
-        </div>
       </div>
 
-      <div className="hidden items-center justify-between rounded-xl border border-[#e6dfd8] bg-cream-soft px-4 py-3 xl:flex">
-        <div className="flex items-center gap-3">
+      <div className="hidden items-center justify-between rounded-xl border border-[#e6dfd8] bg-canvas px-3 py-2 shadow-sm shadow-coal/[0.03] xl:flex">
+        <div className="flex items-center gap-1">
           <button className={toolbarButtonClass} disabled={currentIndex === 0 || !isYoutubeReady} onClick={() => onMoveAndPlay(-1)} type="button">
             <ChevronLeft size={17} />
           </button>
@@ -79,11 +93,7 @@ export default function DictationPractice({
             <ChevronRight size={17} />
           </button>
         </div>
-        <div className="flex items-center gap-3">
-          <button className={toolbarButtonClass} type="button">
-            <Keyboard size={17} />
-          </button>
-        </div>
+        <p className="hidden text-xs font-medium text-ink-muted 2xl:block">Nghe từng đoạn, nhập lại câu bạn nghe được.</p>
       </div>
 
       <p className="text-sm text-ink-muted xl:hidden">Điền trực tiếp vào các ô trống. Bấm mắt để hiện từ đó.</p>
@@ -100,20 +110,14 @@ export default function DictationPractice({
         </div>
       ) : null}
 
-      <div className="relative hidden rounded-xl border border-[#e6dfd8] bg-canvas p-5 xl:block">
-        <label className="eyebrow mb-3 hidden xl:block">Gõ những gì bạn nghe được</label>
+      <div className="hidden rounded-xl border border-[#e6dfd8] bg-canvas p-5 shadow-sm shadow-coal/[0.03] xl:block">
+        <label className="eyebrow mb-3 block">Gõ những gì bạn nghe được</label>
         <textarea
-          className="min-h-36 w-full resize-none rounded-xl border-0 bg-transparent font-display text-xl font-normal leading-relaxed text-coal outline-none placeholder:text-ink-muted/70 xl:min-h-32 xl:text-2xl"
+          className="min-h-40 w-full resize-none rounded-lg border border-transparent bg-cream-soft/45 px-4 py-3 font-display text-xl font-normal leading-relaxed text-coal outline-none transition placeholder:text-ink-muted/70 focus:border-coral/45 focus:bg-canvas focus:ring-4 focus:ring-coral/10 xl:text-2xl"
           onChange={(event) => onChangeAnswer(event.target.value)}
           placeholder="Gõ câu trả lời của bạn ở đây..."
           value={answer}
         />
-        <button
-          className="absolute bottom-[-14px] right-6 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#e6dfd8] bg-canvas text-coral shadow-sm"
-          type="button"
-        >
-          <Mic size={16} />
-        </button>
       </div>
 
       {correctPraise ? (
@@ -126,14 +130,18 @@ export default function DictationPractice({
       ) : null}
 
       {segment ? (
-        <div className="hidden space-y-2 xl:block">
+        <div className="hidden rounded-xl border border-[#e6dfd8] bg-canvas p-4 shadow-sm shadow-coal/[0.03] xl:block">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <p className="eyebrow">Từ gợi ý</p>
+            <p className="text-xs font-medium text-ink-muted">Bấm vào từ để hiện đáp án</p>
+          </div>
           <MaskedWordChips
             difficulty={difficulty}
             onRevealWord={onRevealWord}
             revealedWordIndexes={revealedWordIndexes}
             text={segment.text}
           />
-          <p className="text-sm text-ink-muted">Các từ được tiết lộ sẽ bị tính là lỗi và ảnh hưởng đến điểm số của bạn.</p>
+          <p className="mt-3 text-sm text-ink-muted">Các từ được tiết lộ sẽ bị tính là lỗi và ảnh hưởng đến điểm số của bạn.</p>
         </div>
       ) : null}
 

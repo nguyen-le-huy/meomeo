@@ -1,4 +1,4 @@
-import { AlertTriangle, NotebookPen, Plus, Save, Trash2 } from "lucide-react";
+import { NotebookPen, Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Spinner } from "../../../components/ui/spinner.jsx";
 import { getMaskedWords } from "../utils/dictationText.js";
@@ -159,11 +159,8 @@ export default function TranscriptPanel({
                     >
                       <Trash2 size={16} />
                     </button>
-                    <AlertTriangle size={16} />
                   </div>
-                ) : (
-                  <AlertTriangle className="text-coal/40" size={16} />
-                )}
+                ) : null}
               </div>
               {editingSegmentId === item._id ? (
                 <TranscriptEditForm

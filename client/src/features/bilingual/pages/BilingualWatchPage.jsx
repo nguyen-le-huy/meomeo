@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Maximize, Minimize, Pause, Play, RefreshCw } from "lucide-react";
+import { ArrowLeft, Captions, Maximize, Minimize, Pause, Play, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { Badge } from "../../../components/ui/badge.jsx";
@@ -123,62 +123,82 @@ export default function BilingualWatchPage() {
   }
 
   return (
-    <section className="h-[calc(100vh-4rem)] overflow-hidden bg-canvas xl:block">
-      <div className="flex h-full flex-col xl:grid xl:h-full xl:grid-cols-[minmax(0,1fr)_minmax(360px,560px)]">
-        <div className="flex shrink-0 flex-col xl:overflow-y-auto">
-          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#e6dfd8] bg-canvas px-4 py-3 sm:px-6">
-            <div className="flex items-center gap-3">
-              <Button asChild size="sm" variant="ghost">
-                <Link to="/">
-                  <ArrowLeft className="h-4 w-4" />
+    <section className="h-full overflow-hidden bg-[#f2efe9]">
+      <div className="flex h-full flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_420px] 2xl:grid-cols-[minmax(0,1fr)_460px]">
+        <div className="flex min-h-0 flex-col bg-[#161513]">
+          <div className="z-10 flex h-14 shrink-0 items-center justify-between border-b border-white/10 bg-[#1b1a18] px-3 sm:h-16 sm:px-5">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <Button
+                asChild
+                aria-label="Quay lại thư viện"
+                className="shrink-0 text-canvas hover:bg-white/10 hover:text-white"
+                size="icon"
+                variant="ghost"
+              >
+                <Link to="/youtube">
+                  <ArrowLeft className="h-5 w-5" />
                 </Link>
               </Button>
-              <div>
-                <h4 className="line-clamp-1 font-display text-sm font-medium">{video.title}</h4>
+              <div className="min-w-0">
+                <p className="mb-0.5 hidden text-[11px] font-semibold uppercase tracking-[0.12em] text-white/45 sm:block">
+                  Đang học song ngữ
+                </p>
+                <h1 className="truncate text-sm font-semibold text-white sm:text-base">{video.title}</h1>
               </div>
+            </div>
+            <div className="ml-3 hidden shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/65 sm:flex">
+              <Captions className="h-3.5 w-3.5 text-coral" />
+              {segments.length} đoạn
             </div>
           </div>
 
-          <div className="relative" ref={playerContainerRef}>
-            <SegmentYoutubePlayer
-              ref={playerRef}
-              continuous
-              onEndedChange={setIsVideoEnded}
-              onReadyChange={setIsPlayerReady}
-              onPlayingChange={setIsPlaying}
-              onTimeChange={handleTimeChange}
-              title={video.title}
-              youtubeVideoId={video.youtubeVideoId}
-            />
-
+          <div className="flex min-h-0 flex-1 items-center justify-center bg-[#11110f] lg:p-5 2xl:p-7">
             <div
-              className="pointer-events-auto absolute inset-0 z-10"
-              onClick={handleTogglePlay}
+              className="relative w-full max-w-[min(100%,calc((100dvh-11rem)*16/9))] overflow-hidden bg-black shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:rounded-xl"
+              ref={playerContainerRef}
             >
+              <SegmentYoutubePlayer
+                ref={playerRef}
+                continuous
+                immersive
+                onEndedChange={setIsVideoEnded}
+                onReadyChange={setIsPlayerReady}
+                onPlayingChange={setIsPlaying}
+                onTimeChange={handleTimeChange}
+                title={video.title}
+                youtubeVideoId={video.youtubeVideoId}
+              />
+
+              <div className="pointer-events-auto absolute inset-0 z-10" onClick={handleTogglePlay}>
               {!isPlaying ? (
-                <div className="flex h-full w-full items-center justify-center">
+                <div className="flex h-full w-full items-center justify-center bg-black/10">
                   <button
-                    className="flex flex-col items-center gap-3 rounded-xl bg-[#181715]/85 px-8 py-6 transition hover:bg-[#181715]/95"
+                    className="group flex items-center gap-3 rounded-full border border-white/15 bg-[#181715]/90 py-2.5 pl-2.5 pr-5 text-left shadow-2xl backdrop-blur-md transition hover:bg-[#252320] sm:gap-4 sm:py-3 sm:pl-3 sm:pr-6"
                     onClick={handleTogglePlay}
                     type="button"
                   >
-                    {isVideoEnded ? (
-                      <RefreshCw className="h-10 w-10 text-coral" />
-                    ) : (
-                      <Play className="h-10 w-10 text-coral" fill="currentColor" />
-                    )}
-                    <span className="text-sm text-canvas">{overlayButtonLabel}</span>
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-coral text-white sm:h-12 sm:w-12">
+                      {isVideoEnded ? (
+                        <RefreshCw className="h-5 w-5 sm:h-6 sm:w-6" />
+                      ) : (
+                        <Play className="ml-0.5 h-5 w-5 sm:h-6 sm:w-6" fill="currentColor" />
+                      )}
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold text-white sm:text-base">{overlayButtonLabel}</span>
+                      <span className="hidden text-xs text-white/50 sm:block">Phụ đề Anh - Việt đồng bộ</span>
+                    </span>
                   </button>
                 </div>
               ) : null}
 
               {isPlaying && activeSegment ? (
-                <div className="pointer-events-none absolute bottom-1.5 left-1/2 w-[94%] max-w-2xl -translate-x-1/2 space-y-0 rounded-lg bg-black p-[5px] text-center sm:bottom-4 sm:space-y-1">
-                  <p className="font-normal leading-snug text-[#fdd835] text-[11px] sm:text-xl [text-shadow:0_0_3px_rgba(0,0,0,0.8)]">
+                <div className="pointer-events-none absolute bottom-3 left-1/2 w-[92%] max-w-3xl -translate-x-1/2 space-y-0.5 rounded-lg bg-black/75 px-3 py-2 text-center backdrop-blur-sm sm:bottom-5 sm:space-y-1 sm:px-5 sm:py-3">
+                  <p className="text-xs font-medium leading-snug text-[#f6d85c] [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] sm:text-xl">
                     {activeSegment.text}
                   </p>
                   {activeSegment.translationText ? (
-                    <p className="font-normal leading-snug text-white/90 text-[10px] sm:text-lg [text-shadow:0_0_3px_rgba(0,0,0,0.8)]">
+                    <p className="text-[11px] font-normal leading-snug text-white/90 [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] sm:text-base">
                       {activeSegment.translationText}
                     </p>
                   ) : null}
@@ -187,7 +207,8 @@ export default function BilingualWatchPage() {
 
               {isPlaying ? (
                 <button
-                  className="absolute bottom-3 left-3 rounded-full bg-[#181715]/85 p-2.5 opacity-0 transition hover:opacity-100"
+                  aria-label="Tạm dừng"
+                  className="absolute bottom-3 left-3 rounded-full bg-[#181715]/85 p-2.5 opacity-0 transition hover:opacity-100 focus:opacity-100"
                   onClick={handleTogglePlay}
                   type="button"
                 >
@@ -197,7 +218,7 @@ export default function BilingualWatchPage() {
 
               <Button
                 aria-label={isFullscreen ? "Thoát toàn màn hình" : "Xem toàn màn hình"}
-                className="absolute bottom-3 right-3 hidden rounded-full bg-coal/85 opacity-60 hover:bg-coal hover:opacity-100 sm:inline-flex"
+                className="absolute bottom-3 right-3 hidden rounded-full border border-white/10 bg-coal/85 text-canvas opacity-70 hover:bg-coal hover:opacity-100 sm:inline-flex"
                 onClick={handleToggleFullscreen}
                 size="icon"
                 type="button"
@@ -205,11 +226,12 @@ export default function BilingualWatchPage() {
               >
                 {isFullscreen ? <Minimize className="h-5 w-5 text-canvas" /> : <Maximize className="h-5 w-5 text-canvas" />}
               </Button>
+              </div>
             </div>
           </div>
 
           {isAdmin ? (
-            <div className="border-t border-[#e6dfd8] px-4 py-4 sm:px-6">
+            <div className="shrink-0 border-t border-white/10 bg-[#1b1a18] px-4 py-3 text-canvas sm:px-6">
               <BilingualAdminToolbar
                 bilingualError={video.bilingualError}
                 bilingualStatus={video.bilingualStatus}
@@ -224,27 +246,40 @@ export default function BilingualWatchPage() {
           ) : null}
         </div>
 
-        <aside className="hidden border-l border-[#e6dfd8] xl:block xl:overflow-y-auto">
-          <div className="sticky top-0 z-10 border-b border-[#e6dfd8] bg-canvas px-5 py-3">
-            <h3 className="font-display text-lg font-medium">Phụ đề song ngữ</h3>
-            <p className="text-xs text-ink-muted">{segments.length} đoạn</p>
+        <aside className="hidden min-h-0 border-l border-black/10 bg-canvas lg:flex lg:flex-col">
+          <div className="flex h-20 shrink-0 items-center justify-between border-b border-[#e6dfd8] px-5 2xl:px-6">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-cream text-coral">
+                <Captions className="h-5 w-5" />
+              </span>
+              <div>
+                <h2 className="text-base font-semibold text-coal">Phụ đề song ngữ</h2>
+                <p className="text-xs text-ink-muted">Chọn một câu để phát từ vị trí đó</p>
+              </div>
+            </div>
+            <Badge variant="secondary">{segments.length}</Badge>
           </div>
-          <BilingualSubtitleList
-            activeIndex={activeIndex}
-            canEdit={isAdmin}
-            onSeek={handleSeek}
-            onUpdateSegment={(segmentId, segmentData) =>
-              updateSegmentMutation.mutateAsync({ data: segmentData, segmentId })
-            }
-            onDeleteSegments={(segmentIds) => deleteSegmentsMutation.mutateAsync(segmentIds)}
-            segments={segments}
-          />
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <BilingualSubtitleList
+              activeIndex={activeIndex}
+              canEdit={isAdmin}
+              onSeek={handleSeek}
+              onUpdateSegment={(segmentId, segmentData) =>
+                updateSegmentMutation.mutateAsync({ data: segmentData, segmentId })
+              }
+              onDeleteSegments={(segmentIds) => deleteSegmentsMutation.mutateAsync(segmentIds)}
+              segments={segments}
+            />
+          </div>
         </aside>
 
-        <div className="flex min-h-0 flex-1 flex-col xl:hidden">
-          <div className="shrink-0 border-b border-[#e6dfd8] bg-canvas px-5 py-3 flex items-center justify-between">
-            <h3 className="font-display text-sm font-medium">Phụ đề song ngữ</h3>
-            <p className="text-xs text-ink-muted">{segments.length} đoạn</p>
+        <div className="flex min-h-0 flex-1 flex-col bg-canvas lg:hidden">
+          <div className="flex h-14 shrink-0 items-center justify-between border-b border-[#e6dfd8] px-4">
+            <div className="flex items-center gap-2.5">
+              <Captions className="h-4 w-4 text-coral" />
+              <h2 className="text-sm font-semibold">Phụ đề song ngữ</h2>
+            </div>
+            <Badge variant="secondary">{segments.length} đoạn</Badge>
           </div>
           <div className="flex-1 overflow-y-auto">
             <BilingualSubtitleList

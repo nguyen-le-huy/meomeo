@@ -110,7 +110,7 @@ export default function BilingualSubtitleList({
   }
 
   return (
-    <div className="divide-y divide-[#e6dfd8]">
+    <div className="py-2">
       {canEdit ? (
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-[#e6dfd8] bg-canvas px-5 py-2">
           <label className="flex items-center gap-2 text-xs font-semibold text-ink-muted">
@@ -213,10 +213,11 @@ export default function BilingualSubtitleList({
             key={segment._id}
             ref={isActive ? activeRef : null}
             className={cn(
-              "group flex w-full items-start transition hover:bg-cream-soft",
-              isActive && "bg-cream-soft ring-1 ring-inset ring-coral",
+              "group relative mx-2 flex w-[calc(100%-1rem)] items-start rounded-lg transition-colors hover:bg-cream-soft",
+              isActive && "bg-[#f5e9e2]",
             )}
           >
+            {isActive ? <span className="absolute bottom-2 left-0 top-2 w-0.5 rounded-full bg-coral" /> : null}
             {canEdit ? (
               <label className="flex self-stretch px-3 py-3">
                 <input
@@ -228,26 +229,29 @@ export default function BilingualSubtitleList({
               </label>
             ) : null}
             <button
-              className={cn("flex min-w-0 flex-1 gap-3 py-3 text-left", canEdit ? "pr-3" : "px-5")}
+              className={cn("flex min-w-0 flex-1 gap-3 py-3.5 text-left", canEdit ? "pr-3" : "px-4")}
               onClick={() => onSeek(segment.startTime)}
               type="button"
             >
               <div className="min-w-0 flex-1 space-y-0.5">
                 <p
                   className={cn(
-                    "text-sm leading-relaxed text-coal",
-                    isActive && "font-medium",
+                    "text-sm font-medium leading-snug text-coal",
+                    isActive && "text-[#9f4f37]",
                   )}
                 >
                   {segment.text}
                 </p>
                 {segment.translationText ? (
-                  <p className="text-sm leading-relaxed text-ink-muted">
+                  <p className="mt-1 text-[13px] leading-snug text-ink-muted">
                     {segment.translationText}
                   </p>
                 ) : null}
               </div>
-              <span className="shrink-0 self-start pt-0.5 text-xs font-medium text-ink-muted">
+              <span className={cn(
+                "shrink-0 self-start rounded-md bg-cream-soft px-2 py-1 text-[11px] font-semibold tabular-nums text-ink-muted",
+                isActive && "bg-canvas text-coral",
+              )}>
                 {formatTime(segment.startTime)}
               </span>
             </button>

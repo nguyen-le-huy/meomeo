@@ -113,17 +113,15 @@ export default function TopicVideosPage() {
 
         {topic ? (
           <>
-            <div className="mb-6 scroll-mt-16 rounded-2xl border border-[#d8e1ed] bg-canvas px-5 py-4 shadow-[0_2px_0_rgba(20,20,19,0.08)] md:scroll-mt-20" ref={listTopRef}>
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="h-10 w-1.5 shrink-0 rounded-full bg-[#303866]" />
-                <div className="min-w-0">
-                  <h1 className="truncate text-xl font-black tracking-tight text-[#202036] sm:text-2xl">{topic.name}</h1>
-                  <p className="mt-1 text-sm font-semibold text-[#46516d]">
-                    {topicVideos.length} bài học
-                    {topic.description ? ` · ${topic.description}` : ""}
-                  </p>
-                </div>
+            <div className="mb-6 scroll-mt-16 border-b border-[#e6dfd8] pb-4 md:scroll-mt-20" ref={listTopRef}>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-ink-muted">Chủ đề</p>
+              <div className="flex min-w-0 flex-wrap items-center gap-2.5">
+                <h1 className="truncate text-2xl font-semibold text-coal sm:text-3xl">{topic.name}</h1>
+                <span className="rounded-full bg-cream-soft px-2.5 py-1 text-xs font-semibold text-ink-muted">
+                  {topicVideos.length} bài
+                </span>
               </div>
+              {topic.description ? <p className="mt-1 text-sm text-ink-muted">{topic.description}</p> : null}
             </div>
 
             {topicVideos.length ? (

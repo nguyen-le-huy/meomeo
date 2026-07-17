@@ -18,26 +18,30 @@ export default function TopicVideoSection({
   videos,
 }) {
   return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#d8e1ed] bg-canvas px-5 py-3 shadow-[0_2px_0_rgba(20,20,19,0.08)]">
+    <section className="space-y-4 sm:space-y-5">
+      <div className="flex items-end justify-between gap-4 border-b border-[#e6dfd8] pb-3 sm:pb-4">
         <div className="min-w-0">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="h-9 w-1 shrink-0 rounded-full bg-[#303866]" />
-            <h3 className="truncate text-base text-black tracking-tight text-[#202036] sm:text-xl lg:text-xl">{section.title}</h3>
-            <span className="shrink-0 text-xs font-semibold text-[#46516d] sm:text-sm">({section.videos.length} bài học)</span>
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-muted sm:text-xs">
+            Chủ đề
+          </p>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <h3 className="truncate text-lg font-semibold text-coal sm:text-2xl">{section.title}</h3>
+            <span className="shrink-0 rounded-full bg-cream-soft px-2.5 py-1 text-[11px] font-semibold text-ink-muted sm:text-xs">
+              {section.videos.length} bài
+            </span>
           </div>
           {section.description ? (
-            <p className="ml-4 mt-1 line-clamp-1 text-sm text-ink-muted">{section.description}</p>
+            <p className="mt-1 line-clamp-1 text-xs leading-5 text-ink-muted sm:text-sm">{section.description}</p>
           ) : null}
         </div>
         {canExpand ? (
           <Button
-            className="shrink-0 rounded-2xl border-[#bfc4d3] bg-canvas px-3 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#303866] shadow-[0_3px_0_rgba(48,56,102,0.16)] sm:px-4 sm:text-sm sm:tracking-[0.12em]"
+            className="h-9 shrink-0 px-2 text-xs text-ink-body hover:bg-cream-soft sm:px-3 sm:text-sm"
             onClick={onViewAll}
             type="button"
-            variant="outline"
+            variant="ghost"
           >
-            Xem thêm <ArrowRight size={16} />
+            Xem tất cả <ArrowRight size={15} />
           </Button>
         ) : null}
       </div>

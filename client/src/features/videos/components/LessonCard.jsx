@@ -1,4 +1,4 @@
-import { CheckCircle2, Trash2 } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Clock3, Trash2 } from "lucide-react";
 import { Badge } from "../../../components/ui/badge.jsx";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
@@ -31,8 +31,8 @@ export default function LessonCard({
   return (
     <Card
       className={cn(
-        "group cursor-pointer overflow-hidden rounded-2xl border-[#d8e1ed] bg-canvas shadow-[0_4px_0_rgba(48,56,102,0.12)] outline-none transition duration-300 hover:-translate-y-1 hover:border-[#c0c8d8] hover:shadow-[0_10px_22px_rgba(48,56,102,0.16)] focus-visible:ring-2 focus-visible:ring-coral/30",
-        isFeatured && "border-amber-400 bg-[#fff8e8] shadow-[0_4px_0_rgba(180,116,0,0.35)]",
+        "group cursor-pointer overflow-hidden rounded-lg border-[#e6dfd8] bg-canvas outline-none transition duration-200 hover:-translate-y-0.5 hover:border-[#d2c9be] hover:shadow-[0_10px_24px_rgba(20,20,19,0.09)] focus-visible:ring-2 focus-visible:ring-coral/30",
+        isFeatured && "border-coral/35 bg-coral/5 shadow-[0_6px_18px_rgba(204,120,92,0.10)] hover:border-coral/55",
       )}
       data-lesson-card
       onClick={onSelect}
@@ -48,36 +48,39 @@ export default function LessonCard({
       <div className="relative aspect-video overflow-hidden bg-cream-strong">
         <img
           alt={video.title}
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+          className="h-full w-full object-cover transition duration-500 ease-out group-hover:scale-[1.025]"
+          loading="lazy"
           src={video.thumbnailUrl}
         />
-        <Badge className="absolute bottom-3 right-3 gap-1 bg-coal/90 text-white">
-          ◷ {formatDuration(video.duration || 0)}
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent" />
+        <Badge className="absolute bottom-2 right-2 gap-1 bg-coal/85 px-2 py-1 text-[10px] text-white backdrop-blur-sm sm:bottom-3 sm:right-3 sm:text-xs">
+          <Clock3 size={12} strokeWidth={2.2} /> {formatDuration(video.duration || 0)}
         </Badge>
+        {isFeatured ? (
+          <Badge className="absolute left-2 top-2 bg-coral px-2 py-1 text-[10px] font-semibold text-white shadow-sm sm:left-3 sm:top-3 sm:text-xs">
+            Mới
+          </Badge>
+        ) : null}
         {isShadowingDone ? (
-          <Badge className="absolute left-3 top-3 gap-1 bg-emerald-600 text-white">
+          <Badge className="absolute bottom-2 left-2 gap-1 bg-emerald-700/90 px-2 py-1 text-[10px] text-white backdrop-blur-sm sm:bottom-3 sm:left-3 sm:text-xs">
             <CheckCircle2 size={14} /> Done · {shadowingSession.averageScore || 0}đ
           </Badge>
         ) : null}
       </div>
 
-      <CardContent className="space-y-2 p-2.5 sm:space-y-3 sm:p-4">
-        <p
-          className={cn(
-            "line-clamp-2 min-h-[34px] text-xs font-medium leading-snug text-[#202036] sm:min-h-[42px] sm:text-sm",
-            isFeatured && "text-coral-dark",
-          )}
-        >
+      <CardContent className="flex min-h-[104px] flex-col p-3 sm:min-h-[124px] sm:p-4">
+        <p className="line-clamp-2 min-h-[36px] text-xs font-semibold leading-[1.45] text-coal sm:min-h-[42px] sm:text-[15px]">
           {video.title}
         </p>
-        {isShadowingDone ? (
-          <div className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700">
-            <CheckCircle2 size={13} /> Shadowing done · TB {shadowingSession.averageScore || 0}đ
-          </div>
-        ) : null}
+        <div className="mt-auto flex items-center justify-between gap-2 pt-3 text-[10px] font-semibold text-ink-muted sm:text-xs">
+          <span className="rounded-md bg-cream-soft px-2 py-1">{video.level || "A2"}</span>
+          <span className="inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+            Mở bài học <ArrowUpRight size={13} />
+          </span>
+        </div>
 
         {isAdmin ? (
-          <div className="space-y-2 border-t border-[#e6dfd8] pt-3" onClick={(event) => event.stopPropagation()}>
+          <div className="mt-3 space-y-2 border-t border-[#e6dfd8] pt-3" onClick={(event) => event.stopPropagation()}>
             <Select
               onValueChange={(value) => {
                 updateVideoMutation.mutate({
