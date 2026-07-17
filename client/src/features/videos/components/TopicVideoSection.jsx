@@ -47,22 +47,37 @@ export default function TopicVideoSection({
       </div>
 
       {videos.length ? (
-        <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4" data-lesson-grid>
-          {videos.map((video) => (
-            <LessonCard
-              deleteVideoMutation={deleteVideoMutation}
-              isAdmin={isAdmin}
-              isNew={newestVideoIds.has(video._id)}
-              key={video._id}
-              onSelect={() => onSelectVideo(video)}
-              publishVideoMutation={publishVideoMutation}
-              shadowingSession={shadowingSessionByVideoId?.get(String(video._id))}
-              topics={topics}
-              updateVideoMutation={updateVideoMutation}
-              video={video}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4" data-lesson-grid>
+            {videos.map((video) => (
+              <LessonCard
+                deleteVideoMutation={deleteVideoMutation}
+                isAdmin={isAdmin}
+                isNew={newestVideoIds.has(video._id)}
+                key={video._id}
+                onSelect={() => onSelectVideo(video)}
+                publishVideoMutation={publishVideoMutation}
+                shadowingSession={shadowingSessionByVideoId?.get(String(video._id))}
+                topics={topics}
+                updateVideoMutation={updateVideoMutation}
+                video={video}
+              />
+            ))}
+          </div>
+
+          {canExpand ? (
+            <div className="flex justify-center pt-1 sm:pt-2">
+              <Button
+                className="h-10 rounded-full border-[#d8d0c6] px-4 text-xs text-ink-body hover:border-coal/30 hover:bg-cream-soft sm:px-5 sm:text-sm"
+                onClick={onViewAll}
+                type="button"
+                variant="outline"
+              >
+                Xem tất cả <ArrowRight size={15} />
+              </Button>
+            </div>
+          ) : null}
+        </>
       ) : (
         <Card className="border-dashed bg-cream-soft">
           <CardContent className="p-5 text-sm font-semibold text-ink-muted">Topic này chưa có video.</CardContent>
