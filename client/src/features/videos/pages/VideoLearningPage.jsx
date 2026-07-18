@@ -311,8 +311,8 @@ export default function VideoLearningPage() {
   }
 
   return (
-    <section className="h-full w-full max-w-full overflow-x-hidden overflow-y-auto bg-cream-soft pb-24 md:p-4 md:pb-4">
-      <div className="mx-auto grid w-full max-w-full min-w-0 gap-3 xl:max-w-[1440px] xl:grid-cols-[minmax(360px,0.9fr)_minmax(420px,0.78fr)_minmax(300px,0.56fr)]">
+    <section className="h-full w-full max-w-full overflow-x-hidden overflow-y-auto bg-[#f5f2ec] pb-24 md:p-4 md:pb-4 xl:overflow-hidden xl:pb-4">
+      <div className="mx-auto grid w-full max-w-full min-w-0 gap-4 xl:h-full xl:max-w-[1440px] xl:grid-cols-[minmax(340px,0.84fr)_minmax(410px,0.78fr)_minmax(290px,0.52fr)]">
         <VideoColumn
           analyzeMutation={analyzeMutation}
           isAdmin={isAdmin}
@@ -326,7 +326,7 @@ export default function VideoLearningPage() {
           video={video}
         />
 
-        <section className="min-w-0 max-w-full overflow-hidden bg-canvas p-3 md:rounded-xl md:border md:border-[#e6dfd8] md:p-4 xl:min-h-[calc(100vh-6rem)]">
+        <section className="min-w-0 max-w-full overflow-hidden bg-white p-3 shadow-[0_18px_45px_rgba(20,20,19,0.07)] md:rounded-2xl md:border md:border-[#e6dfd8] md:p-4 xl:h-full xl:min-h-0">
           <DictationPractice
             answer={answer}
             checkMutation={checkMutation}

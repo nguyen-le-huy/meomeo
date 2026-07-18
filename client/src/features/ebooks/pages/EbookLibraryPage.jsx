@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, Settings2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Settings2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
@@ -13,48 +13,23 @@ function EbookCard({ ebook }) {
   return (
     <Link
       aria-label={`Mở ebook ${ebook.title}`}
-      className="group block h-full min-w-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/35 focus-visible:ring-offset-2"
+      className="group block min-w-0 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/35 focus-visible:ring-offset-2"
       to={`/ebooks/${ebook.slug}`}
     >
-      <Card className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border-[#e6dfd8] bg-canvas transition duration-200 group-hover:-translate-y-0.5 group-hover:border-[#d2c9be] group-hover:shadow-[0_12px_28px_rgba(20,20,19,0.09)]">
-        <div className="relative flex aspect-[3/4] shrink-0 items-center justify-center overflow-hidden border-b border-[#e6dfd8] bg-cream-soft/60">
-          {ebook.coverUrl ? (
-            <img
-              alt={`Bìa sách ${ebook.title}`}
-              className="h-full w-full object-cover transition duration-500 ease-out group-hover:scale-[1.015]"
-              loading="lazy"
-              src={ebook.coverUrl}
-            />
-          ) : (
+      <div className="relative aspect-[2/3] overflow-hidden rounded border border-[#d8d0c6] bg-cream-soft shadow-[0_1px_2px_rgba(20,20,19,0.16)] transition duration-200 group-hover:-translate-y-0.5 group-hover:shadow-[0_10px_22px_rgba(20,20,19,0.16)]">
+        {ebook.coverUrl ? (
+          <img
+            alt={`Bìa sách ${ebook.title}`}
+            className="h-full w-full object-cover"
+            loading="lazy"
+            src={ebook.coverUrl}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
             <BookOpen className="text-coral" size={40} strokeWidth={1.5} />
-          )}
-        </div>
-
-        <CardContent className="flex min-w-0 flex-1 flex-col p-3 sm:p-4">
-          <h2 className="line-clamp-2 min-h-[40px] text-sm font-semibold leading-[1.45] text-coal sm:min-h-[46px] sm:text-base">
-            {ebook.title}
-          </h2>
-          <p className="mt-1.5 line-clamp-1 text-xs text-ink-muted sm:text-sm">
-            {ebook.author || "Chưa nhập tác giả"}
-          </p>
-
-          <div className="mt-auto flex items-center justify-between gap-2 pt-4">
-            <div className="flex min-w-0 items-center gap-1.5">
-              <span className="rounded-md bg-cream-soft px-2 py-1 text-[10px] font-semibold uppercase text-ink-muted sm:text-xs">
-                {ebook.format || "ebook"}
-              </span>
-              {ebook.level ? (
-                <span className="rounded-md bg-coral/10 px-2 py-1 text-[10px] font-semibold text-coral-dark sm:text-xs">
-                  {ebook.level}
-                </span>
-              ) : null}
-            </div>
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-muted transition group-hover:bg-coral group-hover:text-white">
-              <ArrowUpRight size={16} />
-            </span>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
     </Link>
   );
 }
@@ -102,7 +77,7 @@ export default function EbookLibraryPage() {
         {isError ? <p className="mt-8 text-sm font-semibold text-red-700">Không tải được thư viện ebook.</p> : null}
 
         {visibleEbooks.length ? (
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-8 grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-5 xl:grid-cols-6">
             {visibleEbooks.map((ebook) => (
               <EbookCard ebook={ebook} key={ebook._id} />
             ))}

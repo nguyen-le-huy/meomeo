@@ -48,7 +48,7 @@ export default function TopicVideoSection({
 
       {videos.length ? (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4" data-lesson-grid>
+          <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3" data-lesson-grid>
             {videos.map((video) => (
               <LessonCard
                 deleteVideoMutation={deleteVideoMutation}

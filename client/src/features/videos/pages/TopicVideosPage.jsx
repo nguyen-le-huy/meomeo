@@ -18,7 +18,7 @@ import LearningModeDialog from "../components/LearningModeDialog.jsx";
 import LessonCard from "../components/LessonCard.jsx";
 import { getNewestVideoIds, getTopicId } from "../utils/videoLibrary.js";
 
-const pageSize = 8;
+const pageSize = 9;
 
 export default function TopicVideosPage() {
   const { slug } = useParams();
@@ -125,7 +125,7 @@ export default function TopicVideosPage() {
             </div>
 
             {topicVideos.length ? (
-              <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
                 {visibleVideos.map((video) => (
                   <LessonCard
                     deleteVideoMutation={deleteVideoMutation}

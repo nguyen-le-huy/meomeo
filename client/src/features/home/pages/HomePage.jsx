@@ -5,6 +5,7 @@ import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import LearningModeDialog from "../../videos/components/LearningModeDialog.jsx";
+import TopicCategoryChips, { allTopicsValue } from "../../videos/components/TopicCategoryChips.jsx";
 import TopicVideoSection from "../../videos/components/TopicVideoSection.jsx";
 import VideoLibraryAdminActions from "../../videos/components/VideoLibraryAdminActions.jsx";
 import VideoLibraryEmptyState from "../../videos/components/VideoLibraryEmptyState.jsx";
@@ -28,6 +29,7 @@ import {
   useUpdateVideo,
   useVideos,
 } from "../../videos/hooks/useVideoLearning.js";
+import { useLazyTopicSections } from "../../videos/hooks/useLazyTopicSections.js";
 import { buildTopicSections, getNewestVideoIds } from "../../videos/utils/videoLibrary.js";
 
 const lessonCategories = [
@@ -102,6 +104,7 @@ export default function HomePage() {
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
   const [greeting, setGreeting] = useState(() => getGreeting());
+  const [selectedTopicId, setSelectedTopicId] = useState(allTopicsValue);
   const [modePickerVideo, setModePickerVideo] = useState(null);
   const isDesktopTopicGrid = useIsDesktopTopicGrid();
   const {
@@ -127,6 +130,15 @@ export default function HomePage() {
     () => buildTopicSections({ isAdmin, topics: visibleTopics, videos }),
     [isAdmin, visibleTopics, videos],
   );
+  const selectedTopicSections = useMemo(() => {
+    if (selectedTopicId === allTopicsValue) return topicSections;
+    return topicSections.filter((section) => section.topic?._id === selectedTopicId);
+  }, [selectedTopicId, topicSections]);
+  const {
+    hasMoreSections,
+    loadMoreRef,
+    visibleSections: visibleTopicSections,
+  } = useLazyTopicSections(selectedTopicSections);
   const shadowingSessionByVideoId = useMemo(
     () => new Map(myShadowingSessions.map((session) => [String(session.videoId), session])),
     [myShadowingSessions],
@@ -137,6 +149,13 @@ export default function HomePage() {
     const intervalId = window.setInterval(() => setGreeting(getGreeting()), 60_000);
     return () => window.clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    if (selectedTopicId === allTopicsValue) return;
+    if (!visibleTopics.some((topic) => topic._id === selectedTopicId)) {
+      setSelectedTopicId(allTopicsValue);
+    }
+  }, [selectedTopicId, visibleTopics]);
 
   function startLearning(mode) {
     if (!modePickerVideo?._id) return;
@@ -219,6 +238,12 @@ export default function HomePage() {
           ) : null}
         </div>
 
+        <TopicCategoryChips
+          onSelectTopic={setSelectedTopicId}
+          selectedTopicId={selectedTopicId}
+          topics={visibleTopics}
+        />
+
         {isLoading || isTopicsLoading ? <LoadingState label="Đang tải thư viện..." /> : null}
 
         {isVideosError ? (
@@ -227,9 +252,9 @@ export default function HomePage() {
 
         {!isLoading && !isVideosError && videos.length === 0 ? <VideoLibraryEmptyState /> : null}
 
-        {topicSections.length > 0 ? (
+        {visibleTopicSections.length > 0 ? (
           <div className="space-y-8">
-            {topicSections.map((section) => {
+            {visibleTopicSections.map((section) => {
               const sectionVideos = section.videos.slice(0, homeTopicVideoLimit);
               const canExpand = section.topic?.slug && section.videos.length > homeTopicVideoLimit;
               const newestVideoIds = getNewestVideoIds(section.videos);
@@ -252,6 +277,7 @@ export default function HomePage() {
                 />
               );
             })}
+            {hasMoreSections ? <div aria-hidden="true" className="h-8" ref={loadMoreRef} /> : null}
           </div>
         ) : null}
 

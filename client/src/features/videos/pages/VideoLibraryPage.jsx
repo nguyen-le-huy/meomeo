@@ -16,8 +16,10 @@ import {
   useUpdateVideo,
   useVideos,
 } from "../hooks/useVideoLearning.js";
+import { useLazyTopicSections } from "../hooks/useLazyTopicSections.js";
 import LearningModeDialog from "../components/LearningModeDialog.jsx";
 import TopicVideoSection from "../components/TopicVideoSection.jsx";
+import TopicCategoryChips, { allTopicsValue } from "../components/TopicCategoryChips.jsx";
 import VideoLibraryAdminActions from "../components/VideoLibraryAdminActions.jsx";
 import VideoLibraryEmptyState from "../components/VideoLibraryEmptyState.jsx";
 import VideoLibraryErrorState from "../components/VideoLibraryErrorState.jsx";
@@ -61,6 +63,7 @@ export default function VideoLibraryPage() {
   const updateVideoMutation = useUpdateVideo();
   const publishVideoMutation = usePublishVideo();
   const deleteVideoMutation = useDeleteVideo();
+  const [selectedTopicId, setSelectedTopicId] = useState(allTopicsValue);
   const [modePickerVideo, setModePickerVideo] = useState(null);
   const isDesktopTopicGrid = useIsDesktopTopicGrid();
   const sessionId = getGuestSessionId();
@@ -70,11 +73,27 @@ export default function VideoLibraryPage() {
     () => buildTopicSections({ isAdmin, topics: visibleTopics, videos }),
     [isAdmin, visibleTopics, videos],
   );
+  const selectedTopicSections = useMemo(() => {
+    if (selectedTopicId === allTopicsValue) return topicSections;
+    return topicSections.filter((section) => section.topic?._id === selectedTopicId);
+  }, [selectedTopicId, topicSections]);
+  const {
+    hasMoreSections,
+    loadMoreRef,
+    visibleSections: visibleTopicSections,
+  } = useLazyTopicSections(selectedTopicSections);
   const shadowingSessionByVideoId = useMemo(
     () => new Map(myShadowingSessions.map((session) => [String(session.videoId), session])),
     [myShadowingSessions],
   );
   const homeTopicVideoLimit = isDesktopTopicGrid ? homeTopicDesktopVideoLimit : homeTopicMobileVideoLimit;
+
+  useEffect(() => {
+    if (selectedTopicId === allTopicsValue) return;
+    if (!visibleTopics.some((topic) => topic._id === selectedTopicId)) {
+      setSelectedTopicId(allTopicsValue);
+    }
+  }, [selectedTopicId, visibleTopics]);
 
   function startLearning(mode) {
     if (!modePickerVideo?._id) return;
@@ -91,8 +110,7 @@ export default function VideoLibraryPage() {
       <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-8 sm:px-6 lg:px-10 lg:pt-12">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
-            <p className="eyebrow">Thư viện theo topic</p>
-            <h2 className="mt-2 font-display text-2xl font-normal tracking-tight sm:text-3xl">Chọn chủ đề hôm nay</h2>
+            <h2 className="mt-2 font-display text-2xl font-normal tracking-tight sm:text-3xl">Học qua Youtube</h2>
           </div>
           {isAdmin ? (
             <VideoLibraryAdminActions
@@ -107,6 +125,12 @@ export default function VideoLibraryPage() {
           ) : null}
         </div>
 
+        <TopicCategoryChips
+          onSelectTopic={setSelectedTopicId}
+          selectedTopicId={selectedTopicId}
+          topics={visibleTopics}
+        />
+
         {isLoading || isTopicsLoading ? <LoadingState label="Đang tải thư viện..." /> : null}
 
         {isVideosError ? (
@@ -115,9 +139,9 @@ export default function VideoLibraryPage() {
 
         {!isLoading && !isVideosError && videos.length === 0 ? <VideoLibraryEmptyState /> : null}
 
-        {topicSections.length > 0 ? (
+        {visibleTopicSections.length > 0 ? (
           <div className="space-y-8">
-            {topicSections.map((section) => {
+            {visibleTopicSections.map((section) => {
               const sectionVideos = section.videos.slice(0, homeTopicVideoLimit);
               const canExpand = section.topic?.slug && section.videos.length > homeTopicVideoLimit;
               const newestVideoIds = getNewestVideoIds(section.videos);
@@ -140,6 +164,7 @@ export default function VideoLibraryPage() {
                 />
               );
             })}
+            {hasMoreSections ? <div aria-hidden="true" className="h-8" ref={loadMoreRef} /> : null}
           </div>
         ) : null}
 

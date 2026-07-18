@@ -32,7 +32,7 @@ import SegmentYoutubePlayer from "./SegmentYoutubePlayer.jsx";
 
 const passingScore = 60;
 const actionButtonMotionClass = "transition-all duration-200 ease-out active:scale-[0.98] disabled:active:scale-100";
-const recordingButtonClass = "animate-pulse shadow-[0_0_0_4px_rgba(204,120,92,0.18),0_10px_26px_rgba(204,120,92,0.28)]";
+const recordingButtonClass = "animate-pulse shadow-[0_0_0_5px_rgba(204,120,92,0.18),0_14px_32px_rgba(204,120,92,0.28)]";
 
 function getSupportedRecordingMimeType() {
   const candidates = [
@@ -301,7 +301,7 @@ export default function ShadowingPractice({
     }
 
     if (!hasStarted) {
-      onReplayCurrentSegment();
+      onStartFirstSegment();
       return;
     }
 
@@ -433,17 +433,19 @@ export default function ShadowingPractice({
   useEffect(() => () => stopRecording({ skipSubmit: true }), []);
 
   return (
-    <section className="h-full w-full max-w-full overflow-hidden bg-cream-soft pb-20 text-coal md:overflow-y-auto md:p-4 md:pb-4">
-      <div className="mx-auto grid w-full max-w-[1500px] gap-3 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <main className="min-w-0 overflow-hidden bg-canvas md:rounded-xl md:border md:border-[#e6dfd8] md:p-4">
-          <div className="hidden items-center gap-3 pb-4 xl:flex">
-            <div className="h-1.5 w-36 rounded-full bg-coral" />
+    <section className="h-full w-full max-w-full overflow-hidden bg-[#f5f2ec] pb-20 text-coal md:overflow-y-auto md:p-4 md:pb-4 xl:overflow-hidden xl:pb-4">
+      <div className="mx-auto grid w-full max-w-[1500px] gap-4 xl:h-full xl:grid-cols-[minmax(0,1fr)_360px]">
+        <main className="min-w-0 overflow-hidden bg-white shadow-[0_18px_45px_rgba(20,20,19,0.07)] md:rounded-2xl md:border md:border-[#e6dfd8] md:p-4 xl:flex xl:h-full xl:min-h-0 xl:flex-col">
+          <div className="hidden items-center gap-3 pb-2 xl:flex xl:shrink-0">
+            <div className="h-1.5 w-36 rounded-full bg-coal" />
             <p className="min-w-0 flex-1 truncate text-sm font-black text-ink-body">{video.title}</p>
-            <Badge className="bg-coral text-white">{video.level || "A2"}</Badge>
+            <Badge className="rounded-full bg-coral text-white">{video.level || "A2"}</Badge>
           </div>
 
           <SegmentYoutubePlayer
+            className="xl:h-[min(38vh,340px)] xl:shrink-0"
             disableInteraction
+            fitDesktop
             onPlayingChange={onPlayingChange}
             onReadyChange={onReadyChange}
             ref={playerRef}
@@ -452,12 +454,12 @@ export default function ShadowingPractice({
             youtubeVideoId={video.youtubeVideoId}
           />
 
-          <div className="space-y-3 px-3 py-4 md:px-0 xl:overflow-visible">
+          <div className="min-h-0 space-y-3 px-3 py-4 md:px-0 xl:flex xl:flex-1 xl:flex-col xl:overflow-hidden xl:py-2">
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
               <div aria-hidden="true" />
               <div className="flex items-center justify-center gap-2">
                 <Button
-                  className="h-10 w-10 rounded-full border-[#e6dfd8] bg-white shadow-sm"
+                  className="h-11 w-11 rounded-full border-[#e6dfd8] bg-white shadow-sm transition hover:bg-cream-soft"
                   disabled={currentIndex === 0 || !isYoutubeReady || locked}
                   onClick={() => onMoveAndPlay(-1)}
                   size="icon"
@@ -467,7 +469,7 @@ export default function ShadowingPractice({
                   <ChevronLeft size={18} />
                 </Button>
                 <Button
-                  className="h-10 w-10 rounded-full border-[#e6dfd8] bg-white shadow-sm"
+                  className="h-11 w-11 rounded-full border-[#e6dfd8] bg-white shadow-sm transition hover:bg-cream-soft"
                   disabled={!canUseSegment}
                   onClick={onReplayCurrentSegment}
                   size="icon"
@@ -477,7 +479,7 @@ export default function ShadowingPractice({
                   <RotateCcw size={18} />
                 </Button>
                 <Button
-                  className="h-10 w-10 rounded-full border-[#e6dfd8] bg-white shadow-sm"
+                  className="h-11 w-11 rounded-full border-[#e6dfd8] bg-white shadow-sm transition hover:bg-cream-soft"
                   disabled={!canUseSegment}
                   onClick={onToggleCurrentSegmentPlayback}
                   size="icon"
@@ -487,7 +489,7 @@ export default function ShadowingPractice({
                   {isPlayerPlaying ? <Pause size={18} /> : <Play size={18} />}
                 </Button>
 	                <Button
-	                  className="h-10 w-10 rounded-full border-[#e6dfd8] bg-white shadow-sm"
+	                  className="h-11 w-11 rounded-full border-[#e6dfd8] bg-white shadow-sm transition hover:bg-cream-soft"
 	                  disabled={!isYoutubeReady || locked || !isCurrentSegmentPassed}
 	                  onClick={onNext}
 	                  size="icon"
@@ -514,9 +516,9 @@ export default function ShadowingPractice({
             {!hasStarted ? (
               <div className="hidden justify-center xl:flex">
                 <Button
-                  className={cn("h-12 min-w-52 bg-coral text-base text-white hover:bg-coral-dark", actionButtonMotionClass)}
+                  className={cn("h-12 min-w-52 rounded-xl bg-coal text-base font-bold text-white shadow-[0_14px_30px_rgba(20,20,19,0.18)] hover:bg-coral-dark", actionButtonMotionClass)}
                   disabled={!canUseSegment}
-                  onClick={onReplayCurrentSegment}
+                  onClick={onStartFirstSegment}
                   type="button"
                 >
                   <Play size={17} /> Bắt đầu
@@ -527,7 +529,7 @@ export default function ShadowingPractice({
             {canDeleteProgress ? (
               <div className="flex justify-end">
                 <Button
-                  className="h-9 gap-2 border-red-200 bg-white text-xs font-black text-red-600 hover:bg-red-50"
+                  className="h-9 gap-2 rounded-xl border-red-200 bg-white text-xs font-black text-red-600 shadow-sm hover:bg-red-50"
                   disabled={deleteMutation.isPending}
                   onClick={() => deleteProgress()}
                   type="button"
@@ -538,7 +540,7 @@ export default function ShadowingPractice({
               </div>
             ) : null}
 
-            <div className="max-h-[calc(100dvh-430px)] min-h-[210px] space-y-3 overflow-y-auto overscroll-contain pb-2 pr-1 xl:max-h-none xl:min-h-0 xl:overflow-visible xl:pr-0">
+            <div className="max-h-[calc(100dvh-430px)] min-h-[210px] space-y-3 overflow-y-auto overscroll-contain pb-2 pr-1 xl:min-h-0 xl:flex-1 xl:overflow-hidden xl:pb-0 xl:pr-0">
               <CurrentTurnCard
                 assessmentResult={assessmentResult}
                 bestScore={currentBestScore}
@@ -565,7 +567,7 @@ export default function ShadowingPractice({
                 isCurrentSegmentPassed ? (
                   <>
                     <Button
-                      className={cn("h-12 min-w-44 rounded-2xl border-[#e6dfd8] bg-white text-sm font-black uppercase text-ink-muted shadow-sm", actionButtonMotionClass)}
+                      className={cn("h-12 min-w-44 rounded-xl border-[#e6dfd8] bg-white text-sm font-black uppercase text-ink-muted shadow-sm hover:bg-cream-soft", actionButtonMotionClass)}
                       disabled={!canUseSegment || assessMutation.isPending || locked}
                       onClick={handleRetryAction}
                       type="button"
@@ -574,7 +576,7 @@ export default function ShadowingPractice({
                       <Mic size={16} /> Thử lại
                     </Button>
                     <Button
-                      className={cn("h-12 min-w-48 bg-coral text-sm text-white hover:bg-coral-dark", actionButtonMotionClass)}
+                      className={cn("h-12 min-w-48 rounded-xl bg-coal text-sm font-bold text-white shadow-[0_14px_30px_rgba(20,20,19,0.18)] hover:bg-coral-dark", actionButtonMotionClass)}
                       disabled={!isYoutubeReady || submitMutation.isPending || locked}
                       onClick={handleContinueAction}
                       type="button"
@@ -585,7 +587,7 @@ export default function ShadowingPractice({
                   </>
                 ) : (
                   <Button
-                    className={cn("h-12 min-w-48 bg-coral text-sm text-white hover:bg-coral-dark", actionButtonMotionClass)}
+                    className={cn("h-12 min-w-48 rounded-xl bg-coal text-sm font-bold text-white shadow-[0_14px_30px_rgba(20,20,19,0.18)] hover:bg-coral-dark", actionButtonMotionClass)}
                     disabled={!canUseSegment || assessMutation.isPending || locked}
                     onClick={handleRetryAction}
                     type="button"
@@ -596,7 +598,7 @@ export default function ShadowingPractice({
               ) : (
                 <>
                   <Button
-                    className={cn("h-12 min-w-44 rounded-2xl border-[#e6dfd8] bg-white text-sm font-black uppercase text-ink-muted shadow-sm", actionButtonMotionClass)}
+                    className={cn("h-12 min-w-44 rounded-xl border-[#e6dfd8] bg-white text-sm font-black uppercase text-ink-muted shadow-sm hover:bg-cream-soft", actionButtonMotionClass)}
                     disabled={!hasStarted}
                     onClick={onReplayCurrentSegment}
                     type="button"
@@ -606,7 +608,7 @@ export default function ShadowingPractice({
                   </Button>
                   <Button
                     className={cn(
-                      "h-12 min-w-48 bg-coral text-sm text-white hover:bg-coral-dark",
+                      "h-12 min-w-48 rounded-xl bg-coal text-sm font-bold text-white shadow-[0_14px_30px_rgba(20,20,19,0.18)] hover:bg-coral-dark",
                       actionButtonMotionClass,
                       isRecording && recordingButtonClass,
                     )}
@@ -623,17 +625,17 @@ export default function ShadowingPractice({
           </div>
         </main>
 
-        <aside className="hidden max-h-[calc(100vh-6rem)] min-h-[calc(100vh-6rem)] flex-col rounded-xl border border-[#e6dfd8] bg-canvas p-4 xl:flex">
+        <aside className="hidden min-h-0 flex-col rounded-2xl border border-[#e6dfd8] bg-white p-4 shadow-[0_18px_45px_rgba(20,20,19,0.07)] xl:flex xl:h-full xl:max-h-full">
           <div className="mb-3 flex items-center justify-between gap-3">
             <h2 className="eyebrow">Bản chép</h2>
-            <span className="rounded-lg border border-[#e6dfd8] bg-cream-soft px-3 py-1 text-sm font-black text-coal">
+            <span className="rounded-full bg-coal px-3 py-1 text-sm font-black text-white">
               {progressPercent}%
             </span>
           </div>
-          <div className="mb-4 h-2 overflow-hidden rounded-full bg-cream">
+          <div className="mb-4 h-2 overflow-hidden rounded-full bg-cream-soft">
             <div className="h-full rounded-full bg-coral" style={{ width: `${progressPercent}%` }} />
           </div>
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {segments.length ? (
               segments.map((item, index) => {
 	                const score = getBestScore(item._id);
@@ -670,7 +672,7 @@ export default function ShadowingPractice({
 	                </span>
               </div>
               <Button
-                className={cn("mt-3 h-12 w-full bg-coral text-sm text-white hover:bg-coral-dark", actionButtonMotionClass)}
+                className={cn("mt-3 h-12 w-full rounded-xl bg-coal text-sm font-bold text-white shadow-[0_14px_30px_rgba(20,20,19,0.18)] hover:bg-coral-dark", actionButtonMotionClass)}
                 disabled={submitMutation.isPending}
                 onClick={handleSubmit}
                 type="button"
@@ -735,11 +737,11 @@ export default function ShadowingPractice({
         </aside>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#e6dfd8] bg-canvas p-3 xl:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#e6dfd8] bg-white/95 p-3 shadow-[0_-18px_36px_rgba(20,20,19,0.10)] backdrop-blur xl:hidden">
         {hasStarted && showResultActions && isCurrentSegmentPassed ? (
           <div className="grid grid-cols-[0.85fr_1fr] gap-2">
             <Button
-              className={cn("h-14 border-[#e6dfd8] bg-white text-base font-black text-ink-muted shadow-sm", actionButtonMotionClass)}
+              className={cn("h-14 rounded-2xl border-[#e6dfd8] bg-white text-base font-black text-ink-muted shadow-sm", actionButtonMotionClass)}
               disabled={!activeSegment || !isYoutubeReady || assessMutation.isPending || locked}
               onClick={handleRetryAction}
               type="button"
@@ -748,7 +750,7 @@ export default function ShadowingPractice({
               <Mic size={17} /> Thử lại
             </Button>
             <Button
-              className={cn("h-14 bg-coral text-base text-white shadow-lg hover:bg-coral-dark", actionButtonMotionClass)}
+              className={cn("h-14 rounded-2xl bg-coal text-base font-bold text-white shadow-lg hover:bg-coral-dark", actionButtonMotionClass)}
               disabled={!activeSegment || !isYoutubeReady || locked || submitMutation.isPending}
               onClick={handleContinueAction}
               type="button"
@@ -760,7 +762,7 @@ export default function ShadowingPractice({
         ) : (
           <Button
             className={cn(
-              "h-14 w-full bg-coral text-base text-white shadow-lg hover:bg-coral-dark",
+              "h-14 w-full rounded-2xl bg-coal text-base font-bold text-white shadow-lg hover:bg-coral-dark",
               actionButtonMotionClass,
               isRecording && recordingButtonClass,
             )}
@@ -799,7 +801,7 @@ function CurrentTurnCard({
 }) {
   if (!segment) {
     return (
-      <Card className="rounded-2xl border-dashed border-[#e6dfd8] bg-cream-soft shadow-sm">
+      <Card className="rounded-2xl border-dashed border-[#e6dfd8] bg-white shadow-[0_14px_32px_rgba(20,20,19,0.06)]">
         <CardContent className="p-5 text-sm font-bold text-ink-muted">Chưa có transcript để luyện shadowing.</CardContent>
       </Card>
     );
@@ -809,14 +811,14 @@ function CurrentTurnCard({
   const showAttempted = bestScore !== undefined && !isLocked;
 
   return (
-    <Card className="rounded-2xl border-2 border-coral bg-cream-soft shadow-[0_3px_0_#d9e2ec]">
-      <CardContent className="space-y-3 p-4">
+    <Card className="rounded-2xl border border-coral/55 bg-white shadow-[0_18px_42px_rgba(204,120,92,0.12)]">
+      <CardContent className="space-y-4 p-5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-cream px-2 text-xs font-black text-ink-muted">
+            <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-cream-soft px-2 text-xs font-black text-ink-muted">
               {segment.index || currentIndex + 1}
             </span>
-            <span className="text-xs font-black uppercase tracking-wide text-ink-muted">Lượt của bạn</span>
+            <span className="text-xs font-black uppercase tracking-[0.14em] text-ink-muted">Lượt của bạn</span>
           </div>
           <div className="flex items-center gap-2">
             {isLocked ? (
@@ -847,7 +849,7 @@ function CurrentTurnCard({
             <TranslationLine text={segment.translationText} />
           </div>
         ) : (
-          <p className="rounded-xl border border-dashed border-[#e6dfd8] bg-white/55 px-3 py-4 text-center text-sm font-bold text-ink-muted">
+          <p className="rounded-2xl border border-dashed border-[#e6dfd8] bg-cream-soft/70 px-3 py-4 text-center text-sm font-bold text-ink-muted">
             Transcript đang ẩn
           </p>
         )}
@@ -864,8 +866,8 @@ function TranscriptCard({ bestScore, index, isActive, isLocked, isSelectable, it
   return (
     <Card
       className={cn(
-        "rounded-2xl border bg-white shadow-sm transition",
-        isActive ? "border-2 border-coral bg-cream" : "border-[#e6dfd8]",
+        "rounded-2xl border bg-white shadow-sm transition hover:bg-cream-soft/50",
+        isActive ? "border-coral bg-coral/5 shadow-[0_10px_24px_rgba(204,120,92,0.10)]" : "border-[#e6dfd8]",
         !isSelectable && "opacity-60",
       )}
     >
@@ -879,7 +881,7 @@ function TranscriptCard({ bestScore, index, isActive, isLocked, isSelectable, it
         >
           <div className="w-full space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-[#e6dfd8] bg-cream-soft px-2 text-xs font-black text-ink-body">
+              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-[#e6dfd8] bg-cream-soft px-2 text-xs font-black text-ink-body">
                 #{item.index || index + 1}
               </span>
               <div className="flex items-center gap-2">
@@ -915,13 +917,13 @@ function MobileTranscriptFeed({ currentIndex, isTranscriptVisible, maxSelectable
 
         return (
         <Card
-          className={cn("rounded-2xl border border-[#e6dfd8] bg-white shadow-sm", isSelectable ? "opacity-70" : "opacity-45")}
+          className={cn("rounded-2xl border border-[#e6dfd8] bg-white shadow-sm", isSelectable ? "opacity-75" : "opacity-45")}
           key={item._id}
         >
           <CardContent className="space-y-2 p-3">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-cream px-2 text-xs font-black text-ink-muted">
+                <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-cream-soft px-2 text-xs font-black text-ink-muted">
                   {item.index || index + 1}
                 </span>
                 <span className="text-xs font-black uppercase tracking-wide text-[#a3acba]">Tiếp theo</span>

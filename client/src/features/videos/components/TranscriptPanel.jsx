@@ -61,13 +61,13 @@ export default function TranscriptPanel({
   }
 
   return (
-    <aside className="hidden max-h-[calc(100vh-6rem)] min-h-[calc(100vh-6rem)] flex-col rounded-xl border border-[#e6dfd8] bg-canvas p-4 xl:flex">
+    <aside className="hidden min-h-0 flex-col rounded-2xl border border-[#e6dfd8] bg-white p-4 shadow-[0_18px_45px_rgba(20,20,19,0.07)] xl:flex xl:h-full xl:max-h-full">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="eyebrow">Bản chép</h2>
         <div className="flex items-center gap-2">
           {isAdmin ? (
             <button
-              className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#e6dfd8] bg-white px-3 text-xs font-black text-coal shadow-sm"
+              className="inline-flex h-8 items-center gap-1 rounded-xl border border-[#e6dfd8] bg-white px-3 text-xs font-black text-coal shadow-sm transition hover:bg-cream-soft"
               onClick={() => setShowAddTranscriptForm((current) => !current)}
               type="button"
             >
@@ -76,7 +76,7 @@ export default function TranscriptPanel({
           ) : null}
           {isAdmin ? (
             <button
-              className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#e6dfd8] bg-white px-3 text-xs font-black text-coal shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-8 items-center gap-1 rounded-xl border border-[#e6dfd8] bg-white px-3 text-xs font-black text-coal shadow-sm transition hover:bg-cream-soft disabled:cursor-not-allowed disabled:opacity-50"
               disabled={!selectedIds.length || isDeleting}
               onClick={() => deleteSegments(selectedIds)}
               type="button"
@@ -85,7 +85,7 @@ export default function TranscriptPanel({
               Xoá {selectedIds.length || ""}
             </button>
           ) : null}
-          <span className="rounded-full bg-cream px-3 py-1 text-xs font-semibold text-ink-body">{progressPercent}%</span>
+          <span className="rounded-full bg-coal px-3 py-1 text-xs font-semibold text-white">{progressPercent}%</span>
         </div>
       </div>
       {isAdmin ? (
@@ -102,7 +102,7 @@ export default function TranscriptPanel({
           {deleteError ? <p className="text-xs font-bold text-red-600">{deleteError}</p> : null}
         </div>
       ) : null}
-      <div className="mb-4 h-2 overflow-hidden rounded-full bg-cream">
+      <div className="mb-4 h-2 overflow-hidden rounded-full bg-cream-soft">
         <div className="h-full rounded-full bg-coral" style={{ width: `${progressPercent}%` }} />
       </div>
       {isAdmin && showAddTranscriptForm ? (
@@ -114,13 +114,13 @@ export default function TranscriptPanel({
           onSave={onCreate}
         />
       ) : null}
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {segments.length ? (
           segments.map((item, index) => (
             <div
               className={[
-                "rounded-xl border p-4 text-sm transition",
-                index === currentIndex ? "border-coral bg-cream-soft" : "border-[#e6dfd8] bg-canvas hover:bg-cream-soft/60",
+                "rounded-2xl border p-4 text-sm shadow-sm transition",
+                index === currentIndex ? "border-coral bg-coral/5 shadow-[0_10px_24px_rgba(204,120,92,0.10)]" : "border-[#e6dfd8] bg-white hover:bg-cream-soft/60",
               ].join(" ")}
               key={item._id}
             >
@@ -135,7 +135,7 @@ export default function TranscriptPanel({
                     />
                   ) : null}
                   <button
-                    className="rounded-lg border border-[#e6dfd8] bg-cream-soft px-3 py-1 text-sm font-black text-coal"
+                    className="rounded-xl border border-[#e6dfd8] bg-cream-soft px-3 py-1 text-sm font-black text-coal"
                     onClick={() => onSelect(index)}
                     type="button"
                   >

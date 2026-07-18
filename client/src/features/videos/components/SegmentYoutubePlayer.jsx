@@ -24,7 +24,7 @@ function loadYouTubeIframeApi() {
 }
 
 const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
-  { continuous, disableInteraction = false, immersive = false, onEndedChange, onPlayingChange, onReadyChange, onTimeChange, segment, title, youtubeVideoId },
+  { className = "", continuous, disableInteraction = false, fitDesktop = false, immersive = false, onEndedChange, onPlayingChange, onReadyChange, onTimeChange, segment, title, youtubeVideoId },
   ref,
 ) {
   const hostRef = useRef(null);
@@ -198,7 +198,9 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
         immersive
           ? "rounded-none border-0 sm:rounded-xl"
           : "rounded-none border-b-4 border-coral md:rounded-xl md:border-4 md:border-[#181715]",
+        fitDesktop ? "xl:h-full xl:max-h-full" : "",
         disableInteraction ? "[&_iframe]:pointer-events-none" : "",
+        className,
       ].join(" ")}
     >
       <div
@@ -206,6 +208,7 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
           immersive
             ? "aspect-video h-auto w-full max-w-full min-w-0 [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:max-w-full"
             : "h-[210px] w-full max-w-full min-w-0 [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:max-w-full md:aspect-video md:h-auto",
+          fitDesktop ? "xl:h-full xl:aspect-auto" : "",
           disableInteraction ? "[&>iframe]:pointer-events-none" : "",
         ].join(" ")}
         ref={hostRef}
