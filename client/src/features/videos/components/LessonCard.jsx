@@ -1,4 +1,4 @@
-import { ArrowUpRight, CheckCircle2, Clock3, Trash2 } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, CirclePlay, Clock3, Trash2 } from "lucide-react";
 import { Badge } from "../../../components/ui/badge.jsx";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
@@ -73,7 +73,10 @@ export default function LessonCard({
           {video.title}
         </p>
         <div className="mt-auto flex items-center justify-between gap-2 pt-3 text-[10px] font-semibold text-ink-muted sm:text-xs">
-          <span className="rounded-md bg-cream-soft px-2 py-1">{video.level || "A2"}</span>
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-red-100 bg-red-50 px-2 py-1 font-bold text-red-700">
+            <CirclePlay size={13} fill="currentColor" strokeWidth={2.4} />
+            YouTube
+          </span>
           <span className="inline-flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
             Mở bài học <ArrowUpRight size={13} />
           </span>

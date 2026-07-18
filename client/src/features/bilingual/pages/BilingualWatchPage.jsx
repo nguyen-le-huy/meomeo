@@ -123,9 +123,9 @@ export default function BilingualWatchPage() {
   }
 
   return (
-    <section className="h-full overflow-hidden bg-[#f2efe9]">
-      <div className="flex h-full flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_420px] 2xl:grid-cols-[minmax(0,1fr)_460px]">
-        <div className="flex min-h-0 flex-col bg-[#161513]">
+    <section className="h-full w-full min-w-0 max-w-full overflow-hidden bg-[#f2efe9]">
+      <div className="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden lg:grid lg:grid-cols-[minmax(0,1fr)_420px] 2xl:grid-cols-[minmax(0,1fr)_460px]">
+        <div className="flex min-h-0 min-w-0 shrink-0 flex-col overflow-hidden bg-[#161513] lg:shrink">
           <div className="z-10 flex h-14 shrink-0 items-center justify-between border-b border-white/10 bg-[#1b1a18] px-3 sm:h-16 sm:px-5">
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <Button
@@ -152,9 +152,9 @@ export default function BilingualWatchPage() {
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-1 items-center justify-center bg-[#11110f] lg:p-5 2xl:p-7">
+          <div className="flex min-h-0 min-w-0 flex-none items-center justify-center overflow-hidden bg-[#11110f] lg:flex-1 lg:p-5 lg:[container-type:size] 2xl:p-7">
             <div
-              className="relative w-full max-w-[min(100%,calc((100dvh-11rem)*16/9))] overflow-hidden bg-black shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:rounded-xl"
+              className="relative w-full max-w-full shrink-0 overflow-hidden bg-black shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:rounded-xl lg:w-[min(100cqw,calc(100cqh*16/9))]"
               ref={playerContainerRef}
             >
               <SegmentYoutubePlayer
@@ -193,7 +193,7 @@ export default function BilingualWatchPage() {
               ) : null}
 
               {isPlaying && activeSegment ? (
-                <div className="pointer-events-none absolute bottom-3 left-1/2 w-[92%] max-w-3xl -translate-x-1/2 space-y-0.5 rounded-lg bg-black/75 px-3 py-2 text-center backdrop-blur-sm sm:bottom-5 sm:space-y-1 sm:px-5 sm:py-3">
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 w-full space-y-0.5 border-t border-white/10 bg-black/75 px-3 py-2 text-center backdrop-blur-sm sm:space-y-1 sm:px-5 sm:py-3">
                   <p className="text-xs font-medium leading-snug text-[#f6d85c] [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] sm:text-xl">
                     {activeSegment.text}
                   </p>
@@ -246,7 +246,7 @@ export default function BilingualWatchPage() {
           ) : null}
         </div>
 
-        <aside className="hidden min-h-0 border-l border-black/10 bg-canvas lg:flex lg:flex-col">
+        <aside className="hidden min-h-0 min-w-0 max-w-full border-l border-black/10 bg-canvas lg:flex lg:flex-col">
           <div className="flex h-20 shrink-0 items-center justify-between border-b border-[#e6dfd8] px-5 2xl:px-6">
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-cream text-coral">
@@ -273,7 +273,7 @@ export default function BilingualWatchPage() {
           </div>
         </aside>
 
-        <div className="flex min-h-0 flex-1 flex-col bg-canvas lg:hidden">
+        <div className="flex min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-hidden bg-canvas lg:hidden">
           <div className="flex h-14 shrink-0 items-center justify-between border-b border-[#e6dfd8] px-4">
             <div className="flex items-center gap-2.5">
               <Captions className="h-4 w-4 text-coral" />
