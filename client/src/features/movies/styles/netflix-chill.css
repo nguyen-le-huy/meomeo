@@ -62,7 +62,13 @@ html.movie-player-lock-scroll #root {
 }
 
 .movie-subtitle-overlay {
-  bottom: calc(3rem + env(safe-area-inset-bottom));
+  bottom: 2.75rem;
+}
+
+.movie-player-surface:fullscreen .movie-subtitle-overlay,
+.movie-player-surface:-webkit-full-screen .movie-subtitle-overlay,
+.movie-player-surface.movie-player-pseudo-fullscreen .movie-subtitle-overlay {
+  bottom: calc(3.25rem + env(safe-area-inset-bottom));
 }
 
 .movie-transcript-scroll {
@@ -103,7 +109,13 @@ html.movie-player-lock-scroll #root {
   }
 
   .movie-subtitle-overlay {
-    bottom: calc(4rem + env(safe-area-inset-bottom));
+    bottom: 3.5rem;
+  }
+
+  .movie-player-surface:fullscreen .movie-subtitle-overlay,
+  .movie-player-surface:-webkit-full-screen .movie-subtitle-overlay,
+  .movie-player-surface.movie-player-pseudo-fullscreen .movie-subtitle-overlay {
+    bottom: calc(4.75rem + env(safe-area-inset-bottom));
   }
 
 }
@@ -135,7 +147,7 @@ html.movie-player-lock-scroll #root {
   }
 
   .movie-subtitle-overlay {
-    bottom: calc(2.75rem + env(safe-area-inset-bottom));
+    bottom: calc(3.5rem + env(safe-area-inset-bottom));
     padding-left: max(1rem, env(safe-area-inset-left));
     padding-right: max(1rem, env(safe-area-inset-right));
   }

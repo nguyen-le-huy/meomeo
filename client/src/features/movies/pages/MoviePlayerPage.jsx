@@ -167,6 +167,18 @@ export default function MoviePlayerPage() {
     if (mockMovie) setIsPlaying((value) => !value);
   }
 
+  const togglePlayback = useCallback(() => {
+    if (mockMovie) {
+      setIsPlaying((value) => !value);
+      return;
+    }
+    if (isPlaying) {
+      playerRef.current?.pause();
+    } else {
+      playerRef.current?.play();
+    }
+  }, [isPlaying, mockMovie]);
+
   function seek(seconds) {
     setCurrentTime(seconds);
     if (mockMovie) {
@@ -264,13 +276,13 @@ export default function MoviePlayerPage() {
           </>
         )}
 
-        <div aria-hidden="true" className="absolute inset-x-0 top-0 z-[19] h-24" onPointerEnter={revealPlayerChrome} onPointerMove={revealPlayerChrome} />
+        <div aria-hidden="true" className="absolute inset-x-0 bottom-14 top-0 z-[19] cursor-pointer" onClick={togglePlayback} onPointerEnter={revealPlayerChrome} onPointerMove={revealPlayerChrome} />
         <div className={`pointer-events-none absolute inset-x-0 top-0 z-10 h-28 bg-gradient-to-b from-black/80 to-transparent transition-opacity duration-300 ${showPlayerChrome ? "opacity-100" : "opacity-0"}`} />
-        <div className={`movie-player-top-controls absolute z-20 flex items-center gap-2 transition duration-300 ${playerChromeClass}`}>
-          <button aria-label="Quay lại thư viện phim" className="grid h-11 w-11 place-items-center rounded-full bg-black/65 backdrop-blur" onClick={goBack} type="button"><ArrowLeft size={24} /></button>
-          <div className="hidden rounded-md bg-black/65 p-1 backdrop-blur sm:flex">
+        <div className={`movie-player-top-controls absolute z-20 flex items-center gap-3 transition duration-300 ${playerChromeClass}`}>
+          <button aria-label="Quay lại thư viện phim" className="grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white/90 backdrop-blur transition hover:bg-black/70 hover:text-white" onClick={goBack} type="button"><ArrowLeft size={22} /></button>
+          <div className="hidden rounded-full bg-black/50 p-1 backdrop-blur sm:flex">
             {subtitleModes.map((mode) => (
-              <button className={`h-8 px-3 text-xs font-semibold ${subtitleMode === mode.id ? "rounded bg-white text-black" : "text-white/70"}`} key={mode.id} onClick={() => setSubtitleMode(mode.id)} type="button">{mode.label}</button>
+              <button className={`h-8 rounded-full px-4 text-[13px] font-medium transition ${subtitleMode === mode.id ? "bg-white text-black shadow-sm" : "text-white/70 hover:text-white"}`} key={mode.id} onClick={() => setSubtitleMode(mode.id)} type="button">{mode.label}</button>
             ))}
           </div>
         </div>
@@ -308,14 +320,14 @@ export default function MoviePlayerPage() {
 
         {activeSegment && subtitleMode !== "off" ? (
           <div className="movie-subtitle-overlay pointer-events-none absolute inset-x-0 z-20 px-5 text-center sm:px-10">
-            <div className="movie-subtitle-panel mx-auto flex max-w-4xl flex-col items-center gap-3">
+            <div className="movie-subtitle-panel mx-auto flex max-w-4xl flex-col items-center gap-1 sm:gap-2">
               {subtitleMode !== "vietnamese" ? (
-                <p className="movie-subtitle-line text-lg font-normal leading-snug text-white sm:text-3xl">
+                <p className="movie-subtitle-line text-[15px] font-normal leading-snug text-white sm:text-3xl">
                   <span className="movie-subtitle-caption">{activeSegment.text}</span>
                 </p>
               ) : null}
               {subtitleMode !== "english" && activeSegment.translationText ? (
-                <p className="movie-subtitle-line text-lg font-normal leading-snug text-[#ffd86b] sm:text-3xl">
+                <p className="movie-subtitle-line text-[15px] font-normal leading-snug text-[#ffd86b] sm:text-3xl">
                   <span className="movie-subtitle-caption movie-subtitle-caption-secondary">{activeSegment.translationText}</span>
                 </p>
               ) : null}
@@ -352,12 +364,12 @@ export default function MoviePlayerPage() {
             translationCount={segments.filter((segment) => segment.translationText?.trim()).length}
           />
         ) : null}
-        <div className="movie-player-mobile-modes grid grid-cols-4 gap-1 border-b border-white/10 p-2 lg:hidden">
+        <div className="movie-player-mobile-modes mx-4 my-3 flex rounded-lg bg-white/5 p-1 lg:hidden">
           {subtitleModes.map((mode) => (
-            <button className={`h-11 min-w-0 rounded text-[11px] font-medium sm:text-xs ${subtitleMode === mode.id ? "bg-white text-black" : "bg-white/5 text-white/65"}`} key={mode.id} onClick={() => setSubtitleMode(mode.id)} type="button">{mode.label}</button>
+            <button className={`flex-1 rounded-md py-1.5 text-xs font-medium transition ${subtitleMode === mode.id ? "bg-white/15 text-white shadow-sm" : "text-white/40"}`} key={mode.id} onClick={() => setSubtitleMode(mode.id)} type="button">{mode.label}</button>
           ))}
         </div>
-        <div className="movie-transcript-scroll min-h-0 flex-1 overflow-y-auto p-2" ref={transcriptScrollRef}>
+        <div className="movie-transcript-scroll min-h-0 flex-1 overflow-y-auto px-4 pb-4" ref={transcriptScrollRef}>
           {segments.length ? (
             <div className="relative w-full" style={{ height: `${transcriptVirtualizer.getTotalSize()}px` }}>
               {transcriptVirtualizer.getVirtualItems().map((virtualRow) => {
