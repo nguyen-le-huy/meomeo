@@ -149,11 +149,24 @@ export default function MoviePlayerPage() {
     if (activeSegmentIndex >= 0) transcriptVirtualizer.scrollToIndex(activeSegmentIndex, { align: "auto" });
   }, [activeSegmentIndex, transcriptVirtualizer]);
 
+  const lastSavedTimeRef = useRef(0);
   const handleTimeUpdate = useCallback((seconds, totalDuration) => {
     setCurrentTime(seconds);
     setDuration(totalDuration);
-  }, []);
-  const handleReady = useCallback(() => setPlayerError(""), []);
+    if (Math.abs(seconds - lastSavedTimeRef.current) >= 5) {
+      localStorage.setItem(`meomeo_progress_${movieId}`, seconds);
+      lastSavedTimeRef.current = seconds;
+    }
+  }, [movieId]);
+
+  const handleReady = useCallback(() => {
+    setPlayerError("");
+    const savedTime = localStorage.getItem(`meomeo_progress_${movieId}`);
+    if (savedTime && Number(savedTime) > 0) {
+      // Small delay to ensure player is fully initialized before seeking
+      setTimeout(() => playerRef.current?.seek(Number(savedTime)), 200);
+    }
+  }, [movieId]);
   const handlePlay = useCallback(() => setIsPlaying(true), []);
   const handlePause = useCallback(() => setIsPlaying(false), []);
   const handleEnded = useCallback(() => setIsPlaying(false), []);

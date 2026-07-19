@@ -36,12 +36,13 @@ app.use(
 
 app.use(
   express.json({
+    limit: "50mb",
     verify(req, res, buffer) {
       req.rawBody = Buffer.from(buffer);
     },
   }),
 );
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 app.get("/api/health", (req, res) => {
   return successResponse(res, "Success", { service: "meomeo-api", status: "ok" });
