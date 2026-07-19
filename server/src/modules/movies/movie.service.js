@@ -20,6 +20,7 @@ import { createTranscriptSegments } from "../videos/video.service.js";
 import { createHttpError } from "../../utils/createHttpError.js";
 import { cloudinary } from "../../config/cloudinary.js";
 import { parseSubtitle } from "./subtitleParser.js";
+import { parsePlainTextVi } from "./plainTextViParser.js";
 
 const MOVIE_FILTER = { source: "bunny", contentType: "movie", deletedAt: { $exists: false } };
 
@@ -392,6 +393,62 @@ export async function importVietnameseSubtitle(id, content, dryRun) {
   movie.bilingualError = "";
   await movie.save();
   return { ...preview, savedCount: matches.length };
+}
+
+export async function importVietnamesePlainText(id, content, dryRun) {
+  const movie = await getMovieDocument(id, { admin: true });
+  const parsed = parsePlainTextVi(content);
+
+  if (parsed.errors.length) {
+    throw createHttpError(422, parsed.errors[0].message);
+  }
+
+  const englishSegments = await TranscriptSegment.find({ videoId: movie._id }).sort({ index: 1 });
+  if (!englishSegments.length) {
+    throw createHttpError(409, "Import English subtitles before Vietnamese subtitles");
+  }
+
+  const { translations } = parsed;
+
+  if (translations.length > englishSegments.length) {
+    throw createHttpError(
+      422,
+      `File có ${translations.length} dòng nhưng phim chỉ có ${englishSegments.length} câu EN. Hãy kiểm tra lại.`,
+    );
+  }
+
+  const nonEmptyCount = translations.filter(Boolean).length;
+  const preview = {
+    totalLines: translations.length,
+    nonEmptyLines: nonEmptyCount,
+    segmentCount: englishSegments.length,
+    warnings: parsed.warnings,
+  };
+
+  if (dryRun) return preview;
+
+  // Update each segment that has a non-null translation
+  await Promise.all(
+    translations.map((text, i) => {
+      const segment = englishSegments[i];
+      if (!segment || text === null) return null;
+      segment.translationText = text;
+      segment.translationStatus = "edited";
+      segment.translatedAt = new Date();
+      return segment.save();
+    }).filter(Boolean),
+  );
+
+  const updatedCount = translations.length - translations.filter((t) => t === null).length;
+  const totalTranslated = await TranscriptSegment.countDocuments({
+    videoId: movie._id,
+    translationText: { $ne: "" },
+  });
+  movie.bilingualStatus = totalTranslated >= englishSegments.length ? "completed" : "pending";
+  movie.bilingualError = "";
+  await movie.save();
+
+  return { ...preview, savedCount: updatedCount };
 }
 
 export async function generateMovieVietsub(id, options = {}) {

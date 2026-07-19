@@ -93,6 +93,20 @@ export default function MoviePlayerPage() {
     return () => window.clearTimeout(playerChromeTimeoutRef.current);
   }, [revealPlayerChrome]);
 
+  // Force black background on html/body while in player to avoid white letterbox
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtml = html.style.background;
+    const prevBody = body.style.background;
+    html.style.background = "#000";
+    body.style.background = "#000";
+    return () => {
+      html.style.background = prevHtml;
+      body.style.background = prevBody;
+    };
+  }, []);
+
   useEffect(() => {
     function handleFullscreenChange() {
       const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
@@ -294,14 +308,14 @@ export default function MoviePlayerPage() {
 
         {activeSegment && subtitleMode !== "off" ? (
           <div className="movie-subtitle-overlay pointer-events-none absolute inset-x-0 z-20 px-5 text-center sm:px-10">
-            <div className="movie-subtitle-panel mx-auto max-w-4xl">
+            <div className="movie-subtitle-panel mx-auto flex max-w-4xl flex-col items-center gap-3">
               {subtitleMode !== "vietnamese" ? (
-                <p className="movie-subtitle-line text-lg font-normal leading-[1.4] text-white sm:text-3xl">
+                <p className="movie-subtitle-line text-lg font-normal leading-snug text-white sm:text-3xl">
                   <span className="movie-subtitle-caption">{activeSegment.text}</span>
                 </p>
               ) : null}
               {subtitleMode !== "english" && activeSegment.translationText ? (
-                <p className="movie-subtitle-line mt-1.5 text-lg font-normal leading-[1.4] text-[#ffd86b] sm:text-3xl">
+                <p className="movie-subtitle-line text-lg font-normal leading-snug text-[#ffd86b] sm:text-3xl">
                   <span className="movie-subtitle-caption movie-subtitle-caption-secondary">{activeSegment.translationText}</span>
                 </p>
               ) : null}
@@ -334,6 +348,7 @@ export default function MoviePlayerPage() {
             movie={detailQuery.data.movie}
             mutations={movieMutations}
             segmentCount={segments.length}
+            segments={segments}
             translationCount={segments.filter((segment) => segment.translationText?.trim()).length}
           />
         ) : null}

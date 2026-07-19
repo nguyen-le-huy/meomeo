@@ -7,6 +7,7 @@ import {
   getMovieLibrary,
   getMoviePlayback,
   importMovieSubtitle,
+  importViPlainText,
   markUploadCompleted,
   publishMovie,
   setMovieHero,
@@ -64,6 +65,10 @@ export function useMovieAdminMutations() {
     }),
     generateVietsub: useMutation({
       mutationFn: ({ id, force }) => generateMovieVietsub(id, { force }),
+      onSuccess: invalidate,
+    }),
+    importViText: useMutation({
+      mutationFn: ({ id, content, dryRun }) => importViPlainText(id, content, dryRun),
       onSuccess: invalidate,
     }),
   };

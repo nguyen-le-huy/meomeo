@@ -68,3 +68,7 @@ export function importMovieSubtitle(id, language, file, dryRun = true) {
 export function generateMovieVietsub(id, options = {}) {
   return apiClient.post(`/movies/${id}/subtitles/vi/generate`, options);
 }
+
+export function importViPlainText(id, content, dryRun = true) {
+  return apiClient.post(`/movies/${id}/subtitles/vi/import-text`, { content }, { params: { dryRun } });
+}

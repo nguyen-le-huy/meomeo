@@ -65,3 +65,10 @@ export const generateMovieVietsubSchema = z.object({
     targetLanguage: z.string().trim().max(12).optional(),
   }).strict(),
 });
+
+export const viPlainTextImportSchema = z.object({
+  params: movieIdParamSchema.shape.params,
+  query: z.object({ dryRun: z.preprocess(optionalBoolean, z.boolean().default(true)) }),
+  body: z.object({ content: z.string().min(1, "content is required") }),
+});
+

@@ -8,6 +8,7 @@ import {
   getMoviePublishEligibility,
   getMovieUploadCredentials,
   importEnglishSubtitle,
+  importVietnamesePlainText,
   importVietnameseSubtitle,
   markMovieUploadCompleted,
   publishMovie,
@@ -103,6 +104,14 @@ export const importEnglishSubtitleController = asyncHandler(async (req, res) => 
 export const importVietnameseSubtitleController = asyncHandler(async (req, res) => {
   const data = await importVietnameseSubtitle(req.validated.params.id, getSubtitleContent(req), req.validated.query.dryRun);
   return successResponse(res, req.validated.query.dryRun ? "Subtitle preview created" : "Vietnamese subtitles imported", data);
+});
+
+export const importViPlainTextController = asyncHandler(async (req, res) => {
+  const content = req.body?.content;
+  if (!content?.trim()) throw createHttpError(400, "content is required");
+  const dryRun = req.validated.query.dryRun;
+  const data = await importVietnamesePlainText(req.validated.params.id, content, dryRun);
+  return successResponse(res, dryRun ? "Plain-text VI preview created" : "Vietnamese plain-text imported", data);
 });
 
 export const generateMovieVietsubController = asyncHandler(async (req, res) => {

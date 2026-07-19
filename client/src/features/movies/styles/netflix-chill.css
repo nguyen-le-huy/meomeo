@@ -77,21 +77,18 @@ html.movie-player-lock-scroll #root {
 
 .movie-subtitle-line {
   overflow-wrap: anywhere;
-  text-shadow:
-    0 1px 2px rgb(0 0 0 / 100%),
-    0 2px 7px rgb(0 0 0 / 90%);
 }
 
 .movie-subtitle-caption {
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
-  background: rgb(0 0 0 / 72%);
+  background: rgb(0 0 0 / 100%);
   border-radius: 3px;
   padding: 0.14em 0.42em 0.18em;
 }
 
 .movie-subtitle-caption-secondary {
-  background: rgb(0 0 0 / 62%);
+  background: rgb(0 0 0 / 100%);
 }
 
 @media (min-width: 640px) {

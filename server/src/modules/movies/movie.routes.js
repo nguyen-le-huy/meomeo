@@ -12,6 +12,7 @@ import {
   getUploadCredentialsController,
   importEnglishSubtitleController,
   importVietnameseSubtitleController,
+  importViPlainTextController,
   markUploadCompletedController,
   publishMovieController,
   reportUploadProgressController,
@@ -27,6 +28,7 @@ import {
   subtitleImportSchema,
   uploadProgressSchema,
   updateMovieSchema,
+  viPlainTextImportSchema,
 } from "./movie.validation.js";
 import { optionalAuth, requireAuth } from "../../middlewares/auth.middleware.js";
 import { requireRole } from "../../middlewares/role.middleware.js";
@@ -100,6 +102,12 @@ router.post(
   subtitleUpload.single("file"),
   validate(subtitleImportSchema),
   importVietnameseSubtitleController,
+);
+router.post(
+  "/:id/subtitles/vi/import-text",
+  ...adminOnly,
+  validate(viPlainTextImportSchema),
+  importViPlainTextController,
 );
 router.post(
   "/:id/subtitles/vi/generate",

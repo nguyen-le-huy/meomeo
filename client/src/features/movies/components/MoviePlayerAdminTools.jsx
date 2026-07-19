@@ -1,9 +1,11 @@
-import { Captions, Languages, LoaderCircle, RefreshCw, Send, Sparkles } from "lucide-react";
+import { Captions, Languages, LoaderCircle, RefreshCw, Send, Sparkles, Type } from "lucide-react";
 import { useState } from "react";
+import ImportViTextDialog from "./ImportViTextDialog.jsx";
 
-export default function MoviePlayerAdminTools({ eligibility, movie, mutations, segmentCount, translationCount }) {
+export default function MoviePlayerAdminTools({ eligibility, movie, mutations, segmentCount, segments, translationCount }) {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showViTextDialog, setShowViTextDialog] = useState(false);
 
   async function importSubtitle(language, file) {
     if (!file) return;
@@ -57,12 +59,28 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
     }
   }
 
+  function handleViTextClose(result) {
+    setShowViTextDialog(false);
+    if (result) {
+      setMessage(`Đã lưu ${result.savedCount} câu dịch tiếng Việt.`);
+    }
+  }
+
   return (
     <div className="shrink-0 border-b border-white/10 bg-[#171717] p-2.5 sm:p-3">
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <button className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium disabled:opacity-40 sm:h-9 sm:w-auto sm:px-3 sm:text-xs" disabled={busy} onClick={syncBunny} type="button"><RefreshCw className={busy ? "animate-spin" : ""} size={14} /> Đồng bộ</button>
         <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium sm:h-9 sm:w-auto sm:px-3 sm:text-xs"><Captions size={14} /> Import EN<input accept=".srt,.vtt" className="sr-only" disabled={busy} onChange={(event) => importSubtitle("en", event.target.files?.[0])} type="file" /></label>
-        <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium sm:h-9 sm:w-auto sm:px-3 sm:text-xs"><Languages size={14} /> Import VI<input accept=".srt,.vtt" className="sr-only" disabled={busy} onChange={(event) => importSubtitle("vi", event.target.files?.[0])} type="file" /></label>
+        <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium sm:h-9 sm:w-auto sm:px-3 sm:text-xs"><Languages size={14} /> Import VI (.srt)<input accept=".srt,.vtt" className="sr-only" disabled={busy} onChange={(event) => importSubtitle("vi", event.target.files?.[0])} type="file" /></label>
+        <button
+          className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded border border-[#e06f50]/40 bg-[#e06f50]/10 px-2 text-[11px] font-medium text-[#f3a38d] disabled:opacity-40 sm:h-9 sm:w-auto sm:px-3 sm:text-xs"
+          disabled={busy || !segmentCount}
+          onClick={() => setShowViTextDialog(true)}
+          title="Import bản dịch tiếng Việt dạng văn bản thuần theo thứ tự câu"
+          type="button"
+        >
+          <Type size={14} /> Import VI văn bản
+        </button>
         <button
           className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded border border-[#e06f50]/55 bg-[#e06f50]/10 px-2 text-[11px] font-semibold text-[#f3a38d] disabled:opacity-40 sm:h-9 sm:w-auto sm:px-3 sm:text-xs"
           disabled={busy || segmentCount < 1}
@@ -84,6 +102,15 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
       </div>
       {!movie.isPublished && eligibility?.reasons?.length ? <p className="mt-2 text-xs text-amber-300/75">{eligibility.reasons.map((reason) => reason.message).join(" · ")}</p> : null}
       {message ? <p className="mt-2 text-xs text-white/55">{message}</p> : null}
+
+      {showViTextDialog && (
+        <ImportViTextDialog
+          movie={movie}
+          mutation={mutations.importViText}
+          onClose={handleViTextClose}
+          segments={segments}
+        />
+      )}
     </div>
   );
 }
