@@ -146,8 +146,11 @@ html.movie-player-lock-scroll #root {
     display: none !important;
   }
 
-  .movie-subtitle-overlay {
-    bottom: 0.75rem;
+  .movie-subtitle-overlay,
+  .movie-player-surface:fullscreen .movie-subtitle-overlay,
+  .movie-player-surface:-webkit-full-screen .movie-subtitle-overlay,
+  .movie-player-surface.movie-player-pseudo-fullscreen .movie-subtitle-overlay {
+    bottom: 0.75rem !important;
     padding-left: max(1rem, env(safe-area-inset-left));
     padding-right: max(1rem, env(safe-area-inset-right));
   }
