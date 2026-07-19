@@ -40,6 +40,13 @@ const BunnyStreamPlayer = forwardRef(function BunnyStreamPlayer(
     seek(seconds) {
       playerRef.current?.setCurrentTime(Number(seconds) || 0);
     },
+    togglePlay() {
+      if (!playerRef.current) return;
+      playerRef.current.getPaused?.((paused) => {
+        if (paused) playerRef.current.play();
+        else playerRef.current.pause();
+      });
+    }
   }));
 
   useEffect(() => {

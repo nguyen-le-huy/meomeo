@@ -172,12 +172,8 @@ export default function MoviePlayerPage() {
       setIsPlaying((value) => !value);
       return;
     }
-    if (isPlaying) {
-      playerRef.current?.pause();
-    } else {
-      playerRef.current?.play();
-    }
-  }, [isPlaying, mockMovie]);
+    playerRef.current?.togglePlay?.();
+  }, [mockMovie]);
 
   function seek(seconds) {
     setCurrentTime(seconds);
@@ -320,7 +316,7 @@ export default function MoviePlayerPage() {
 
         {activeSegment && subtitleMode !== "off" ? (
           <div className="movie-subtitle-overlay pointer-events-none absolute inset-x-0 z-20 px-5 text-center sm:px-10">
-            <div className="movie-subtitle-panel mx-auto flex max-w-4xl flex-col items-center gap-1 sm:gap-2">
+            <div className="movie-subtitle-panel mx-auto flex max-w-4xl flex-col items-center gap-0 sm:gap-2">
               {subtitleMode !== "vietnamese" ? (
                 <p className="movie-subtitle-line text-[15px] font-normal leading-snug text-white sm:text-3xl">
                   <span className="movie-subtitle-caption">{activeSegment.text}</span>
