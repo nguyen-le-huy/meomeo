@@ -21,9 +21,14 @@
 
 html.movie-player-lock-scroll,
 html.movie-player-lock-scroll body {
+  background: #000;
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
+}
+
+html.movie-player-lock-scroll #root {
+  background: #000;
 }
 
 .movie-player-surface:fullscreen,
@@ -107,9 +112,20 @@ html.movie-player-lock-scroll body {
 }
 
 @media (orientation: landscape) and (max-width: 1023px) and (max-height: 600px) {
+  html,
+  body,
+  #root,
+  .movie-player-shell {
+    background: #000 !important;
+  }
+
   .movie-player-shell {
     grid-template-columns: minmax(0, 1fr) minmax(300px, 38vw);
     grid-template-rows: minmax(0, 1fr);
+  }
+
+  .movie-player-surface {
+    background: #000 !important;
   }
 
   .movie-player-sidebar {
@@ -119,6 +135,29 @@ html.movie-player-lock-scroll body {
 
   .movie-player-mobile-modes {
     display: none !important;
+  }
+
+  .movie-subtitle-overlay {
+    bottom: calc(2.75rem + env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .movie-subtitle-panel {
+    max-width: min(76vw, 44rem);
+  }
+
+  .movie-subtitle-line {
+    font-size: clamp(1.05rem, 4.2vh, 1.45rem) !important;
+    line-height: 1.32 !important;
+  }
+
+  .movie-subtitle-line + .movie-subtitle-line {
+    margin-top: 0.32rem;
+  }
+
+  .movie-subtitle-caption {
+    padding: 0.12em 0.34em 0.16em;
   }
 }
 
