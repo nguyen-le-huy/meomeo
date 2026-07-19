@@ -6,7 +6,7 @@ const videoLessonSchema = new mongoose.Schema(
     youtubeUrl: {
       type: String,
       trim: true,
-      default: "",
+      default: null,
       required() {
         return this.source === "youtube";
       },
@@ -14,7 +14,7 @@ const videoLessonSchema = new mongoose.Schema(
     youtubeVideoId: {
       type: String,
       trim: true,
-      default: "",
+      default: null,
       required() {
         return this.source === "youtube";
       },
