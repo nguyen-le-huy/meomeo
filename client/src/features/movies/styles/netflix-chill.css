@@ -68,7 +68,7 @@ html.movie-player-lock-scroll #root {
 .movie-player-surface:fullscreen .movie-subtitle-overlay,
 .movie-player-surface:-webkit-full-screen .movie-subtitle-overlay,
 .movie-player-surface.movie-player-pseudo-fullscreen .movie-subtitle-overlay {
-  bottom: calc(3.25rem + env(safe-area-inset-bottom));
+  bottom: calc(1.5rem + env(safe-area-inset-bottom));
 }
 
 .movie-transcript-scroll {
@@ -147,7 +147,7 @@ html.movie-player-lock-scroll #root {
   }
 
   .movie-subtitle-overlay {
-    bottom: calc(3.5rem + env(safe-area-inset-bottom));
+    bottom: calc(1.5rem + env(safe-area-inset-bottom));
     padding-left: max(1rem, env(safe-area-inset-left));
     padding-right: max(1rem, env(safe-area-inset-right));
   }
@@ -162,7 +162,7 @@ html.movie-player-lock-scroll #root {
   }
 
   .movie-subtitle-line + .movie-subtitle-line {
-    margin-top: 0.32rem;
+    margin-top: 0;
   }
 
   .movie-subtitle-caption {
