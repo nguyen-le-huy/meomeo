@@ -5,15 +5,16 @@ import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import LearningModeDialog from "../../videos/components/LearningModeDialog.jsx";
+import LessonCard from "../../videos/components/LessonCard.jsx";
 import TopicCategoryChips, { allTopicsValue } from "../../videos/components/TopicCategoryChips.jsx";
-import TopicVideoSection from "../../videos/components/TopicVideoSection.jsx";
 import VideoLibraryAdminActions from "../../videos/components/VideoLibraryAdminActions.jsx";
 import VideoLibraryEmptyState from "../../videos/components/VideoLibraryEmptyState.jsx";
 import VideoLibraryErrorState from "../../videos/components/VideoLibraryErrorState.jsx";
 import {
   heroCatUrl,
-  homeTopicDesktopVideoLimit,
-  homeTopicMobileVideoLimit,
+  homeInitialDesktopVideoLimit,
+  homeInitialMobileVideoLimit,
+  homeVideoLoadBatchSize,
   practiceCatUrl,
 } from "../../videos/constants/videoLibrary.constants.js";
 import {
@@ -41,6 +42,15 @@ const lessonCategories = [
     className: "border-[#f4c7b0] bg-[#fff4ed] text-[#35231c]",
     badgeClassName: "bg-[#ffe1d2] text-[#a84420]",
     layerClassName: "bg-[#f2a17d]",
+  },
+  {
+    title: "Netflix Chill",
+    description: "Luyện nghe với phim và series",
+    to: "/netflix",
+    gifUrl: "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExMTVpMG5zbnpyaWYzeDd1dTFuZWVmMDJzYzR3aWtjM2t5YXhoMXBmOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/YqhFT4yCuUO51FazQz/giphy.gif",
+    className: "border-[#d7c2c2] bg-[#fff1f1] text-[#341717]",
+    badgeClassName: "bg-[#ffdada] text-[#a51f1f]",
+    layerClassName: "bg-[#e50914]",
   },
   {
     title: "Từ vựng mỗi ngày",
@@ -104,8 +114,8 @@ export default function HomePage() {
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
   const [greeting, setGreeting] = useState(() => getGreeting());
-  const [selectedTopicId, setSelectedTopicId] = useState(allTopicsValue);
   const [modePickerVideo, setModePickerVideo] = useState(null);
+  const [selectedTopicId, setSelectedTopicId] = useState(allTopicsValue);
   const isDesktopTopicGrid = useIsDesktopTopicGrid();
   const {
     data: videos = [],
@@ -130,20 +140,50 @@ export default function HomePage() {
     () => buildTopicSections({ isAdmin, topics: visibleTopics, videos }),
     [isAdmin, visibleTopics, videos],
   );
-  const selectedTopicSections = useMemo(() => {
+  const categoryTopics = useMemo(() => {
+    const videoCountByTopicId = new Map(
+      topicSections
+        .filter((section) => section.topic?._id)
+        .map((section) => [section.topic._id, section.videos.length]),
+    );
+    const topicsWithCounts = visibleTopics.map((topic) => ({
+      ...topic,
+      videoCount: videoCountByTopicId.get(topic._id) || 0,
+    }));
+
+    if (isAdmin) return topicsWithCounts;
+
+    return topicsWithCounts.filter((topic) => topic.videoCount > 0);
+  }, [isAdmin, topicSections, visibleTopics]);
+  const filteredTopicSections = useMemo(() => {
     if (selectedTopicId === allTopicsValue) return topicSections;
     return topicSections.filter((section) => section.topic?._id === selectedTopicId);
   }, [selectedTopicId, topicSections]);
+  const initialVideoLimit = isDesktopTopicGrid ? homeInitialDesktopVideoLimit : homeInitialMobileVideoLimit;
   const {
     hasMoreSections,
     loadMoreRef,
     visibleSections: visibleTopicSections,
-  } = useLazyTopicSections(selectedTopicSections);
+  } = useLazyTopicSections(filteredTopicSections, {
+    batchSize: homeVideoLoadBatchSize,
+    initialCount: initialVideoLimit,
+  });
   const shadowingSessionByVideoId = useMemo(
     () => new Map(myShadowingSessions.map((session) => [String(session.videoId), session])),
     [myShadowingSessions],
   );
-  const homeTopicVideoLimit = isDesktopTopicGrid ? homeTopicDesktopVideoLimit : homeTopicMobileVideoLimit;
+  const visibleVideoItems = useMemo(
+    () =>
+      visibleTopicSections.flatMap((section) => {
+        const newestVideoIds = getNewestVideoIds(section.videos);
+
+        return section.videos.map((video) => ({
+          isNew: newestVideoIds.has(video._id),
+          video,
+        }));
+      }),
+    [visibleTopicSections],
+  );
 
   useEffect(() => {
     const intervalId = window.setInterval(() => setGreeting(getGreeting()), 60_000);
@@ -152,10 +192,10 @@ export default function HomePage() {
 
   useEffect(() => {
     if (selectedTopicId === allTopicsValue) return;
-    if (!visibleTopics.some((topic) => topic._id === selectedTopicId)) {
+    if (!categoryTopics.some((topic) => topic._id === selectedTopicId)) {
       setSelectedTopicId(allTopicsValue);
     }
-  }, [selectedTopicId, visibleTopics]);
+  }, [categoryTopics, selectedTopicId]);
 
   function startLearning(mode) {
     if (!modePickerVideo?._id) return;
@@ -199,7 +239,7 @@ export default function HomePage() {
           <div className="mb-5">
             <h2 className="mt-2 font-display text-2xl font-normal tracking-tight sm:text-3xl">Chọn loại bài học</h2>
           </div>
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-5">
             {lessonCategories.map((category) => {
               return (
                 <button
@@ -241,7 +281,7 @@ export default function HomePage() {
         <TopicCategoryChips
           onSelectTopic={setSelectedTopicId}
           selectedTopicId={selectedTopicId}
-          topics={visibleTopics}
+          topics={categoryTopics}
         />
 
         {isLoading || isTopicsLoading ? <LoadingState label="Đang tải thư viện..." /> : null}
@@ -252,33 +292,26 @@ export default function HomePage() {
 
         {!isLoading && !isVideosError && videos.length === 0 ? <VideoLibraryEmptyState /> : null}
 
-        {visibleTopicSections.length > 0 ? (
-          <div className="space-y-8">
-            {visibleTopicSections.map((section) => {
-              const sectionVideos = section.videos.slice(0, homeTopicVideoLimit);
-              const canExpand = section.topic?.slug && section.videos.length > homeTopicVideoLimit;
-              const newestVideoIds = getNewestVideoIds(section.videos);
-
-              return (
-                <TopicVideoSection
-                  canExpand={canExpand}
+        {visibleVideoItems.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3" data-lesson-grid>
+              {visibleVideoItems.map(({ isNew, video }) => (
+                <LessonCard
                   deleteVideoMutation={deleteVideoMutation}
                   isAdmin={isAdmin}
-                  key={section.key}
-                  newestVideoIds={newestVideoIds}
-                  onSelectVideo={(video) => setModePickerVideo(video)}
-                  onViewAll={() => navigate(`/topics/${section.topic.slug}`)}
+                  isNew={isNew}
+                  key={video._id}
+                  onSelect={() => setModePickerVideo(video)}
                   publishVideoMutation={publishVideoMutation}
-                  section={section}
-                  shadowingSessionByVideoId={shadowingSessionByVideoId}
+                  shadowingSession={shadowingSessionByVideoId?.get(String(video._id))}
                   topics={visibleTopics}
                   updateVideoMutation={updateVideoMutation}
-                  videos={sectionVideos}
+                  video={video}
                 />
-              );
-            })}
+              ))}
+            </div>
             {hasMoreSections ? <div aria-hidden="true" className="h-8" ref={loadMoreRef} /> : null}
-          </div>
+          </>
         ) : null}
 
         <LearningModeDialog

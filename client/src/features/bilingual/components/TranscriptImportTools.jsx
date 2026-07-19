@@ -193,13 +193,13 @@ export default function TranscriptImportTools({ onDone, segments, videoId }) {
           <DialogHeader>
             <DialogTitle>Import lại transcript</DialogTitle>
             <DialogDescription>
-              Dán transcript tiếng Anh theo từng dòng. Hệ thống sẽ cập nhật lại nội dung và thời gian theo thứ tự dòng.
+              Dán nguyên file SRT tiếng Anh hoặc transcript theo từng dòng. Hệ thống sẽ cập nhật lại nội dung và thời gian theo thứ tự dòng.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3">
             <p className="text-xs font-semibold text-ink-muted">
-              Định dạng mỗi dòng: <code className="rounded bg-cream px-1">00:01 - 00:04 Nội dung tiếng Anh</code>
+              Hỗ trợ SRT chuẩn hoặc mỗi dòng: <code className="rounded bg-cream px-1">00:01 - 00:04 Nội dung tiếng Anh</code>
             </p>
             <Textarea
               className="min-h-60 font-mono text-sm"
@@ -207,7 +207,7 @@ export default function TranscriptImportTools({ onDone, segments, videoId }) {
                 setText(event.target.value);
                 setError("");
               }}
-              placeholder={`00:01 - 00:04 Tell me something I need to know\n00:04 - 00:07 Then take my breath and never let it go`}
+              placeholder={`1\n00:00:01,000 --> 00:00:04,000\nTell me something I need to know\n\n2\n00:00:04,000 --> 00:00:07,000\nThen take my breath and never let it go`}
               value={text}
             />
             <div className="flex items-center justify-between text-xs font-bold text-ink-muted">

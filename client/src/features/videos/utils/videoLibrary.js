@@ -1,5 +1,23 @@
 import { getTopicId } from "./manualTranscript.js";
 
+function sortVideosForTopic(videos) {
+  return [...videos].sort((firstVideo, secondVideo) => {
+    const firstOrder = Number.isFinite(Number(firstVideo.order)) ? Number(firstVideo.order) : null;
+    const secondOrder = Number.isFinite(Number(secondVideo.order)) ? Number(secondVideo.order) : null;
+
+    if (firstOrder !== null || secondOrder !== null) {
+      if (firstOrder === null) return 1;
+      if (secondOrder === null) return -1;
+      if (firstOrder !== secondOrder) return firstOrder - secondOrder;
+    }
+
+    const firstCreatedAt = new Date(firstVideo.createdAt || 0).getTime();
+    const secondCreatedAt = new Date(secondVideo.createdAt || 0).getTime();
+
+    return secondCreatedAt - firstCreatedAt;
+  });
+}
+
 export function buildTopicSections({ isAdmin, topics, videos }) {
   const sections = topics
     .map((topic) => ({
@@ -7,11 +25,11 @@ export function buildTopicSections({ isAdmin, topics, videos }) {
       title: topic.name,
       description: topic.description,
       topic,
-      videos: videos.filter((video) => getTopicId(video) === topic._id),
+      videos: sortVideosForTopic(videos.filter((video) => getTopicId(video) === topic._id)),
     }))
     .filter((section) => isAdmin || section.videos.length > 0);
   const knownTopicIds = new Set(topics.map((topic) => topic._id));
-  const uncategorizedVideos = videos.filter((video) => !knownTopicIds.has(getTopicId(video)));
+  const uncategorizedVideos = sortVideosForTopic(videos.filter((video) => !knownTopicIds.has(getTopicId(video))));
 
   if (uncategorizedVideos.length || isAdmin) {
     sections.push({

@@ -19,6 +19,8 @@ import VocabularyDailyPage from "../features/vocabulary/pages/VocabularyDailyPag
 import VocabularyDayPathPage from "../features/vocabulary/pages/VocabularyDayPathPage.jsx";
 import VocabularyLessonPage from "../features/vocabulary/pages/VocabularyLessonPage.jsx";
 import AdminVocabularyPage from "../features/vocabulary/pages/AdminVocabularyPage.jsx";
+import NetflixChillPage from "../features/movies/pages/NetflixChillPage.jsx";
+import MoviePlayerPage from "../features/movies/pages/MoviePlayerPage.jsx";
 
 function RouteShell() {
   return (
@@ -40,6 +42,10 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <HomePage /> },
           { path: "youtube", element: <VideoLibraryPage /> },
+          { path: "netflix", element: <NetflixChillPage /> },
+          { path: "netflix/:movieId", element: <MoviePlayerPage /> },
+          { path: "movies", element: <NetflixChillPage /> },
+          { path: "movies/:movieId", element: <MoviePlayerPage /> },
           { path: "reading", element: <ReadingLibraryPage /> },
           { path: "vocabulary", element: <VocabularyDailyPage /> },
           { path: "vocabulary/:dayId", element: <VocabularyDayPathPage /> },

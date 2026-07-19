@@ -1,0 +1,146 @@
+.netflix-chill {
+  color-scheme: dark;
+  font-family: "Google Sans", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+.netflix-chill * {
+  border-color: rgba(255, 255, 255, 0.12);
+  letter-spacing: 0;
+}
+
+.netflix-chill button,
+.netflix-chill label {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.movie-player-shell {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+html.movie-player-lock-scroll,
+html.movie-player-lock-scroll body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.movie-player-surface:fullscreen,
+.movie-player-surface:-webkit-full-screen,
+.movie-player-surface.movie-player-pseudo-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  aspect-ratio: auto !important;
+  background: #000;
+}
+
+.movie-player-surface:fullscreen iframe,
+.movie-player-surface:-webkit-full-screen iframe,
+.movie-player-surface.movie-player-pseudo-fullscreen iframe {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.movie-player-top-controls {
+  left: max(0.75rem, env(safe-area-inset-left));
+  top: max(0.75rem, env(safe-area-inset-top));
+}
+
+.movie-player-fullscreen {
+  bottom: max(0.5rem, env(safe-area-inset-bottom));
+  right: max(0.5rem, env(safe-area-inset-right));
+}
+
+.movie-subtitle-overlay {
+  bottom: calc(3rem + env(safe-area-inset-bottom));
+}
+
+.movie-transcript-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.movie-subtitle-panel {
+  text-wrap: balance;
+}
+
+.movie-subtitle-line {
+  overflow-wrap: anywhere;
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 100%),
+    0 2px 7px rgb(0 0 0 / 90%);
+}
+
+.movie-subtitle-caption {
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  background: rgb(0 0 0 / 72%);
+  border-radius: 3px;
+  padding: 0.14em 0.42em 0.18em;
+}
+
+.movie-subtitle-caption-secondary {
+  background: rgb(0 0 0 / 62%);
+}
+
+@media (min-width: 640px) {
+  .movie-player-top-controls {
+    left: max(1.25rem, env(safe-area-inset-left));
+    top: max(1.25rem, env(safe-area-inset-top));
+  }
+
+  .movie-player-fullscreen {
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    right: max(0.75rem, env(safe-area-inset-right));
+  }
+
+  .movie-subtitle-overlay {
+    bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+
+}
+
+@media (orientation: landscape) and (max-width: 1023px) and (max-height: 600px) {
+  .movie-player-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 38vw);
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .movie-player-sidebar {
+    border-left-width: 1px;
+    border-top-width: 0;
+  }
+
+  .movie-player-mobile-modes {
+    display: none !important;
+  }
+}
+
+@media (orientation: portrait) and (max-width: 1023px) {
+  .movie-player-surface.movie-player-force-landscape:fullscreen,
+  .movie-player-surface.movie-player-force-landscape:-webkit-full-screen,
+  .movie-player-surface.movie-player-force-landscape.movie-player-pseudo-fullscreen {
+    inset: auto !important;
+    top: 0 !important;
+    left: 100% !important;
+    width: 100dvh !important;
+    height: 100vw !important;
+    transform: rotate(90deg);
+    transform-origin: top left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .netflix-chill *,
+  .netflix-chill *::before,
+  .netflix-chill *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

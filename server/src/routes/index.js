@@ -18,6 +18,8 @@ import bilingualRoutes from "../modules/bilingual/bilingual.routes.js";
 import readingRoutes from "../modules/readings/reading.routes.js";
 import dictionaryRoutes from "../modules/dictionary/dictionary.routes.js";
 import ebookRoutes from "../modules/ebooks/ebook.routes.js";
+import movieRoutes from "../modules/movies/movie.routes.js";
+import bunnyRoutes from "../modules/bunny/bunny.routes.js";
 
 const router = Router();
 
@@ -40,5 +42,7 @@ router.use("/youtube", youtubeRoutes);
 router.use("/readings", readingRoutes);
 router.use("/dictionary", dictionaryRoutes);
 router.use("/ebooks", ebookRoutes);
+router.use("/movies", movieRoutes);
+router.use("/webhooks/bunny", bunnyRoutes);
 
 export default router;

@@ -113,14 +113,14 @@ export default function ManualVietsubDialog({ segments, onDone }) {
         <DialogHeader>
           <DialogTitle>Thêm Vietsub thủ công</DialogTitle>
           <DialogDescription>
-            Dán phụ đề tiếng Việt theo từng dòng với thời gian. Hệ thống sẽ tự ghép với transcript tiếng Anh theo timestamp.
+            Dán nguyên file SRT tiếng Việt hoặc phụ đề theo từng dòng với thời gian. Hệ thống sẽ tự ghép với transcript tiếng Anh theo timestamp.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div>
             <p className="text-xs font-semibold text-ink-muted">
-              Định dạng mỗi dòng: <code className="rounded bg-cream px-1">00:01 - 00:04 Nội dung tiếng Việt</code>
+              Hỗ trợ SRT chuẩn hoặc mỗi dòng: <code className="rounded bg-cream px-1">00:01 - 00:04 Nội dung tiếng Việt</code>
             </p>
           </div>
           <Textarea
@@ -129,7 +129,7 @@ export default function ManualVietsubDialog({ segments, onDone }) {
               setText(e.target.value);
               setError("");
             }}
-            placeholder={`00:20 - 00:25 Anh là ánh sáng, cũng là màn đêm\n00:25 - 00:30 Anh là sắc màu chảy trong huyết quản em`}
+            placeholder={`1\n00:00:20,000 --> 00:00:25,000\nAnh là ánh sáng, cũng là màn đêm\n\n2\n00:00:25,000 --> 00:00:30,000\nAnh là sắc màu chảy trong huyết quản em`}
             value={text}
           />
           <div className="flex items-center justify-between text-xs font-bold text-ink-muted">

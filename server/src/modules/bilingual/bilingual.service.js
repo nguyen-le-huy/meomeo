@@ -57,10 +57,16 @@ export async function generateVietsub(videoId, options = {}) {
 
 export async function getBilingualVideoData(videoId, options = {}) {
   const filter = { _id: videoId };
-  if (!options.admin) filter.isPublished = true;
+  if (!options.admin) {
+    filter.isPublished = true;
+    filter.deletedAt = { $exists: false };
+  }
 
   const video = await VideoLesson.findOne(filter).populate("topicId");
   if (!video) throw createHttpError(404, "Video not found");
+  if (!options.admin && video.source === "bunny" && (video.streamStatus !== "ready" || !video.topicId?.isPublished)) {
+    throw createHttpError(404, "Video not found");
+  }
 
   const segmentFilter = { videoId: video._id };
   if (!options.admin) segmentFilter.isPublished = true;
@@ -86,6 +92,13 @@ export async function getBilingualVideoData(videoId, options = {}) {
       title: video.title,
       youtubeUrl: video.youtubeUrl,
       youtubeVideoId: video.youtubeVideoId,
+      source: video.source,
+      contentType: video.contentType,
+      bunnyVideoId: video.bunnyVideoId,
+      bunnyLibraryId: video.bunnyLibraryId,
+      streamStatus: video.streamStatus,
+      posterUrl: video.posterUrl,
+      backdropUrl: video.backdropUrl,
       thumbnailUrl: video.thumbnailUrl,
       duration: video.duration,
       level: video.level,

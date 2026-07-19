@@ -11,6 +11,8 @@ app.set("trust proxy", 1);
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
   "https://meomeo.devenir.shop",
 ];
 
@@ -32,7 +34,13 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(
+  express.json({
+    verify(req, res, buffer) {
+      req.rawBody = Buffer.from(buffer);
+    },
+  }),
+);
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/api/health", (req, res) => {

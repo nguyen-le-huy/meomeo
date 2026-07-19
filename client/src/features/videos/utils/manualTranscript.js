@@ -5,6 +5,9 @@ const DASH_TIME_PATTERN = new RegExp(
 const PIPE_TIME_PATTERN = new RegExp(
   String.raw`^[^\d|]*(${TIME_TOKEN_PATTERN})\s*\|\s*(${TIME_TOKEN_PATTERN})\s*\|\s*(.+)$`,
 );
+const SRT_TIME_PATTERN = new RegExp(
+  String.raw`^\s*(${TIME_TOKEN_PATTERN})\s*-->\s*(${TIME_TOKEN_PATTERN})(?:\s+.*)?$`,
+);
 
 export function parseTimeToSeconds(value) {
   const raw = String(value || "")
@@ -28,8 +31,68 @@ export function parseTimeToSeconds(value) {
   return Number.NaN;
 }
 
+function cleanSubtitleText(lines) {
+  return lines
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseSrtBlocks(value, options = {}) {
+  const contentLabel = options.contentLabel || "transcript";
+  const blocks = String(value || "")
+    .replace(/^\uFEFF/, "")
+    .replace(/\r/g, "")
+    .split(/\n{2,}/)
+    .map((block) => block.split("\n").map((line) => line.trim()).filter(Boolean))
+    .filter((block) => block.length);
+
+  if (!blocks.length) return { entries: [], error: "" };
+
+  const entries = [];
+
+  for (const [blockIndex, block] of blocks.entries()) {
+    const timeLineIndex = block.findIndex((line) => SRT_TIME_PATTERN.test(line));
+    if (timeLineIndex < 0) {
+      return {
+        entries: [],
+        error: `Block phụ đề ${blockIndex + 1} chưa có dòng thời gian hợp lệ.`,
+      };
+    }
+
+    const match = block[timeLineIndex].match(SRT_TIME_PATTERN);
+    const startTime = parseTimeToSeconds(match[1]);
+    const endTime = parseTimeToSeconds(match[2]);
+    const text = cleanSubtitleText(block.slice(timeLineIndex + 1));
+
+    if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) {
+      return { entries: [], error: `Block phụ đề ${blockIndex + 1} có thời gian không hợp lệ.` };
+    }
+
+    if (endTime <= startTime) {
+      return { entries: [], error: `Block phụ đề ${blockIndex + 1} cần thời gian kết thúc lớn hơn thời gian bắt đầu.` };
+    }
+
+    if (!text) {
+      return { entries: [], error: `Block phụ đề ${blockIndex + 1} chưa có nội dung ${contentLabel}.` };
+    }
+
+    entries.push({ startTime, endTime, text });
+  }
+
+  return { entries, error: "" };
+}
+
 export function parseTimedTextLines(value, options = {}) {
   const contentLabel = options.contentLabel || "transcript";
+  const rawValue = String(value || "");
+  if (rawValue.includes("-->") && /(?:^|\n)\s*\d{1,2}(?::\d{1,2}){1,2}[\.,]\d+\s*-->/.test(rawValue)) {
+    return parseSrtBlocks(rawValue, options);
+  }
+
   const lines = String(value || "")
     .split("\n")
     .map((line) => line.trim())

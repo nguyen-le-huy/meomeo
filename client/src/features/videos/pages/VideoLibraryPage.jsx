@@ -18,15 +18,15 @@ import {
 } from "../hooks/useVideoLearning.js";
 import { useLazyTopicSections } from "../hooks/useLazyTopicSections.js";
 import LearningModeDialog from "../components/LearningModeDialog.jsx";
-import TopicVideoSection from "../components/TopicVideoSection.jsx";
+import LessonCard from "../components/LessonCard.jsx";
 import TopicCategoryChips, { allTopicsValue } from "../components/TopicCategoryChips.jsx";
 import VideoLibraryAdminActions from "../components/VideoLibraryAdminActions.jsx";
 import VideoLibraryEmptyState from "../components/VideoLibraryEmptyState.jsx";
 import VideoLibraryErrorState from "../components/VideoLibraryErrorState.jsx";
-import { homeTopicDesktopVideoLimit, homeTopicMobileVideoLimit } from "../constants/videoLibrary.constants.js";
+import { homeInitialDesktopVideoLimit, homeInitialMobileVideoLimit, homeVideoLoadBatchSize } from "../constants/videoLibrary.constants.js";
 import { buildTopicSections, getNewestVideoIds } from "../utils/videoLibrary.js";
 
-function useIsDesktopTopicGrid() {
+function useIsDesktopViewport() {
   const [isDesktop, setIsDesktop] = useState(() =>
     typeof window === "undefined" ? true : window.matchMedia("(min-width: 1024px)").matches,
   );
@@ -43,7 +43,7 @@ function useIsDesktopTopicGrid() {
   return isDesktop;
 }
 
-export default function VideoLibraryPage() {
+export default function VideoLibraryPage({ showCategoryList = true, title = "Học qua Youtube" }) {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
@@ -63,9 +63,9 @@ export default function VideoLibraryPage() {
   const updateVideoMutation = useUpdateVideo();
   const publishVideoMutation = usePublishVideo();
   const deleteVideoMutation = useDeleteVideo();
-  const [selectedTopicId, setSelectedTopicId] = useState(allTopicsValue);
   const [modePickerVideo, setModePickerVideo] = useState(null);
-  const isDesktopTopicGrid = useIsDesktopTopicGrid();
+  const [selectedTopicId, setSelectedTopicId] = useState(allTopicsValue);
+  const isDesktopViewport = useIsDesktopViewport();
   const sessionId = getGuestSessionId();
   const { data: myShadowingSessions = [] } = useMyShadowingSessions(sessionId);
   const visibleTopics = useMemo(() => topics.filter((topic) => topic.slug !== "all-videos"), [topics]);
@@ -73,27 +73,57 @@ export default function VideoLibraryPage() {
     () => buildTopicSections({ isAdmin, topics: visibleTopics, videos }),
     [isAdmin, visibleTopics, videos],
   );
-  const selectedTopicSections = useMemo(() => {
-    if (selectedTopicId === allTopicsValue) return topicSections;
+  const categoryTopics = useMemo(() => {
+    const videoCountByTopicId = new Map(
+      topicSections
+        .filter((section) => section.topic?._id)
+        .map((section) => [section.topic._id, section.videos.length]),
+    );
+    const topicsWithCounts = visibleTopics.map((topic) => ({
+      ...topic,
+      videoCount: videoCountByTopicId.get(topic._id) || 0,
+    }));
+
+    if (isAdmin) return topicsWithCounts;
+
+    return topicsWithCounts.filter((topic) => topic.videoCount > 0);
+  }, [isAdmin, topicSections, visibleTopics]);
+  const filteredTopicSections = useMemo(() => {
+    if (!showCategoryList || selectedTopicId === allTopicsValue) return topicSections;
     return topicSections.filter((section) => section.topic?._id === selectedTopicId);
-  }, [selectedTopicId, topicSections]);
+  }, [selectedTopicId, showCategoryList, topicSections]);
+  const initialVideoLimit = isDesktopViewport ? homeInitialDesktopVideoLimit : homeInitialMobileVideoLimit;
   const {
     hasMoreSections,
     loadMoreRef,
     visibleSections: visibleTopicSections,
-  } = useLazyTopicSections(selectedTopicSections);
+  } = useLazyTopicSections(filteredTopicSections, {
+    batchSize: homeVideoLoadBatchSize,
+    initialCount: initialVideoLimit,
+  });
   const shadowingSessionByVideoId = useMemo(
     () => new Map(myShadowingSessions.map((session) => [String(session.videoId), session])),
     [myShadowingSessions],
   );
-  const homeTopicVideoLimit = isDesktopTopicGrid ? homeTopicDesktopVideoLimit : homeTopicMobileVideoLimit;
+  const visibleVideoItems = useMemo(
+    () =>
+      visibleTopicSections.flatMap((section) => {
+        const newestVideoIds = getNewestVideoIds(section.videos);
+
+        return section.videos.map((video) => ({
+          isNew: newestVideoIds.has(video._id),
+          video,
+        }));
+      }),
+    [visibleTopicSections],
+  );
 
   useEffect(() => {
-    if (selectedTopicId === allTopicsValue) return;
-    if (!visibleTopics.some((topic) => topic._id === selectedTopicId)) {
+    if (!showCategoryList || selectedTopicId === allTopicsValue) return;
+    if (!categoryTopics.some((topic) => topic._id === selectedTopicId)) {
       setSelectedTopicId(allTopicsValue);
     }
-  }, [selectedTopicId, visibleTopics]);
+  }, [categoryTopics, selectedTopicId, showCategoryList]);
 
   function startLearning(mode) {
     if (!modePickerVideo?._id) return;
@@ -110,7 +140,7 @@ export default function VideoLibraryPage() {
       <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-8 sm:px-6 lg:px-10 lg:pt-12">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
-            <h2 className="mt-2 font-display text-2xl font-normal tracking-tight sm:text-3xl">Học qua Youtube</h2>
+            <h2 className="mt-2 font-display text-2xl font-normal tracking-tight sm:text-3xl">{title}</h2>
           </div>
           {isAdmin ? (
             <VideoLibraryAdminActions
@@ -125,11 +155,13 @@ export default function VideoLibraryPage() {
           ) : null}
         </div>
 
-        <TopicCategoryChips
-          onSelectTopic={setSelectedTopicId}
-          selectedTopicId={selectedTopicId}
-          topics={visibleTopics}
-        />
+        {showCategoryList ? (
+          <TopicCategoryChips
+            onSelectTopic={setSelectedTopicId}
+            selectedTopicId={selectedTopicId}
+            topics={categoryTopics}
+          />
+        ) : null}
 
         {isLoading || isTopicsLoading ? <LoadingState label="Đang tải thư viện..." /> : null}
 
@@ -139,33 +171,26 @@ export default function VideoLibraryPage() {
 
         {!isLoading && !isVideosError && videos.length === 0 ? <VideoLibraryEmptyState /> : null}
 
-        {visibleTopicSections.length > 0 ? (
-          <div className="space-y-8">
-            {visibleTopicSections.map((section) => {
-              const sectionVideos = section.videos.slice(0, homeTopicVideoLimit);
-              const canExpand = section.topic?.slug && section.videos.length > homeTopicVideoLimit;
-              const newestVideoIds = getNewestVideoIds(section.videos);
-
-              return (
-                <TopicVideoSection
-                  canExpand={canExpand}
+        {visibleVideoItems.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3" data-lesson-grid>
+              {visibleVideoItems.map(({ isNew, video }) => (
+                <LessonCard
                   deleteVideoMutation={deleteVideoMutation}
                   isAdmin={isAdmin}
-                  key={section.key}
-                  newestVideoIds={newestVideoIds}
-                  onSelectVideo={(video) => setModePickerVideo(video)}
-                  onViewAll={() => navigate(`/topics/${section.topic.slug}`)}
+                  isNew={isNew}
+                  key={video._id}
+                  onSelect={() => setModePickerVideo(video)}
                   publishVideoMutation={publishVideoMutation}
-                  section={section}
-                  shadowingSessionByVideoId={shadowingSessionByVideoId}
+                  shadowingSession={shadowingSessionByVideoId?.get(String(video._id))}
                   topics={visibleTopics}
                   updateVideoMutation={updateVideoMutation}
-                  videos={sectionVideos}
+                  video={video}
                 />
-              );
-            })}
+              ))}
+            </div>
             {hasMoreSections ? <div aria-hidden="true" className="h-8" ref={loadMoreRef} /> : null}
-          </div>
+          </>
         ) : null}
 
         <LearningModeDialog

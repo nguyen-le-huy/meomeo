@@ -1,19 +1,38 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+const defaultInitialCount = 15;
 const defaultBatchSize = 5;
 
-export function useLazyTopicSections(sections, batchSize = defaultBatchSize) {
-  const [visibleCount, setVisibleCount] = useState(batchSize);
+export function useLazyTopicSections(sections, options = {}) {
+  const { batchSize = defaultBatchSize, initialCount = defaultInitialCount } = options;
+  const [visibleVideoCount, setVisibleVideoCount] = useState(initialCount);
   const loadMoreRef = useRef(null);
-  const hasMoreSections = visibleCount < sections.length;
-  const visibleSections = useMemo(() => sections.slice(0, visibleCount), [sections, visibleCount]);
+  const totalVideoCount = useMemo(
+    () => sections.reduce((total, section) => total + section.videos.length, 0),
+    [sections],
+  );
+  const hasMoreVideos = visibleVideoCount < totalVideoCount;
+  const visibleSections = useMemo(() => {
+    let remainingVideos = visibleVideoCount;
+
+    return sections
+      .map((section) => {
+        if (remainingVideos <= 0) return { ...section, videos: [] };
+
+        const videos = section.videos.slice(0, remainingVideos);
+        remainingVideos -= videos.length;
+
+        return { ...section, videos };
+      })
+      .filter((section) => section.videos.length > 0);
+  }, [sections, visibleVideoCount]);
 
   useEffect(() => {
-    setVisibleCount(batchSize);
-  }, [batchSize, sections]);
+    setVisibleVideoCount(initialCount);
+  }, [initialCount, sections]);
 
   useEffect(() => {
-    if (!hasMoreSections) return undefined;
+    if (!hasMoreVideos) return undefined;
 
     const node = loadMoreRef.current;
     if (!node) return undefined;
@@ -21,14 +40,14 @@ export function useLazyTopicSections(sections, batchSize = defaultBatchSize) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry?.isIntersecting) return;
-        setVisibleCount((current) => Math.min(current + batchSize, sections.length));
+        setVisibleVideoCount((current) => Math.min(current + batchSize, totalVideoCount));
       },
       { rootMargin: "640px 0px" },
     );
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [batchSize, hasMoreSections, sections.length]);
+  }, [batchSize, hasMoreVideos, totalVideoCount]);
 
-  return { hasMoreSections, loadMoreRef, visibleSections };
+  return { hasMoreSections: hasMoreVideos, hasMoreVideos, loadMoreRef, visibleSections };
 }

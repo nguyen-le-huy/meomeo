@@ -60,6 +60,15 @@ export const config = {
     ebookPrefix: process.env.R2_EBOOK_PREFIX || "ebooks",
     publicBaseUrl: process.env.R2_PUBLIC_BASE_URL || "",
   },
+  bunnyStream: {
+    libraryId: process.env.BUNNY_STREAM_LIBRARY_ID || "",
+    apiKey: process.env.BUNNY_STREAM_API_KEY || "",
+    tokenKey: process.env.BUNNY_STREAM_TOKEN_KEY || "",
+    readOnlyApiKey: process.env.BUNNY_STREAM_READ_ONLY_API_KEY || process.env.BUNNY_STREAM_WEBHOOK_SECRET || "",
+    pullZoneHost: process.env.BUNNY_STREAM_PULL_ZONE_HOST || "",
+    uploadExpiresIn: Number(process.env.BUNNY_STREAM_UPLOAD_EXPIRES_IN || 86400),
+    playbackExpiresIn: Number(process.env.BUNNY_STREAM_PLAYBACK_EXPIRES_IN || 300),
+  },
   azureSpeech: {
     key: process.env.AZURE_SPEECH_KEY || "",
     region: process.env.AZURE_SPEECH_REGION || "",
