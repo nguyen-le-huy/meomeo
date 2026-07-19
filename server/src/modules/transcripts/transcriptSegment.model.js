@@ -8,7 +8,7 @@ const transcriptSegmentSchema = new mongoose.Schema(
     endTime: { type: Number, required: true },
     duration: { type: Number, default: 0 },
     text: { type: String, required: true, trim: true },
-    normalizedText: { type: String, required: true, trim: true },
+    normalizedText: { type: String, default: "", trim: true },
     wordCount: { type: Number, default: 0 },
     source: { type: String, enum: ["youtube", "manual", "edited"], default: "youtube" },
     isPublished: { type: Boolean, default: true },
