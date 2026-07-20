@@ -86,7 +86,17 @@ export default function NetflixChillPage() {
           <div className="absolute inset-x-0 bottom-10 mx-auto max-w-[1720px] px-4 sm:bottom-auto sm:top-[42%] sm:-translate-y-1/2 sm:px-6 lg:px-10">
             <div className="max-w-xl">
               <h1 className="max-w-[12ch] text-[2.5rem] font-semibold leading-[0.95] text-white sm:text-[clamp(3rem,7vw,6.5rem)] sm:leading-[0.92]" id="featured-movie-title">{featuredMovie.title}</h1>
-              <p className="mt-3 max-w-md text-sm leading-6 text-white/90 sm:mt-4 sm:text-lg sm:leading-7">{featuredMovie.description}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-white/75 sm:mt-4 sm:text-sm">
+                <span>{featuredMovie.year}</span>
+                <span className="rounded border border-white/20 bg-white/5 px-1.5 py-0.5 text-[10px] sm:text-xs leading-none uppercase">{featuredMovie.age}</span>
+                <span>{featuredMovie.duration}</span>
+                {featuredMovie.rating ? (
+                  <span className="flex items-center gap-0.5 text-amber-400">
+                    ★ {featuredMovie.rating.toFixed(1)}
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-3 max-w-md text-sm leading-6 text-white/90 sm:text-lg sm:leading-7">{featuredMovie.description}</p>
               <div className="mt-4 flex flex-wrap gap-2.5 sm:mt-5">
                 <button className="inline-flex h-10 items-center gap-2 rounded-md bg-white px-5 text-sm font-bold text-black transition hover:bg-white/80 sm:h-12 sm:px-6 sm:text-base" onClick={() => openPlayer(featuredMovie)} type="button"><Play fill="currentColor" size={20} /> Xem ngay</button>
                 <button className="inline-flex h-10 items-center gap-2 rounded-md bg-[#6d6d6e]/80 px-4 text-sm font-bold text-white transition hover:bg-[#6d6d6e]/60 sm:h-12 sm:px-5 sm:text-base" onClick={() => openPlayer(featuredMovie)} type="button"><Info size={21} /> Thông tin</button>

@@ -35,6 +35,18 @@ function findActiveSegmentIndex(segments, currentTime) {
   return -1;
 }
 
+function formatDuration(seconds) {
+  const total = Math.max(0, Number(seconds) || 0);
+  const hrs = Math.floor(total / 3600);
+  const mins = Math.floor((total % 3600) / 60);
+  const secs = Math.floor(total % 60);
+
+  if (hrs > 0) {
+    return `${hrs.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  }
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+}
+
 export default function MoviePlayerPage() {
   const { movieId } = useParams();
   const navigate = useNavigate();
@@ -65,6 +77,15 @@ export default function MoviePlayerPage() {
   const [showPlayerChrome, setShowPlayerChrome] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
+  const [resumeTime, setResumeTime] = useState(0);
+  const resumeTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      window.clearTimeout(resumeTimeoutRef.current);
+    };
+  }, []);
   const activeSegmentIndex = useMemo(() => findActiveSegmentIndex(segments, currentTime), [currentTime, segments]);
   const activeSegment = activeSegmentIndex >= 0 ? segments[activeSegmentIndex] : null;
   const playbackPending = isApiMovie && playbackQuery.isError;
@@ -162,11 +183,29 @@ export default function MoviePlayerPage() {
   const handleReady = useCallback(() => {
     setPlayerError("");
     const savedTime = localStorage.getItem(`meomeo_progress_${movieId}`);
-    if (savedTime && Number(savedTime) > 0) {
-      // Small delay to ensure player is fully initialized before seeking
-      setTimeout(() => playerRef.current?.seek(Number(savedTime)), 200);
+    if (savedTime && Number(savedTime) > 10) {
+      setResumeTime(Number(savedTime));
+      setShowResumePrompt(true);
+      window.clearTimeout(resumeTimeoutRef.current);
+      resumeTimeoutRef.current = window.setTimeout(() => {
+        setShowResumePrompt(false);
+      }, 8000);
     }
   }, [movieId]);
+
+  const handleResume = useCallback(() => {
+    if (resumeTime > 0) {
+      playerRef.current?.seek(resumeTime);
+      playerRef.current?.play();
+    }
+    setShowResumePrompt(false);
+    window.clearTimeout(resumeTimeoutRef.current);
+  }, [resumeTime]);
+
+  const handleIgnoreResume = useCallback(() => {
+    setShowResumePrompt(false);
+    window.clearTimeout(resumeTimeoutRef.current);
+  }, []);
   const handlePlay = useCallback(() => setIsPlaying(true), []);
   const handlePause = useCallback(() => setIsPlaying(false), []);
   const handleEnded = useCallback(() => setIsPlaying(false), []);
@@ -351,6 +390,31 @@ export default function MoviePlayerPage() {
             <span className="truncate text-sm font-semibold">{movie.title}</span>
           </div>
         ) : null}
+
+        {showResumePrompt && (
+          <div className="absolute bottom-24 left-4 right-4 z-40 flex items-center justify-between gap-3 rounded-lg bg-black/90 border border-white/15 px-4 py-3 text-white backdrop-blur-md shadow-2xl transition duration-300 sm:left-6 sm:right-auto sm:max-w-sm">
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-semibold text-white/50">Xem tiếp phim dở?</span>
+              <span className="truncate text-sm font-bold">Tiếp tục tại {formatDuration(resumeTime)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleIgnoreResume} 
+                className="rounded px-2.5 py-1.5 text-xs font-medium text-white/60 hover:text-white transition"
+                type="button"
+              >
+                Bỏ qua
+              </button>
+              <button 
+                onClick={handleResume} 
+                className="rounded bg-coral px-3 py-1.5 text-xs font-bold text-white hover:bg-coral-strong transition"
+                type="button"
+              >
+                Xem tiếp
+              </button>
+            </div>
+          </div>
+        )}
 
         {playerError ? <div className="absolute inset-x-4 top-20 z-30 rounded-md bg-red-700/95 p-3 text-center text-sm">{playerError}</div> : null}
       </main>
