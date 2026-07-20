@@ -78,7 +78,7 @@ export async function createTranscriptSegments(videoId, segments = [], source = 
 }
 
 export async function getVideos(query = {}, options = {}) {
-  const filter = {};
+  const filter = { contentType: { $ne: "movie" } };
 
   if (!options.admin || !query.includeUnpublished) {
     filter.isPublished = true;

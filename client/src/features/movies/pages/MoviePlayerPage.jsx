@@ -285,7 +285,7 @@ export default function MoviePlayerPage() {
           </>
         )}
 
-        <div aria-hidden="true" className="absolute inset-x-0 bottom-14 top-0 z-[19] cursor-pointer" onClick={togglePlayback} onPointerEnter={revealPlayerChrome} onPointerMove={revealPlayerChrome} />
+        <div aria-hidden="true" className="absolute inset-x-0 bottom-20 top-0 z-[19] cursor-pointer" onClick={togglePlayback} onPointerEnter={revealPlayerChrome} onPointerMove={revealPlayerChrome} />
         <div className={`pointer-events-none absolute inset-x-0 top-0 z-10 h-28 bg-gradient-to-b from-black/80 to-transparent transition-opacity duration-300 ${showPlayerChrome ? "opacity-100" : "opacity-0"}`} />
         <div className={`movie-player-top-controls absolute z-20 flex items-center gap-3 transition duration-300 ${playerChromeClass}`}>
           <button aria-label="Quay lại thư viện phim" className="grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white/90 backdrop-blur transition hover:bg-black/70 hover:text-white" onClick={goBack} type="button"><ArrowLeft size={22} /></button>
