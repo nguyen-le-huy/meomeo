@@ -37,5 +37,5 @@ export function formatDuration(seconds) {
   if (!value) return "Đang cập nhật";
   const hours = Math.floor(value / 3600);
   const minutes = Math.round((value % 3600) / 60);
-  return hours ? `${hours}g ${minutes}p` : `${minutes}p`;
+  return hours ? `${hours}h ${minutes}m` : `${minutes}m`;
 }
