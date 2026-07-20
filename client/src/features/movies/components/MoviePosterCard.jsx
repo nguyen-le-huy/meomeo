@@ -44,7 +44,7 @@ export default function MoviePosterCard({ editMutation, isAdmin, isDeleting, mov
         <span className="relative block aspect-[2/3] overflow-hidden rounded-sm bg-[#211f1c] ring-1 ring-white/10">
           <img alt={movie.title} className="h-full w-full object-cover transition duration-500 ease-out group-hover:scale-[1.035]" loading="lazy" src={movie.poster} />
           <span className="absolute inset-0 bg-black/5 transition group-hover:bg-black/25" />
-          <span className="absolute right-0 top-0 rounded-bl-sm bg-emerald-500 px-2 py-1 text-xs font-bold text-white sm:text-sm">{movie.rating.toFixed(1)}</span>
+          <span className="absolute right-0 top-0 rounded-bl-sm bg-[#f5c518] px-2 py-1 text-xs font-extrabold text-black sm:text-sm shadow-md">{movie.rating.toFixed(1)}</span>
           {movie.streamStatus && movie.streamStatus !== "ready" ? <span className="absolute left-0 top-0 rounded-br-sm bg-black/80 px-2 py-1 text-[10px] font-bold uppercase text-amber-300 sm:text-xs">{movie.streamStatus}</span> : !movie.isPublished && movie._id ? <span className="absolute left-0 top-0 rounded-br-sm bg-black/80 px-2 py-1 text-[10px] font-bold uppercase text-white/70 sm:text-xs">Draft</span> : null}
           <span className="absolute inset-0 grid place-items-center opacity-0 transition group-hover:opacity-100"><span className="grid h-10 w-10 place-items-center rounded-full border border-white/40 bg-black/55 text-white backdrop-blur-sm"><Play fill="currentColor" size={16} /></span></span>
           {progressState ? (

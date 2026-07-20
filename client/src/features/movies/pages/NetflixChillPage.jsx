@@ -91,8 +91,9 @@ export default function NetflixChillPage() {
                 <span className="rounded border border-white/20 bg-white/5 px-1.5 py-0.5 text-[10px] sm:text-xs leading-none uppercase">{featuredMovie.age}</span>
                 <span>{featuredMovie.duration}</span>
                 {featuredMovie.rating ? (
-                  <span className="flex items-center gap-0.5 text-amber-400">
-                    ★ {featuredMovie.rating.toFixed(1)}
+                  <span className="flex items-center gap-1.5">
+                    <img src="https://res.cloudinary.com/dq6rydlgi/image/upload/v1784519808/imdb_c1uo7v.png" alt="IMDb" className="h-3.5 w-auto object-contain" />
+                    <span className="text-white font-bold">{featuredMovie.rating.toFixed(1)}</span>
                   </span>
                 ) : null}
               </div>
