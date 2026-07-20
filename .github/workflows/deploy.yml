@@ -13,9 +13,13 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
         
+      - name: Tạo file .env từ GitHub Secrets
+        run: |
+          cd ~/Development/meomeo
+          echo "${{ secrets.ENV_PRODUCTION }}" > server/.env
+        
       - name: Deploy with Docker Compose
         run: |
-          # Di chuyển vào thư mục dự án
           cd ~/Development/meomeo
           
           # Cập nhật code mới nhất từ git (để đảm bảo không bị lỗi phân nhánh)
