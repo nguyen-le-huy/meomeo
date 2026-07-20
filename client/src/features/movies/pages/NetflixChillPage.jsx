@@ -92,7 +92,7 @@ export default function NetflixChillPage() {
                 <span>{featuredMovie.duration}</span>
                 {featuredMovie.rating ? (
                   <span className="flex items-center gap-1.5">
-                    <img src="https://res.cloudinary.com/dq6rydlgi/image/upload/v1784519808/imdb_c1uo7v.png" alt="IMDb" className="h-[18px] sm:h-[22px] w-auto object-contain" />
+                    <img src="https://res.cloudinary.com/dq6rydlgi/image/upload/v1784519808/imdb_c1uo7v.png" alt="IMDb" className="h-[35px] sm:h-[45px] w-auto object-contain" />
                     <span className="text-white font-bold">{featuredMovie.rating.toFixed(1)}</span>
                   </span>
                 ) : null}
