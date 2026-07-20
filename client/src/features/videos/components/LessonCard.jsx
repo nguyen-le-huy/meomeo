@@ -55,7 +55,7 @@ export default function LessonCard({
   return (
     <article
       className={cn(
-        "group cursor-pointer rounded-lg bg-transparent outline-none transition duration-150 focus-visible:ring-2 focus-visible:ring-coral/35",
+        "group cursor-pointer rounded-lg bg-transparent font-roboto outline-none transition duration-150 focus-visible:ring-2 focus-visible:ring-coral/35",
         isFeatured && "rounded-xl",
       )}
       data-lesson-card

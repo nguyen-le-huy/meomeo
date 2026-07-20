@@ -25,6 +25,7 @@ export default {
       fontFamily: {
         sans: ['"Google Sans"', "Arial", "sans-serif"],
         display: ['"Google Sans"', "Arial", "sans-serif"],
+        roboto: ['"Roboto"', "sans-serif"],
       },
     },
   },

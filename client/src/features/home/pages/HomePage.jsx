@@ -36,7 +36,7 @@ import { buildTopicSections, getNewestVideoIds } from "../../videos/utils/videoL
 const lessonCategories = [
   {
     title: "Học qua YouTube",
-    description: "Shadowing, dictation, vietsub song ngữ",
+    description: "Shadowing, dictation, song ngữ",
     to: "/youtube",
     gifUrl: "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdDdvNG44emNxbTl2NWg5ZDJpYTAyd2dxN2d1N3c5Z2RjNzl2dXhoZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/3eZRwwX91t7xSaNkaE/giphy.gif",
     className: "border-[#f4c7b0] bg-[#fff4ed] text-[#35231c]",
@@ -45,7 +45,7 @@ const lessonCategories = [
   },
   {
     title: "Netflix Chill",
-    description: "Luyện nghe với phim và series",
+    description: "Xem phim đi",
     to: "/netflix",
     gifUrl: "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExMTVpMG5zbnpyaWYzeDd1dTFuZWVmMDJzYzR3aWtjM2t5YXhoMXBmOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/YqhFT4yCuUO51FazQz/giphy.gif",
     className: "border-[#d7c2c2] bg-[#fff1f1] text-[#341717]",
@@ -54,7 +54,7 @@ const lessonCategories = [
   },
   {
     title: "Từ vựng mỗi ngày",
-    description: "Bài đọc ngắn để học từ mới",
+    description: "Học từ vựng nhiều vô",
     to: "/vocabulary",
     gifUrl: "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExYWtlMzdneWtnZDJqajA0OXlsYTZlcjVmNjBodTBwZmtsMnJzZ2JmOCZlcD12MV9pbnRlcm5hbF9naWQmY3Q9cw/ggpoVsIg0LwtHfTBEY/giphy.gif",
     className: "border-[#a9ddd3] bg-[#eafaf6] text-[#153b35]",
@@ -63,7 +63,7 @@ const lessonCategories = [
   },
   {
     title: "Ebook",
-    description: "Đọc sách",
+    description: "Đọc sách cho tau",
     to: "/ebooks",
     gifUrl: "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExenhqbHFkMHQyZ285b2libW52YnptYnRvY21sM25pd21tbGo3cmZsNiZlcD12MV9pbnRlcm5hbF9naWQmY3Q9cw/RXG7XYXYV4JQBt2i7h/giphy.gif",
     className: "border-[#cfc1ef] bg-[#f4f0ff] text-[#30264d]",
@@ -72,7 +72,7 @@ const lessonCategories = [
   },
   {
     title: "Từ đã tra",
-    description: "Xem lại lịch sử tra từ",
+    description: "Lịch sử tra từ",
     to: "/dictionary/history",
     gifUrl: "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExM2xmNWM1c3lhbXFmdm1yMmZ3cmN0MHl0ajJiaXFuZXkwNXJkNGY1OSZlcD12MV9pbnRlcm5hbF9naWQmY3Q9cw/H2Uj3lf7jVd62AAivr/giphy.gif",
     className: "border-[#efd38b] bg-[#fff8df] text-[#443711]",

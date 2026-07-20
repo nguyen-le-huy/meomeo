@@ -16,6 +16,7 @@ import {
   useGenerateVietsub,
   useUpdateBilingualSegment,
 } from "../hooks/useBilingualWatch.js";
+import "../../movies/styles/netflix-chill.css";
 
 export default function BilingualWatchPage() {
   const { id } = useParams();
@@ -29,6 +30,7 @@ export default function BilingualWatchPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isVideoEnded, setIsVideoEnded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
 
   const { data, isLoading, error } = useBilingualVideo(id);
   const generateVietsubMutation = useGenerateVietsub(id);
@@ -70,25 +72,85 @@ export default function BilingualWatchPage() {
   );
 
   const handleToggleFullscreen = useCallback(
-    (e) => {
-      e.stopPropagation();
-      const el = playerContainerRef.current;
-      if (!el) return;
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      } else {
-        el.requestFullscreen?.();
+    async (e) => {
+      e?.stopPropagation();
+      const container = playerContainerRef.current;
+      if (!container) return;
+      const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
+
+      if (fullscreenElement || isPseudoFullscreen) {
+        if (fullscreenElement) {
+          const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
+          try {
+            await exitFullscreen?.call(document);
+          } catch {
+            // Orientation unlocking or exit fullscreen gesture
+          }
+        }
+        setIsPseudoFullscreen(false);
+        setIsFullscreen(false);
+        document.documentElement.classList.remove("movie-player-lock-scroll");
+        try {
+          window.screen.orientation?.unlock?.();
+        } catch {
+          // Ignore unsupported orientation unlock
+        }
+        return;
       }
+
+      document.documentElement.classList.add("movie-player-lock-scroll");
+      const requestFullscreen = container.requestFullscreen || container.webkitRequestFullscreen;
+      if (requestFullscreen) {
+        try {
+          await requestFullscreen.call(container, { navigationUI: "hide" });
+          setIsFullscreen(true);
+          try {
+            await window.screen.orientation?.lock?.("landscape");
+          } catch {
+            // CSS rotates player if screen orientation lock fails
+          }
+          return;
+        } catch {
+          // iPhone Safari rejects fullscreen for non-video elements
+        }
+      }
+
+      setIsPseudoFullscreen(true);
+      setIsFullscreen(true);
     },
-    [],
+    [isPseudoFullscreen],
   );
 
   useEffect(() => {
-    function onChange() {
-      setIsFullscreen(Boolean(document.fullscreenElement));
+    function handleFullscreenChange() {
+      const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
+      const playerIsFullscreen = fullscreenElement === playerContainerRef.current;
+      setIsFullscreen(playerIsFullscreen);
+      const playerIsPseudoFullscreen = playerContainerRef.current?.classList.contains("movie-player-pseudo-fullscreen");
+      if (!playerIsFullscreen && !playerIsPseudoFullscreen) {
+        document.documentElement.classList.remove("movie-player-lock-scroll");
+        try {
+          window.screen.orientation?.unlock?.();
+        } catch {
+          // Ignore unsupported orientation unlock
+        }
+      }
     }
-    document.addEventListener("fullscreenchange", onChange);
-    return () => document.removeEventListener("fullscreenchange", onChange);
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    window.addEventListener("resize", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+      window.removeEventListener("resize", handleFullscreenChange);
+      document.documentElement.classList.remove("movie-player-lock-scroll");
+      try {
+        window.screen.orientation?.unlock?.();
+      } catch {
+        // Ignore unsupported orientation unlock
+      }
+    };
   }, []);
 
   const handleVietsubDone = useCallback(() => {
@@ -154,7 +216,7 @@ export default function BilingualWatchPage() {
 
           <div className="flex min-h-0 min-w-0 flex-none items-center justify-center overflow-hidden bg-[#11110f] lg:flex-1 lg:p-5 lg:[container-type:size] 2xl:p-7">
             <div
-              className="relative w-full max-w-full shrink-0 overflow-hidden bg-black shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:rounded-xl lg:w-[min(100cqw,calc(100cqh*16/9))]"
+              className={`movie-player-surface relative w-full max-w-full shrink-0 overflow-hidden bg-black shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:rounded-xl lg:w-[min(100cqw,calc(100cqh*16/9))] ${isFullscreen ? "movie-player-force-landscape" : ""} ${isPseudoFullscreen ? "movie-player-pseudo-fullscreen" : ""}`}
               ref={playerContainerRef}
             >
               <SegmentYoutubePlayer
@@ -192,16 +254,20 @@ export default function BilingualWatchPage() {
                 </div>
               ) : null}
 
-              {isPlaying && activeSegment ? (
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 w-full space-y-0.5 border-t border-white/10 bg-black/75 px-3 py-2 text-center backdrop-blur-sm sm:space-y-1 sm:px-5 sm:py-3">
-                  <p className="text-xs font-medium leading-snug text-[#f6d85c] [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] sm:text-xl">
-                    {activeSegment.text}
-                  </p>
-                  {activeSegment.translationText ? (
-                    <p className="text-[11px] font-normal leading-snug text-white/90 [text-shadow:0_1px_2px_rgba(0,0,0,0.8)] sm:text-base">
-                      {activeSegment.translationText}
+              {activeSegment ? (
+                <div className="movie-subtitle-overlay pointer-events-none absolute inset-x-0 z-20 px-5 text-center sm:px-10">
+                  <div className="movie-subtitle-panel mx-auto flex max-w-4xl flex-col items-center gap-0 sm:gap-2">
+                    <p className="movie-subtitle-line text-[11px] font-normal leading-snug text-white sm:text-3xl">
+                      <span className="movie-subtitle-caption">{activeSegment.text}</span>
                     </p>
-                  ) : null}
+                    {activeSegment.translationText ? (
+                      <p className="movie-subtitle-line text-[11px] font-normal leading-snug text-[#ffd86b] sm:text-3xl">
+                        <span className="movie-subtitle-caption movie-subtitle-caption-secondary">
+                          {activeSegment.translationText}
+                        </span>
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               ) : null}
 
@@ -216,16 +282,14 @@ export default function BilingualWatchPage() {
                 </button>
               ) : null}
 
-              <Button
-                aria-label={isFullscreen ? "Thoát toàn màn hình" : "Xem toàn màn hình"}
-                className="absolute bottom-3 right-3 hidden rounded-full border border-white/10 bg-coal/85 text-canvas opacity-70 hover:bg-coal hover:opacity-100 sm:inline-flex"
+              <button
+                aria-label={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình ngang kèm phụ đề"}
+                className="movie-player-fullscreen absolute bottom-3 right-3 z-30 grid h-10 w-10 place-items-center rounded-md bg-black/65 text-white shadow-lg backdrop-blur transition duration-300 hover:bg-black/85"
                 onClick={handleToggleFullscreen}
-                size="icon"
                 type="button"
-                variant="secondary"
               >
-                {isFullscreen ? <Minimize className="h-5 w-5 text-canvas" /> : <Maximize className="h-5 w-5 text-canvas" />}
-              </Button>
+                {isFullscreen ? <Minimize size={21} /> : <Maximize size={21} />}
+              </button>
               </div>
             </div>
           </div>

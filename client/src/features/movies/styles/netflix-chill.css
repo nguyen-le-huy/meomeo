@@ -46,7 +46,10 @@ html.movie-player-lock-scroll #root {
 
 .movie-player-surface:fullscreen iframe,
 .movie-player-surface:-webkit-full-screen iframe,
-.movie-player-surface.movie-player-pseudo-fullscreen iframe {
+.movie-player-surface.movie-player-pseudo-fullscreen iframe,
+.movie-player-surface:fullscreen > div,
+.movie-player-surface:-webkit-full-screen > div,
+.movie-player-surface.movie-player-pseudo-fullscreen > div {
   width: 100% !important;
   height: 100% !important;
 }
@@ -62,7 +65,7 @@ html.movie-player-lock-scroll #root {
 }
 
 .movie-subtitle-overlay {
-  bottom: 2.75rem;
+  bottom: 0.5rem;
 }
 
 .movie-player-surface:fullscreen .movie-subtitle-overlay,
