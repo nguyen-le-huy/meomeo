@@ -22,7 +22,7 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=https://meomeo-api.devenir.shop/api
+        - VITE_API_URL=https://api.meomeo.quest/api
     container_name: meomeo-client
     restart: always
     ports:

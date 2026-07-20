@@ -1,22 +1,22 @@
 # Hướng dẫn Deploy Devenir (MeoMeo) lên Server Linux
 
-> **Tài liệu này hướng dẫn chi tiết cách deploy dự án YouTube Shadowing & Dictation lên server Linux với domain `meomeo.devenir.shop` thông qua Cloudflare Tunnel.**
+> **Tài liệu này hướng dẫn chi tiết cách deploy dự án YouTube Shadowing & Dictation lên server Linux với domain `meomeo.quest` thông qua Cloudflare Tunnel.**
 
 ## 1. Yêu cầu hệ thống
 - Server chạy **Linux (Ubuntu/Debian)** đã cài sẵn **Docker** và **Docker Compose**.
-- Domain hoặc tài khoản **Cloudflare** chứa domain `devenir.shop`.
+- Domain hoặc tài khoản **Cloudflare** chứa domain `quest`.
 - Source code đã được tải về máy chủ Linux (ví dụ tại `~/Development/meomeo`).
 
 ## 2. Chuẩn bị Biến môi trường (.env)
 
-Việc quan trọng đầu tiên là chuyển các callback và URL về domain `meomeo.devenir.shop`.
+Việc quan trọng đầu tiên là chuyển các callback và URL về domain `meomeo.quest`.
 
 **A. Tạo/Sửa file `server/.env`:**
 ```env
 PORT=5000
 NODE_ENV=production
-CLIENT_URL=https://meomeo.devenir.shop
-API_PUBLIC_URL=https://meomeo-api.devenir.shop
+CLIENT_URL=https://meomeo.quest
+API_PUBLIC_URL=https://meomeo-api.quest
 MONGODB_URI=your_mongodb_uri
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=7d
@@ -42,7 +42,7 @@ R2_PUBLIC_BASE_URL=
 
 **B. Tạo/Sửa file `client/.env.production`:**
 ```env
-VITE_API_URL=https://meomeo-api.devenir.shop/api
+VITE_API_URL=https://meomeo-api.quest/api
 ```
 
 ## 3. Cập nhật CORS Backend
@@ -52,7 +52,7 @@ Mở file `server/src/app.js` (hoặc `server.js`) và thêm domain vào mốc `
 ```javascript
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://meomeo.devenir.shop",
+  "https://meomeo.quest",
 ];
 ```
 
@@ -93,8 +93,8 @@ cloudflared tunnel create meomeo
 
 ### 5.3. Trỏ Map Domains (DNS)
 ```bash
-cloudflared tunnel route dns meomeo meomeo.devenir.shop
-cloudflared tunnel route dns meomeo meomeo-api.devenir.shop
+cloudflared tunnel route dns meomeo meomeo.quest
+cloudflared tunnel route dns meomeo meomeo-api.quest
 ```
 
 ### 5.4. Tạo file cấu hình Routing Config
@@ -105,11 +105,11 @@ credentials-file: /etc/cloudflared/<Thay-Bằng-TUNNEL_UUID>.json
 
 ingress:
   # API Backend -> Server Container Port 5000
-  - hostname: meomeo-api.devenir.shop
+  - hostname: meomeo-api.quest
     service: http://localhost:5000
     
   # Main Frontend App -> Client Container Port 5180
-  - hostname: meomeo.devenir.shop
+  - hostname: meomeo.quest
     service: http://localhost:5180
 
   # Bắt buộc: Catch-all rule cho 404
@@ -132,8 +132,8 @@ sudo systemctl enable cloudflared
 
 ## 6. Kiểm tra Hậu kiểm deployment
 Mọi thứ lúc này sẽ đã online và sẵn sàng sử dụng:
-🌐 **Web App:** [https://meomeo.devenir.shop](https://meomeo.devenir.shop)
-🔌 **API/Server:** [https://meomeo-api.devenir.shop](https://meomeo-api.devenir.shop)
+🌐 **Web App:** [https://meomeo.quest](https://meomeo.quest)
+🔌 **API/Server:** [https://meomeo-api.quest](https://meomeo-api.quest)
 
 ### Các câu lệnh Useful Tracking Log:
 ```bash
