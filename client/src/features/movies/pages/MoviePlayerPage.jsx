@@ -114,6 +114,18 @@ export default function MoviePlayerPage() {
     return () => window.clearTimeout(playerChromeTimeoutRef.current);
   }, [revealPlayerChrome]);
 
+  useEffect(() => {
+    const handleWindowBlur = () => {
+      if (document.activeElement?.tagName === "IFRAME") {
+        revealPlayerChrome();
+      }
+    };
+    window.addEventListener("blur", handleWindowBlur);
+    return () => {
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  }, [revealPlayerChrome]);
+
   // Force black background on html/body while in player to avoid white letterbox
   useEffect(() => {
     const html = document.documentElement;
@@ -200,8 +212,16 @@ export default function MoviePlayerPage() {
   const handleIgnoreResume = useCallback(() => {
     setShowResumePrompt(false);
   }, []);
-  const handlePlay = useCallback(() => setIsPlaying(true), []);
-  const handlePause = useCallback(() => setIsPlaying(false), []);
+  const handlePlay = useCallback(() => {
+    setIsPlaying(true);
+    revealPlayerChrome();
+  }, [revealPlayerChrome]);
+
+  const handlePause = useCallback(() => {
+    setIsPlaying(false);
+    revealPlayerChrome();
+  }, [revealPlayerChrome]);
+
   const handleEnded = useCallback(() => setIsPlaying(false), []);
   const handleError = useCallback(() => setPlayerError("Không thể phát phim. Hãy thử tải lại player."), []);
 
@@ -331,7 +351,7 @@ export default function MoviePlayerPage() {
 
         <button
           aria-label={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình ngang kèm phụ đề"}
-          className={`movie-player-fullscreen absolute z-30 grid h-12 w-12 place-items-center rounded-md text-white transition duration-300 ${showPlayerChrome ? "bg-black/65 opacity-100 backdrop-blur" : "bg-transparent opacity-0"}`}
+          className={`movie-player-fullscreen absolute z-30 grid h-12 w-12 place-items-center rounded-md text-white transition duration-300 ${showPlayerChrome ? "bg-black/65 opacity-100 backdrop-blur" : "bg-transparent opacity-0 pointer-events-none"}`}
           onClick={toggleFullscreen}
           onPointerEnter={revealPlayerChrome}
           onPointerMove={revealPlayerChrome}
