@@ -279,7 +279,7 @@ export default function MoviePlayerPage() {
   }
 
   if (isApiMovie && (detailQuery.isLoading || playbackQuery.isLoading)) {
-    return <div className="grid h-[100dvh] place-items-center bg-black text-white"><LoadingState label="Đang chuẩn bị phim..." /></div>;
+    return <div className="grid h-[100dvh] place-items-center bg-black text-white"><LoadingState label="Đang tải phim..." /></div>;
   }
   if (isApiMovie && (detailQuery.error || !detailQuery.data?.movie)) {
     return <Navigate replace to="/netflix" />;
