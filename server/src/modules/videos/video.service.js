@@ -140,6 +140,7 @@ export async function createVideo(data, adminUser) {
     description: data.description || "",
     thumbnailUrl: analyzed.video.thumbnailUrl,
     duration: analyzed.video.duration,
+    viewCount: analyzed.video.viewCount || 0,
     level: data.level || "A2",
     transcriptStatus,
     transcriptLanguage: analyzed.transcriptLanguage || "en",
@@ -171,6 +172,7 @@ export async function updateVideo(id, data) {
     if (!data.title) video.title = analyzed.video.title;
     video.thumbnailUrl = analyzed.video.thumbnailUrl;
     video.duration = analyzed.video.duration;
+    if (analyzed.video.viewCount !== undefined) video.viewCount = analyzed.video.viewCount;
   }
   if (data.title !== undefined) video.title = data.title;
   if (data.description !== undefined) video.description = data.description;

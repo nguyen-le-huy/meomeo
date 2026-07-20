@@ -151,6 +151,7 @@ export async function getYoutubeMetadata(youtubeUrl) {
       description: output.description || "",
       thumbnailUrl: output.thumbnail || `https://img.youtube.com/vi/${youtubeVideoId}/hqdefault.jpg`,
       duration: Number(output.duration || 0),
+      viewCount: Number(output.view_count || 0),
     },
   };
 }
@@ -336,6 +337,7 @@ export async function analyzeYoutubeUrl(youtubeUrl) {
         description: "",
         thumbnailUrl: `https://img.youtube.com/vi/${youtubeVideoId}/hqdefault.jpg`,
         duration: 0,
+        viewCount: 0,
         youtubeUrl,
       },
       transcriptLanguage: "",
