@@ -105,6 +105,20 @@ export default function MoviePlayerPage() {
     }
   }, [isPlaying]);
 
+  const lastMousePosRef = useRef({ x: 0, y: 0 });
+  const handlePointerMove = useCallback((e) => {
+    const { clientX, clientY } = e;
+    if (clientX === undefined || clientY === undefined) {
+      revealPlayerChrome();
+      return;
+    }
+    if (clientX === lastMousePosRef.current.x && clientY === lastMousePosRef.current.y) {
+      return;
+    }
+    lastMousePosRef.current = { x: clientX, y: clientY };
+    revealPlayerChrome();
+  }, [revealPlayerChrome]);
+
   useEffect(() => {
     localStorage.setItem("movie_subtitle_mode", subtitleMode);
   }, [subtitleMode]);
@@ -316,7 +330,7 @@ export default function MoviePlayerPage() {
         className={`movie-player-surface relative aspect-video w-full min-h-0 min-w-0 self-center bg-black ${isFullscreen ? "movie-player-force-landscape" : ""} ${isPseudoFullscreen ? "movie-player-pseudo-fullscreen" : ""}`}
         onFocusCapture={revealPlayerChrome}
         onPointerDown={revealPlayerChrome}
-        onPointerMove={revealPlayerChrome}
+        onPointerMove={handlePointerMove}
         ref={playerContainerRef}
       >
         {playbackQuery.data?.embedUrl ? (
@@ -338,7 +352,7 @@ export default function MoviePlayerPage() {
           </>
         )}
 
-        <div aria-hidden="true" className={`absolute inset-x-0 bottom-20 top-0 z-[19] cursor-pointer transition-all ${showPlayerChrome ? "pointer-events-none" : "pointer-events-auto"}`} onClick={togglePlayback} onPointerEnter={revealPlayerChrome} onPointerMove={revealPlayerChrome} />
+        <div aria-hidden="true" className={`absolute inset-x-0 bottom-20 top-0 z-[19] cursor-pointer transition-all ${showPlayerChrome ? "pointer-events-none" : "pointer-events-auto"}`} onClick={togglePlayback} onPointerEnter={handlePointerMove} onPointerMove={handlePointerMove} />
         <div className={`pointer-events-none absolute inset-x-0 top-0 z-10 h-28 bg-gradient-to-b from-black/80 to-transparent transition-opacity duration-300 ${showPlayerChrome ? "opacity-100" : "opacity-0"}`} />
         <div className={`movie-player-top-controls absolute z-20 flex items-center gap-3 transition duration-300 ${playerChromeClass}`}>
           <button aria-label="Quay lại thư viện phim" className="grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white/90 backdrop-blur transition hover:bg-black/70 hover:text-white" onClick={goBack} type="button"><ArrowLeft size={22} /></button>
