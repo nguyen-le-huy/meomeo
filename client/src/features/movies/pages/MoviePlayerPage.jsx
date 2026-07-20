@@ -186,10 +186,6 @@ export default function MoviePlayerPage() {
     if (savedTime && Number(savedTime) > 10) {
       setResumeTime(Number(savedTime));
       setShowResumePrompt(true);
-      window.clearTimeout(resumeTimeoutRef.current);
-      resumeTimeoutRef.current = window.setTimeout(() => {
-        setShowResumePrompt(false);
-      }, 8000);
     }
   }, [movieId]);
 
@@ -199,12 +195,10 @@ export default function MoviePlayerPage() {
       playerRef.current?.play();
     }
     setShowResumePrompt(false);
-    window.clearTimeout(resumeTimeoutRef.current);
   }, [resumeTime]);
 
   const handleIgnoreResume = useCallback(() => {
     setShowResumePrompt(false);
-    window.clearTimeout(resumeTimeoutRef.current);
   }, []);
   const handlePlay = useCallback(() => setIsPlaying(true), []);
   const handlePause = useCallback(() => setIsPlaying(false), []);
@@ -392,25 +386,30 @@ export default function MoviePlayerPage() {
         ) : null}
 
         {showResumePrompt && (
-          <div className="absolute bottom-24 left-4 right-4 z-40 flex items-center justify-between gap-3 rounded-lg bg-black/90 border border-white/15 px-4 py-3 text-white backdrop-blur-md shadow-2xl transition duration-300 sm:left-6 sm:right-auto sm:max-w-sm">
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs font-semibold text-white/50">Xem tiếp phim dở?</span>
-              <span className="truncate text-sm font-bold">Tiếp tục tại {formatDuration(resumeTime)}</span>
+          <div className="absolute bottom-24 left-4 right-4 z-40 flex items-center justify-between gap-4 rounded-xl bg-zinc-950/90 border border-white/10 p-4 text-white backdrop-blur-xl shadow-2xl transition-all duration-300 sm:left-6 sm:right-auto sm:max-w-md animate-fade-in">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="hidden sm:grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/5 border border-white/10 text-coral">
+                <RotateCcw size={15} />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-coral">BẠN ĐANG XEM DỞ</span>
+                <span className="truncate text-sm font-medium text-white/90">Xem tiếp từ {formatDuration(resumeTime)}?</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <button 
                 onClick={handleIgnoreResume} 
-                className="rounded px-2.5 py-1.5 text-xs font-medium text-white/60 hover:text-white transition"
+                className="rounded-md px-3 py-2 text-xs font-bold text-white/60 hover:bg-white/5 hover:text-white transition"
                 type="button"
               >
                 Bỏ qua
               </button>
               <button 
                 onClick={handleResume} 
-                className="rounded bg-coral px-3 py-1.5 text-xs font-bold text-white hover:bg-coral-strong transition"
+                className="rounded-md bg-white hover:bg-white/90 text-black px-4 py-2 text-xs font-bold shadow-md transition flex items-center gap-1.5"
                 type="button"
               >
-                Xem tiếp
+                <Play fill="currentColor" size={12} /> Xem tiếp
               </button>
             </div>
           </div>
