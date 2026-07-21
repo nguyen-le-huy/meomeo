@@ -207,6 +207,15 @@ html.movie-player-lock-scroll #root {
   }
 }
 
+/* Mobile landscape fullscreen: override 640px rule back to small */
+@media (max-width: 1023px) {
+  .movie-player-surface:fullscreen .movie-subtitle-line,
+  .movie-player-surface:-webkit-full-screen .movie-subtitle-line,
+  .movie-player-surface.movie-player-pseudo-fullscreen .movie-subtitle-line {
+    font-size: 11px !important;
+  }
+}
+
 @media (min-width: 1024px) {
   .movie-player-surface:fullscreen .movie-subtitle-line,
   .movie-player-surface:-webkit-full-screen .movie-subtitle-line,
