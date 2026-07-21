@@ -44,9 +44,6 @@ html.movie-player-lock-scroll #root {
   background: #000;
 }
 
-.movie-player-surface:fullscreen > div,
-.movie-player-surface:-webkit-full-screen > div,
-.movie-player-surface.movie-player-pseudo-fullscreen > div,
 .movie-player-surface:fullscreen iframe,
 .movie-player-surface:-webkit-full-screen iframe,
 .movie-player-surface.movie-player-pseudo-fullscreen iframe {
