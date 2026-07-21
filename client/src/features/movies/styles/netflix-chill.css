@@ -46,10 +46,7 @@ html.movie-player-lock-scroll #root {
 
 .movie-player-surface:fullscreen iframe,
 .movie-player-surface:-webkit-full-screen iframe,
-.movie-player-surface.movie-player-pseudo-fullscreen iframe,
-.movie-player-surface:fullscreen > div,
-.movie-player-surface:-webkit-full-screen > div,
-.movie-player-surface.movie-player-pseudo-fullscreen > div {
+.movie-player-surface.movie-player-pseudo-fullscreen iframe {
   width: 100% !important;
   height: 100% !important;
 }
@@ -86,6 +83,10 @@ html.movie-player-lock-scroll #root {
 
 .movie-subtitle-line {
   overflow-wrap: anywhere;
+}
+
+.movie-subtitle-line + .movie-subtitle-line {
+  margin-top: 0.1em;
 }
 
 .movie-subtitle-caption {
@@ -163,12 +164,12 @@ html.movie-player-lock-scroll #root {
   }
 
   .movie-subtitle-line {
-    font-size: clamp(1.05rem, 4.2vh, 1.45rem) !important;
+    font-size: clamp(1.2rem, 5vh, 1.6rem) !important;
     line-height: 1.32 !important;
   }
 
   .movie-subtitle-line + .movie-subtitle-line {
-    margin-top: 0;
+    margin-top: 0.1em;
   }
 
   .movie-subtitle-caption {
@@ -189,6 +190,31 @@ html.movie-player-lock-scroll #root {
     transform-origin: top left;
   }
 }
+
+/* Fullscreen Subtitle Overrides */
+.movie-player-surface:fullscreen .movie-subtitle-line,
+.movie-player-surface:-webkit-full-screen .movie-subtitle-line,
+.movie-player-surface.movie-player-pseudo-fullscreen .movie-subtitle-line {
+  font-size: 20px !important;
+  line-height: 1.32 !important;
+}
+
+@media (min-width: 640px) {
+  .movie-player-surface:fullscreen .movie-subtitle-line,
+  .movie-player-surface:-webkit-full-screen .movie-subtitle-line,
+  .movie-player-surface.movie-player-pseudo-fullscreen .movie-subtitle-line {
+    font-size: 26px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .movie-player-surface:fullscreen .movie-subtitle-line,
+  .movie-player-surface:-webkit-full-screen .movie-subtitle-line,
+  .movie-player-surface.movie-player-pseudo-fullscreen .movie-subtitle-line {
+    font-size: 34px !important;
+  }
+}
+
 
 @media (prefers-reduced-motion: reduce) {
   .netflix-chill *,

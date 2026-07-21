@@ -256,12 +256,12 @@ export default function BilingualWatchPage() {
 
               {activeSegment ? (
                 <div className="movie-subtitle-overlay pointer-events-none absolute inset-x-0 z-20 px-5 text-center sm:px-10">
-                  <div className="movie-subtitle-panel mx-auto flex max-w-4xl flex-col items-center gap-0 sm:gap-2">
-                    <p className="movie-subtitle-line text-[11px] font-normal leading-snug text-white sm:text-3xl">
+                  <div className="movie-subtitle-panel mx-auto flex max-w-4xl flex-col items-center gap-0">
+                    <p className="movie-subtitle-line text-[12px] font-normal leading-snug text-white sm:text-[18px] lg:text-xl">
                       <span className="movie-subtitle-caption">{activeSegment.text}</span>
                     </p>
                     {activeSegment.translationText ? (
-                      <p className="movie-subtitle-line text-[11px] font-normal leading-snug text-[#ffd86b] sm:text-3xl">
+                      <p className="movie-subtitle-line text-[12px] font-normal leading-snug text-[#ffd86b] sm:text-[18px] lg:text-xl">
                         <span className="movie-subtitle-caption movie-subtitle-caption-secondary">
                           {activeSegment.translationText}
                         </span>

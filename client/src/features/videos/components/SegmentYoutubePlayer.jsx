@@ -149,16 +149,31 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
           enablejsapi: 1,
           playsinline: 1,
           rel: 0,
+          cc_load_policy: 3,
+          iv_load_policy: 3,
           origin: window.location.origin,
         },
         events: {
-          onReady: () => {
+          onReady: (event) => {
             if (isMounted) {
+              try {
+                event.target.unloadModule("captions");
+                event.target.unloadModule("cc");
+              } catch (error) {
+                // Ignore if modules are not loaded
+              }
               setIsPlayerReady(true);
               onReadyChange?.(true);
             }
           },
           onStateChange: (event) => {
+            try {
+              event.target.unloadModule("captions");
+              event.target.unloadModule("cc");
+            } catch (error) {
+              // Ignore if modules are not loaded
+            }
+            
             if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
               setIsPlaying(false);
               onPlayingChange?.(false);
