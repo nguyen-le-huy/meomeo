@@ -61,7 +61,7 @@ export default function VideoColumn({
           </div>
         </div>
         <div className="hidden min-h-0 border-t border-coal/10 pt-4 xl:block">
-          <p className="text-xl font-bold leading-tight text-coal">{video.title}</p>
+          <p className="text-xl font-semibold leading-tight text-coal">{video.title}</p>
           <p className="mt-1 text-sm text-ink-muted">YouTube · {video.level}</p>
           {isAdmin ? (
             <Button

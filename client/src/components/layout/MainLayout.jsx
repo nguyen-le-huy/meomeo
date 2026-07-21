@@ -29,7 +29,6 @@ function Brand({ dark = false }) {
 
 function HeaderNavLink({ item, onClick }) {
   const location = useLocation();
-  const isReadingActive = item.to === "/reading" && location.pathname.startsWith("/reading");
   const isVocabularyActive = item.to === "/vocabulary" && location.pathname.startsWith("/vocabulary");
   const isYoutubeActive =
     item.to === "/youtube" &&
@@ -45,7 +44,7 @@ function HeaderNavLink({ item, onClick }) {
       className={({ isActive }) =>
         [
           "rounded-lg px-3 py-2 text-sm font-semibold transition",
-          isActive || isReadingActive || isVocabularyActive || isYoutubeActive || isNetflixActive
+          isActive || isVocabularyActive || isYoutubeActive || isNetflixActive
             ? isDark
               ? "bg-white/10 text-white"
               : "bg-cream text-coal"
@@ -74,7 +73,7 @@ export default function MainLayout() {
   const { logout, user } = useAuthStore();
   const isNetflixPage = location.pathname.startsWith("/netflix") || location.pathname.startsWith("/movies");
   const isNetflixPlayerPage = /^\/(netflix|movies)\/[^/]+$/.test(location.pathname);
-  const isImmersivePage = location.pathname.startsWith("/videos/") || location.pathname.startsWith("/reading/") || location.pathname.startsWith("/ebooks/") || isNetflixPlayerPage;
+  const isImmersivePage = location.pathname.startsWith("/videos/") || location.pathname.startsWith("/ebooks/") || isNetflixPlayerPage;
 
   useEffect(() => {
     if (mobileOpen) {

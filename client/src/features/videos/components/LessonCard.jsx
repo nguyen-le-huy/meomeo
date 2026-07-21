@@ -93,11 +93,11 @@ export default function LessonCard({
 
       <div className="grid grid-cols-[1fr_32px] gap-3 pt-3">
         <div className="min-w-0">
-          <h3 className="line-clamp-2 min-h-[40px] text-[15px] font-bold leading-5 text-coal sm:text-base sm:leading-[1.35]">
+          <h3 className="line-clamp-2 min-h-[40px] text-[15px] font-medium leading-5 text-coal sm:text-base sm:leading-[1.35]">
             {video.title}
           </h3>
-          <p className="mt-1 truncate text-[13px] font-semibold leading-5 text-ink-muted">{channelName}</p>
-          <p className="truncate text-[13px] font-semibold leading-5 text-ink-muted">{metaText}</p>
+          <p className="mt-1 truncate text-sm font-medium leading-5 text-ink-muted">{channelName}</p>
+          <p className="truncate text-sm font-medium leading-5 text-ink-muted">{metaText}</p>
           {!video.isPublished && isAdmin ? (
             <Badge className="mt-2 rounded bg-amber-100 px-2 py-1 text-[11px] font-bold text-amber-800">Nháp</Badge>
           ) : null}

@@ -8,9 +8,6 @@ import VideoLearningPage from "../features/videos/pages/VideoLearningPage.jsx";
 import VideoLibraryPage from "../features/videos/pages/VideoLibraryPage.jsx";
 import TopicVideosPage from "../features/videos/pages/TopicVideosPage.jsx";
 import BilingualWatchPage from "../features/bilingual/pages/BilingualWatchPage.jsx";
-import AdminReadingsPage from "../features/reading/pages/AdminReadingsPage.jsx";
-import ReadingLibraryPage from "../features/reading/pages/ReadingLibraryPage.jsx";
-import ReadingPracticePage from "../features/reading/pages/ReadingPracticePage.jsx";
 import EbookLibraryPage from "../features/ebooks/pages/EbookLibraryPage.jsx";
 import EbookReaderPage from "../features/ebooks/pages/EbookReaderPage.jsx";
 import AdminEbooksPage from "../features/ebooks/pages/AdminEbooksPage.jsx";
@@ -46,15 +43,12 @@ export const router = createBrowserRouter([
           { path: "netflix/:movieId", element: <MoviePlayerPage /> },
           { path: "movies", element: <NetflixChillPage /> },
           { path: "movies/:movieId", element: <MoviePlayerPage /> },
-          { path: "reading", element: <ReadingLibraryPage /> },
           { path: "vocabulary", element: <VocabularyDailyPage /> },
           { path: "vocabulary/:dayId", element: <VocabularyDayPathPage /> },
           { path: "vocabulary/:dayId/:lessonId", element: <VocabularyLessonPage /> },
-          { path: "readings", element: <Navigate to="/reading" replace /> },
           { path: "ebooks", element: <EbookLibraryPage /> },
           { path: "dictionary/history", element: <DictionaryHistoryPage /> },
           { path: "ebooks/:slug", element: <EbookReaderPage /> },
-          { path: "reading/:slug", element: <ReadingPracticePage /> },
           { path: "topics/:slug", element: <TopicVideosPage /> },
           { path: "videos/:id", element: <VideoLearningPage /> },
           { path: "videos/:id/dictation", element: <VideoLearningPage /> },
@@ -62,13 +56,12 @@ export const router = createBrowserRouter([
           {
             element: <ProtectedRoute allowedRoles={["admin"]} />,
             children: [
-              { path: "admin/readings", element: <AdminReadingsPage /> },
               { path: "admin/ebooks", element: <AdminEbooksPage /> },
               { path: "admin/vocabulary", element: <AdminVocabularyPage /> },
             ],
           },
-          { path: "admin", element: <Navigate to="/admin/readings" replace /> },
-          { path: "admin/*", element: <Navigate to="/admin/readings" replace /> },
+          { path: "admin", element: <Navigate to="/" replace /> },
+          { path: "admin/*", element: <Navigate to="/" replace /> },
         ],
       },
     ],

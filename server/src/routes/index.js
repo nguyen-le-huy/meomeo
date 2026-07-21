@@ -15,7 +15,7 @@ import dictationRoutes from "../modules/dictation/dictation.routes.js";
 import shadowingRoutes from "../modules/shadowing/shadowing.routes.js";
 import youtubeRoutes from "../modules/youtube/youtube.routes.js";
 import bilingualRoutes from "../modules/bilingual/bilingual.routes.js";
-import readingRoutes from "../modules/readings/reading.routes.js";
+
 import dictionaryRoutes from "../modules/dictionary/dictionary.routes.js";
 import ebookRoutes from "../modules/ebooks/ebook.routes.js";
 import movieRoutes from "../modules/movies/movie.routes.js";
@@ -39,7 +39,7 @@ router.use("/transcripts", transcriptRoutes);
 router.use("/dictation", dictationRoutes);
 router.use("/shadowing", shadowingRoutes);
 router.use("/youtube", youtubeRoutes);
-router.use("/readings", readingRoutes);
+
 router.use("/dictionary", dictionaryRoutes);
 router.use("/ebooks", ebookRoutes);
 router.use("/movies", movieRoutes);
