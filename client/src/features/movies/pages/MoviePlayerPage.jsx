@@ -206,12 +206,15 @@ export default function MoviePlayerPage() {
     }
   }, [movieId]);
 
+  const hasPromptedResumeRef = useRef(false);
   const handleReady = useCallback(() => {
     setPlayerError("");
+    if (hasPromptedResumeRef.current) return;
     const savedTime = localStorage.getItem(`meomeo_progress_${movieId}`);
     if (savedTime && Number(savedTime) > 10) {
       setResumeTime(Number(savedTime));
       setShowResumePrompt(true);
+      hasPromptedResumeRef.current = true;
     }
   }, [movieId]);
 
@@ -420,31 +423,31 @@ export default function MoviePlayerPage() {
         ) : null}
 
         {showResumePrompt && (
-          <div className="absolute bottom-24 left-4 right-4 z-40 flex items-center justify-between gap-4 rounded-xl bg-zinc-950/90 border border-white/10 p-4 text-white backdrop-blur-xl shadow-2xl transition-all duration-300 sm:left-6 sm:right-auto sm:max-w-md animate-fade-in">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="hidden sm:grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/5 border border-white/10 text-coral">
-                <RotateCcw size={15} />
+          <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
+            <div className="flex w-[85%] max-w-[320px] flex-col items-center gap-3 rounded-2xl border border-white/10 bg-zinc-950/95 p-5 text-center text-white shadow-2xl sm:max-w-sm sm:gap-4 sm:p-8">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-coral shadow-inner sm:h-14 sm:w-14">
+                <RotateCcw className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-coral">BẠN ĐANG XEM DỞ</span>
-                <span className="truncate text-sm font-medium text-white/90">Xem tiếp từ {formatDuration(resumeTime)}?</span>
+              <div className="flex flex-col gap-1 sm:gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-coral sm:text-xs">Bạn đang xem dở</span>
+                <span className="text-sm font-medium text-white/90 sm:text-base">Bạn có muốn xem tiếp từ <span className="text-white font-bold">{formatDuration(resumeTime)}</span> không?</span>
               </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button 
-                onClick={handleIgnoreResume} 
-                className="rounded-md px-3 py-2 text-xs font-bold text-white/60 hover:bg-white/5 hover:text-white transition"
-                type="button"
-              >
-                Bỏ qua
-              </button>
-              <button 
-                onClick={handleResume} 
-                className="rounded-md bg-white hover:bg-white/90 text-black px-4 py-2 text-xs font-bold shadow-md transition flex items-center gap-1.5"
-                type="button"
-              >
-                <Play fill="currentColor" size={12} /> Xem tiếp
-              </button>
+              <div className="mt-1 flex w-full gap-2 sm:mt-2 sm:gap-3">
+                <button 
+                  onClick={handleIgnoreResume} 
+                  className="flex-1 rounded-xl bg-white/10 px-3 py-2.5 text-xs font-bold text-white transition hover:bg-white/20 hover:text-white sm:px-4 sm:py-3 sm:text-sm"
+                  type="button"
+                >
+                  Bỏ qua
+                </button>
+                <button 
+                  onClick={handleResume} 
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-white px-3 py-2.5 text-xs font-bold text-black shadow-lg transition hover:bg-gray-200 sm:gap-2 sm:px-4 sm:py-3 sm:text-sm"
+                  type="button"
+                >
+                  <Play fill="currentColor" size={14} className="sm:h-4 sm:w-4" /> Xem tiếp
+                </button>
+              </div>
             </div>
           </div>
         )}
