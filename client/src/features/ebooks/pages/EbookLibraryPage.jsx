@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
+import ErrorState from "../../../components/ui/error-state.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import { useEbooks } from "../hooks/useEbooks.js";
 
@@ -74,7 +75,7 @@ export default function EbookLibraryPage() {
         </div>
 
         {isLoading ? <LoadingState className="mt-8" label="Đang tải thư viện..." /> : null}
-        {isError ? <p className="mt-8 text-sm font-semibold text-red-700">Không tải được thư viện ebook.</p> : null}
+        {isError ? <ErrorState className="mt-8" error={error} onRetry={() => window.location.reload()} title="Không tải được thư viện ebook" /> : null}
 
         {visibleEbooks.length ? (
           <div className="mt-8 grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-5 xl:grid-cols-6">

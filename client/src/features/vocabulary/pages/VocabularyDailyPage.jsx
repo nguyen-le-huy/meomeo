@@ -6,6 +6,7 @@ import { getDayCompletion, readVocabularyProgress } from "../utils/vocabularyPro
 import { useAuth } from "../../../hooks/useAuth.js";
 import { Button } from "../../../components/ui/button.jsx";
 import { usePublishedVocabularyCourses } from "../hooks/useVocabularyPublic.js";
+import ErrorState from "../../../components/ui/error-state.jsx";
 
 function getCompletionMeta(completion) {
   if (completion.isCompleted) {
@@ -38,7 +39,7 @@ export default function VocabularyDailyPage() {
   const [progress, setProgress] = useState(() => readVocabularyProgress());
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: publishedCourses = [] } = usePublishedVocabularyCourses();
+  const { data: publishedCourses = [], isLoading: coursesLoading, isError: coursesError, error: coursesErrorObj, refetch: refetchCourses } = usePublishedVocabularyCourses();
   const displayLessons = publishedCourses.length
     ? publishedCourses.map((course) => ({ id: course._id, title: course.title, subtitle: course.description || "Bài học từ vựng", words: [] }))
     : vocabularyDays;
@@ -73,6 +74,14 @@ export default function VocabularyDailyPage() {
           {user?.role === "admin" ? <Button onClick={() => navigate("/admin/vocabulary")} type="button" variant="outline"><Settings2 size={16} /> Quản lý bài học</Button> : null}
         </div>
 
+        {coursesError ? (
+          <ErrorState
+            className="mt-8"
+            error={coursesErrorObj}
+            onRetry={refetchCourses}
+            title="Không tải được danh sách bài học"
+          />
+        ) : (
         <div className="mt-8 grid gap-5">
           {displayLessons.map((day) => {
             const completion = getDayCompletion(progress, day.id, lessonTypes);
@@ -134,6 +143,7 @@ export default function VocabularyDailyPage() {
             );
           })}
         </div>
+        )}
       </div>
     </section>
   );

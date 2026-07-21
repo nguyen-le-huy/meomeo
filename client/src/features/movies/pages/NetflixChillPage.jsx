@@ -3,11 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
+import ErrorState from "../../../components/ui/error-state.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import AddMovieDialog from "../components/AddMovieDialog.jsx";
 import ManageMovieHeroDialog from "../components/ManageMovieHeroDialog.jsx";
 import MovieRow from "../components/MovieRow.jsx";
-import { movies as demoMovies } from "../data/netflixMockData.js";
+
 import { useMovieAdminMutations, useMovieLibrary } from "../hooks/useMovies.js";
 import { flattenMovieLibrary, normalizeMovie } from "../utils/movieData.js";
 import { uploadMovieFile } from "../utils/tusMovieUpload.js";
@@ -28,8 +29,8 @@ export default function NetflixChillPage() {
   const refetchLibrary = libraryQuery.refetch;
   const movieMutations = useMovieAdminMutations();
   const apiMovies = useMemo(() => flattenMovieLibrary(libraryQuery.data), [libraryQuery.data]);
-  const isOfflineDemo = libraryQuery.isError;
-  const allMovies = isOfflineDemo ? demoMovies : apiMovies;
+  const isOfflineDemo = false;
+  const allMovies = apiMovies;
   const visibleMovies = useMemo(() => {
     const term = search.trim().toLocaleLowerCase("vi");
     if (!term) return allMovies;
@@ -74,6 +75,19 @@ export default function NetflixChillPage() {
 
   if (libraryQuery.isLoading) {
     return <div className="grid min-h-[70vh] place-items-center bg-[#111] text-white"><LoadingState label="Đang tải thư viện phim..." /></div>;
+  }
+
+  if (libraryQuery.isError) {
+    return (
+      <div className="grid min-h-[70vh] place-items-center bg-[#111] px-4">
+        <ErrorState
+          dark
+          error={libraryQuery.error}
+          onRetry={libraryQuery.refetch}
+          title="Không tải được thư viện phim"
+        />
+      </div>
+    );
   }
 
   return (
