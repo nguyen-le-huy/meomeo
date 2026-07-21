@@ -212,7 +212,7 @@ html.movie-player-lock-scroll #root {
   .movie-player-surface:fullscreen .movie-subtitle-line,
   .movie-player-surface:-webkit-full-screen .movie-subtitle-line,
   .movie-player-surface.movie-player-pseudo-fullscreen .movie-subtitle-line {
-    font-size: 11px !important;
+    font-size: 14px !important;
   }
 }
 
