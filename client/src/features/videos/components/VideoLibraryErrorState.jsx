@@ -8,7 +8,7 @@ export default function VideoLibraryErrorState({ error, onRetry }) {
         <p className="font-display text-2xl text-red-900">Không tải được video.</p>
         <p className="mx-auto max-w-xl text-sm text-red-700">
           {error?.response?.data?.message ||
-            "Trình duyệt trong Instagram đang chặn hoặc không gọi được API. Bấm thử lại hoặc mở bằng trình duyệt ngoài."}
+            "Trình duyệt trong Instagram đang chặn web - dùng safari, chrome,... sẽ tốt hơn."}
         </p>
         <Button onClick={onRetry} type="button" variant="outline">
           Tải lại
