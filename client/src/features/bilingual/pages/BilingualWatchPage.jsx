@@ -220,6 +220,7 @@ export default function BilingualWatchPage() {
               ref={playerContainerRef}
             >
               <SegmentYoutubePlayer
+                className="movie-player-video-wrapper"
                 ref={playerRef}
                 continuous
                 immersive

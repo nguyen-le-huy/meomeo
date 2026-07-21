@@ -44,6 +44,12 @@ html.movie-player-lock-scroll #root {
   background: #000;
 }
 
+.movie-player-surface:fullscreen .movie-player-video-wrapper,
+.movie-player-surface:-webkit-full-screen .movie-player-video-wrapper,
+.movie-player-surface.movie-player-pseudo-fullscreen .movie-player-video-wrapper,
+.movie-player-surface:fullscreen .movie-player-video-wrapper > div,
+.movie-player-surface:-webkit-full-screen .movie-player-video-wrapper > div,
+.movie-player-surface.movie-player-pseudo-fullscreen .movie-player-video-wrapper > div,
 .movie-player-surface:fullscreen iframe,
 .movie-player-surface:-webkit-full-screen iframe,
 .movie-player-surface.movie-player-pseudo-fullscreen iframe {
