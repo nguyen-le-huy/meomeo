@@ -234,8 +234,8 @@ function CreateEbookDialog({ createMutation, onOpenChange, open }) {
           {error ? <p className="mx-5 mb-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700 sm:mx-6">{error}</p> : null}
           <div className="flex items-center justify-end gap-2 border-t border-[#e6dfd8] bg-cream-soft/45 px-5 py-4 sm:px-6">
             <Button disabled={createMutation.isPending} onClick={() => handleOpenChange(false)} type="button" variant="outline">Huỷ</Button>
-            <Button disabled={createMutation.isPending || !file || !title.trim()} type="submit">
-              <FileUp size={16} /> {createMutation.isPending ? "Đang tải lên..." : "Thêm ebook"}
+            <Button disabled={!file || !title.trim()} isLoading={createMutation.isPending} type="submit">
+              <FileUp size={16} /> Thêm ebook
             </Button>
           </div>
         </form>
@@ -375,8 +375,8 @@ function EbookEditDialog({ ebook, onOpenChange, updateMutation }) {
           {error ? <p className="mx-5 mb-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700 sm:mx-6">{error}</p> : null}
           <div className="flex items-center justify-end gap-2 border-t border-[#e6dfd8] bg-cream-soft/45 px-5 py-4 sm:px-6">
             <Button disabled={updateMutation.isPending} onClick={() => onOpenChange(false)} type="button" variant="outline">Huỷ</Button>
-            <Button disabled={updateMutation.isPending || !form.title.trim() || !form.slug.trim()} type="submit">
-              {updateMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+            <Button disabled={!form.title.trim() || !form.slug.trim()} isLoading={updateMutation.isPending} type="submit">
+              Lưu thay đổi
             </Button>
           </div>
         </form>
@@ -411,8 +411,8 @@ function DeleteEbookDialog({ ebook, onOpenChange, removeMutation }) {
         {removeMutation.isError ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">Không xoá được ebook. Vui lòng thử lại.</p> : null}
         <div className="mt-2 flex justify-end gap-2">
           <Button disabled={removeMutation.isPending} onClick={() => onOpenChange(false)} type="button" variant="outline">Huỷ</Button>
-          <Button disabled={removeMutation.isPending} onClick={confirmDelete} type="button" variant="destructive">
-            <Trash2 size={15} /> {removeMutation.isPending ? "Đang xoá..." : "Xoá ebook"}
+          <Button isLoading={removeMutation.isPending} onClick={confirmDelete} type="button" variant="destructive">
+            <Trash2 size={15} /> Xoá ebook
           </Button>
         </div>
       </DialogContent>

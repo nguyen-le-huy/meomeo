@@ -107,9 +107,8 @@ export default function EditMovieDialog({ movie, mutation }) {
           {error ? <Alert className="border-red-300/20 bg-red-300/10 text-red-100" variant="error">{error}</Alert> : null}
 
           <div className="flex justify-end">
-            <Button className="bg-[#e06f50] text-white hover:bg-[#c95f43]" disabled={mutation.isPending} type="submit">
-              {mutation.isPending ? <LoaderCircle className="animate-spin" size={16} /> : <Check size={16} />}
-              {mutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+            <Button className="bg-[#e06f50] text-white hover:bg-[#c95f43]" isLoading={mutation.isPending} type="submit">
+              Lưu thay đổi
             </Button>
           </div>
         </form>

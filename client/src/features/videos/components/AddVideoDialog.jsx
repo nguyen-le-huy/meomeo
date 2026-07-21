@@ -166,9 +166,8 @@ export default function AddVideoDialog({ createVideoMutation, onVideoCreated, to
               {createVideoMutation.error.response?.data?.message || "Không thêm được video."}
             </p>
           ) : null}
-          <Button disabled={createVideoMutation.isPending} type="submit">
-            {createVideoMutation.isPending ? <Spinner size="sm" /> : null}
-            {createVideoMutation.isPending ? "Đang phân tích transcript..." : "Thêm video"}
+          <Button disabled={!videoForm.youtubeUrl.trim()} isLoading={createVideoMutation.isPending} type="submit">
+            Thêm video
           </Button>
         </form>
       </DialogContent>

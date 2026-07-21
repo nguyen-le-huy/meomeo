@@ -577,12 +577,13 @@ export default function ShadowingPractice({
                     </Button>
                     <Button
                       className={cn("h-12 min-w-48 rounded-xl bg-coal text-sm font-bold text-white shadow-[0_14px_30px_rgba(20,20,19,0.18)] hover:bg-coral-dark", actionButtonMotionClass)}
-                      disabled={!isYoutubeReady || submitMutation.isPending || locked}
+                      disabled={!isYoutubeReady || locked}
+                      isLoading={submitMutation.isPending}
                       onClick={handleContinueAction}
                       type="button"
                     >
-                      {submitMutation.isPending ? <Spinner size="sm" /> : allCompleted ? <CheckCircle2 size={16} /> : <ChevronRight size={16} />}
-                      {allCompleted ? (submitMutation.isPending ? "Đang hoàn thành..." : "Hoàn thành") : "Tiếp tục"}
+                      {!submitMutation.isPending && (allCompleted ? <CheckCircle2 size={16} /> : <ChevronRight size={16} />)}
+                      {allCompleted ? "Hoàn thành" : "Tiếp tục"}
                     </Button>
                   </>
                 ) : (
@@ -613,11 +614,12 @@ export default function ShadowingPractice({
                       isRecording && recordingButtonClass,
                     )}
                     disabled={!canUseSegment || !hasStarted || assessMutation.isPending || locked}
+                    isLoading={assessMutation.isPending}
                     onClick={isRecording ? stopRecording : startRecording}
                     type="button"
                   >
-                    {assessMutation.isPending ? <Spinner size="sm" /> : <Mic className={cn(isRecording && "animate-bounce")} size={16} />}
-                    {assessMutation.isPending ? "Đang chấm..." : isRecording ? "Dừng ghi âm" : "Ghi âm"}
+                    <Mic className={cn(isRecording && "animate-bounce")} size={16} />
+                    {isRecording ? "Dừng ghi âm" : "Ghi âm"}
                   </Button>
                 </>
               )}
@@ -672,13 +674,15 @@ export default function ShadowingPractice({
 	                </span>
               </div>
               <Button
-                className={cn("mt-3 h-12 w-full rounded-xl bg-coal text-sm font-bold text-white shadow-[0_14px_30px_rgba(20,20,19,0.18)] hover:bg-coral-dark", actionButtonMotionClass)}
-                disabled={submitMutation.isPending}
-                onClick={handleSubmit}
+                className="mt-6 w-full rounded-full bg-coal hover:bg-coal/90"
+                disabled={locked}
+                isLoading={submitMutation.isPending}
+                onClick={() => submitMutation.mutate()}
+                size="lg"
                 type="button"
               >
-                {submitMutation.isPending ? <Spinner size="sm" /> : <CheckCircle2 size={16} />}
-                {submitMutation.isPending ? "Đang nộp..." : "Nộp bài"}
+                {!submitMutation.isPending && <CheckCircle2 size={18} />}
+                Nộp bài
               </Button>
               {submitMutation.isError ? (
                 <p className="mt-2 text-sm font-semibold text-red-600">
@@ -751,12 +755,13 @@ export default function ShadowingPractice({
             </Button>
             <Button
               className={cn("h-14 rounded-2xl bg-coal text-base font-bold text-white shadow-lg hover:bg-coral-dark", actionButtonMotionClass)}
-              disabled={!activeSegment || !isYoutubeReady || locked || submitMutation.isPending}
+              disabled={!activeSegment || !isYoutubeReady || locked}
+              isLoading={submitMutation.isPending}
               onClick={handleContinueAction}
               type="button"
             >
-              {submitMutation.isPending ? <Spinner size="sm" /> : allCompleted ? <CheckCircle2 size={17} /> : <ChevronRight size={17} />}
-              {allCompleted ? (submitMutation.isPending ? "Đang hoàn thành..." : "Hoàn thành") : "Tiếp tục"}
+              {!submitMutation.isPending && (allCompleted ? <CheckCircle2 size={17} /> : <ChevronRight size={17} />)}
+              {allCompleted ? "Hoàn thành" : "Tiếp tục"}
             </Button>
           </div>
         ) : (
@@ -766,19 +771,20 @@ export default function ShadowingPractice({
               actionButtonMotionClass,
               isRecording && recordingButtonClass,
             )}
-            disabled={!activeSegment || !isYoutubeReady || assessMutation.isPending || locked || submitMutation.isPending}
+            disabled={!activeSegment || !isYoutubeReady || locked}
+            isLoading={assessMutation.isPending || submitMutation.isPending}
             onClick={hasStarted && showResultActions && !isCurrentSegmentPassed ? handleRetryAction : handlePrimaryAction}
             type="button"
           >
-            {assessMutation.isPending || submitMutation.isPending ? (
-              <Spinner size="sm" />
-            ) : hasStarted ? (
-              <Mic className={cn(isRecording && "animate-bounce")} size={17} />
-            ) : (
-              <Play size={17} />
+            {!(assessMutation.isPending || submitMutation.isPending) && (
+              hasStarted ? (
+                <Mic className={cn(isRecording && "animate-bounce")} size={17} />
+              ) : (
+                <Play size={17} />
+              )
             )}
             {hasStarted
-              ? (submitMutation.isPending ? "Đang nộp..." : assessMutation.isPending ? "Đang chấm..." : isRecording ? "Dừng ghi âm" : showResultActions ? "Nói lại" : "Ghi âm")
+              ? (isRecording ? "Dừng ghi âm" : showResultActions ? "Nói lại" : "Ghi âm")
               : "Bắt đầu"}
           </Button>
         )}

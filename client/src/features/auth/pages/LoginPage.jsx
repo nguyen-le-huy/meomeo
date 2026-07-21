@@ -95,8 +95,8 @@ export default function LoginPage() {
 
                 {loginError ? <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{loginError}</div> : null}
 
-                <Button className="h-12 w-full" disabled={isSubmitting} type="submit">
-                  {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
+                <Button className="h-12 w-full" isLoading={isSubmitting} type="submit">
+                  Đăng nhập
                 </Button>
               </form>
             </CardContent>

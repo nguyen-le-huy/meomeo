@@ -1,5 +1,6 @@
 import { NotebookPen, Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "../../../components/ui/button.jsx";
 import { Spinner } from "../../../components/ui/spinner.jsx";
 import { getMaskedWords } from "../utils/dictationText.js";
 
@@ -260,14 +261,9 @@ function TranscriptCreateForm({ className = "", isSaving, lastEndTime = 0, onCan
         Hiển thị cho người học
       </label>
       <div className="flex gap-2">
-        <button
-          className="inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-coal text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={isSaving}
-          type="submit"
-        >
-          {isSaving ? <Spinner size="sm" /> : <Save size={15} />}
-          {isSaving ? "Đang lưu..." : "Lưu card"}
-        </button>
+        <Button disabled={!form.text.trim()} isLoading={isSaving} type="submit">
+          Lưu card
+        </Button>
         <button className="h-10 rounded-lg border border-[#e6dfd8] bg-white px-3 text-sm font-black text-coal" onClick={onCancel} type="button">
           Hủy
         </button>
