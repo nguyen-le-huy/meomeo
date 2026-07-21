@@ -443,7 +443,7 @@ export default function ShadowingPractice({
           </div>
 
           <SegmentYoutubePlayer
-            className="xl:h-[min(38vh,340px)] xl:shrink-0"
+            className="xl:h-[min(40vh,340px)] xl:shrink-0"
             disableInteraction
             fitDesktop
             onPlayingChange={onPlayingChange}
@@ -454,7 +454,7 @@ export default function ShadowingPractice({
             youtubeVideoId={video.youtubeVideoId}
           />
 
-          <div className="min-h-0 space-y-3 px-3 py-4 md:px-0 xl:flex xl:flex-1 xl:flex-col xl:overflow-hidden xl:py-2">
+          <div className="min-h-0 space-y-3 px-3 py-4 md:px-0 xl:flex xl:flex-1 xl:flex-col xl:overflow-y-auto xl:py-2">
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
               <div aria-hidden="true" />
               <div className="flex items-center justify-center gap-2">
@@ -540,7 +540,7 @@ export default function ShadowingPractice({
               </div>
             ) : null}
 
-            <div className="max-h-[calc(100dvh-430px)] min-h-[210px] space-y-3 overflow-y-auto overscroll-contain pb-2 pr-1 xl:min-h-0 xl:flex-1 xl:overflow-hidden xl:pb-0 xl:pr-0">
+            <div className="max-h-[calc(100dvh-430px)] min-h-[210px] space-y-3 overflow-y-auto overscroll-contain pb-2 pr-1 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:pb-0 xl:pr-0">
               <CurrentTurnCard
                 assessmentResult={assessmentResult}
                 bestScore={currentBestScore}
@@ -562,7 +562,7 @@ export default function ShadowingPractice({
               />
             </div>
 
-            <div className="hidden items-center justify-center gap-3 xl:flex">
+            <div className="hidden shrink-0 items-center justify-center gap-3 pt-2 xl:flex">
               {showResultActions ? (
                 isCurrentSegmentPassed ? (
                   <>
