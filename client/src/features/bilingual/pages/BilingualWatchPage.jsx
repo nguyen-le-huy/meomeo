@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { Badge } from "../../../components/ui/badge.jsx";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
+import { useLandscapeFullscreen } from "../../../hooks/useLandscapeFullscreen.js";
 import SegmentYoutubePlayer from "../../videos/components/SegmentYoutubePlayer.jsx";
 import BilingualSubtitleList from "../components/BilingualSubtitleList.jsx";
 import BilingualAdminToolbar from "../components/BilingualAdminToolbar.jsx";
@@ -29,8 +30,7 @@ export default function BilingualWatchPage() {
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isVideoEnded, setIsVideoEnded] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
+  const { isFullscreen, isPseudoFullscreen, toggleFullscreen } = useLandscapeFullscreen(playerContainerRef);
 
   const { data, isLoading, error } = useBilingualVideo(id);
   const generateVietsubMutation = useGenerateVietsub(id);
@@ -71,87 +71,10 @@ export default function BilingualWatchPage() {
     [currentTime, isPlaying, isVideoEnded],
   );
 
-  const handleToggleFullscreen = useCallback(
-    async (e) => {
-      e?.stopPropagation();
-      const container = playerContainerRef.current;
-      if (!container) return;
-      const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
-
-      if (fullscreenElement || isPseudoFullscreen) {
-        if (fullscreenElement) {
-          const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
-          try {
-            await exitFullscreen?.call(document);
-          } catch {
-            // Orientation unlocking or exit fullscreen gesture
-          }
-        }
-        setIsPseudoFullscreen(false);
-        setIsFullscreen(false);
-        document.documentElement.classList.remove("movie-player-lock-scroll");
-        try {
-          window.screen.orientation?.unlock?.();
-        } catch {
-          // Ignore unsupported orientation unlock
-        }
-        return;
-      }
-
-      document.documentElement.classList.add("movie-player-lock-scroll");
-      const requestFullscreen = container.requestFullscreen || container.webkitRequestFullscreen;
-      if (requestFullscreen) {
-        try {
-          await requestFullscreen.call(container, { navigationUI: "hide" });
-          setIsFullscreen(true);
-          try {
-            await window.screen.orientation?.lock?.("landscape");
-          } catch {
-            // CSS rotates player if screen orientation lock fails
-          }
-          return;
-        } catch {
-          // iPhone Safari rejects fullscreen for non-video elements
-        }
-      }
-
-      setIsPseudoFullscreen(true);
-      setIsFullscreen(true);
-    },
-    [isPseudoFullscreen],
-  );
-
-  useEffect(() => {
-    function handleFullscreenChange() {
-      const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
-      const playerIsFullscreen = fullscreenElement === playerContainerRef.current;
-      setIsFullscreen(playerIsFullscreen);
-      const playerIsPseudoFullscreen = playerContainerRef.current?.classList.contains("movie-player-pseudo-fullscreen");
-      if (!playerIsFullscreen && !playerIsPseudoFullscreen) {
-        document.documentElement.classList.remove("movie-player-lock-scroll");
-        try {
-          window.screen.orientation?.unlock?.();
-        } catch {
-          // Ignore unsupported orientation unlock
-        }
-      }
-    }
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
-    window.addEventListener("resize", handleFullscreenChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
-      window.removeEventListener("resize", handleFullscreenChange);
-      document.documentElement.classList.remove("movie-player-lock-scroll");
-      try {
-        window.screen.orientation?.unlock?.();
-      } catch {
-        // Ignore unsupported orientation unlock
-      }
-    };
-  }, []);
+  const handleToggleFullscreen = useCallback((event) => {
+    event?.stopPropagation();
+    toggleFullscreen();
+  }, [toggleFullscreen]);
 
   const handleVietsubDone = useCallback(() => {
     generateVietsubMutation.reset?.();

@@ -39,13 +39,6 @@ const BunnyStreamPlayer = forwardRef(function BunnyStreamPlayer(
     },
     seek(seconds) {
       playerRef.current?.setCurrentTime(Number(seconds) || 0);
-    },
-    togglePlay() {
-      if (!playerRef.current) return;
-      playerRef.current.getPaused?.((paused) => {
-        if (paused) playerRef.current.play();
-        else playerRef.current.pause();
-      });
     }
   }));
 
@@ -85,6 +78,7 @@ const BunnyStreamPlayer = forwardRef(function BunnyStreamPlayer(
   return (
     <iframe
       allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+      allowFullScreen
       className="absolute inset-0 h-full w-full border-0"
       ref={iframeRef}
       src={embedUrl}

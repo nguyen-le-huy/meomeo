@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
+import { useLandscapeFullscreen } from "../../../hooks/useLandscapeFullscreen.js";
 import BunnyStreamPlayer from "../components/BunnyStreamPlayer.jsx";
 import MoviePlayerAdminTools from "../components/MoviePlayerAdminTools.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
@@ -75,8 +76,7 @@ export default function MoviePlayerPage() {
   const [subtitleMode, setSubtitleMode] = useState(() => localStorage.getItem("movie_subtitle_mode") || "bilingual");
   const [playerError, setPlayerError] = useState("");
   const [showPlayerChrome, setShowPlayerChrome] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
+  const { isFullscreen, isPseudoFullscreen, toggleFullscreen } = useLandscapeFullscreen(playerContainerRef);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [resumeTime, setResumeTime] = useState(0);
   const resumeTimeoutRef = useRef(null);
@@ -155,38 +155,6 @@ export default function MoviePlayerPage() {
   }, []);
 
   useEffect(() => {
-    function handleFullscreenChange() {
-      const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
-      const playerIsFullscreen = fullscreenElement === playerContainerRef.current;
-      setIsFullscreen(playerIsFullscreen);
-      const playerIsPseudoFullscreen = playerContainerRef.current?.classList.contains("movie-player-pseudo-fullscreen");
-      if (!playerIsFullscreen && !playerIsPseudoFullscreen) {
-        document.documentElement.classList.remove("movie-player-lock-scroll");
-        try {
-          window.screen.orientation?.unlock?.();
-        } catch {
-          // Orientation unlocking is not available in every mobile browser.
-        }
-      }
-    }
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
-    window.addEventListener("resize", handleFullscreenChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
-      window.removeEventListener("resize", handleFullscreenChange);
-      document.documentElement.classList.remove("movie-player-lock-scroll");
-      try {
-        window.screen.orientation?.unlock?.();
-      } catch {
-        // Orientation unlocking is not available in every mobile browser.
-      }
-    };
-  }, []);
-
-  useEffect(() => {
     if (!mockMovie || !isPlaying) return undefined;
     const interval = window.setInterval(() => setCurrentTime((time) => time + 0.25), 250);
     return () => window.clearInterval(interval);
@@ -255,8 +223,13 @@ export default function MoviePlayerPage() {
       setIsPlaying((value) => !value);
       return;
     }
-    playerRef.current?.togglePlay?.();
-  }, [mockMovie]);
+
+    if (isPlaying) {
+      playerRef.current?.pause?.();
+    } else {
+      playerRef.current?.play?.();
+    }
+  }, [isPlaying, mockMovie]);
 
   function seek(seconds) {
     setCurrentTime(seconds);
@@ -267,52 +240,6 @@ export default function MoviePlayerPage() {
     setIsPlaying(true);
     playerRef.current?.seek(seconds);
     playerRef.current?.play();
-  }
-
-  async function toggleFullscreen() {
-    const container = playerContainerRef.current;
-    if (!container) return;
-    const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
-
-    if (fullscreenElement || isPseudoFullscreen) {
-      if (fullscreenElement) {
-        const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
-        try {
-          await exitFullscreen?.call(document);
-        } catch {
-          // The browser may already be leaving fullscreen through a system gesture.
-        }
-      }
-      setIsPseudoFullscreen(false);
-      setIsFullscreen(false);
-      document.documentElement.classList.remove("movie-player-lock-scroll");
-      try {
-        window.screen.orientation?.unlock?.();
-      } catch {
-        // Orientation unlocking is not available in every mobile browser.
-      }
-      return;
-    }
-
-    document.documentElement.classList.add("movie-player-lock-scroll");
-    const requestFullscreen = container.requestFullscreen || container.webkitRequestFullscreen;
-    if (requestFullscreen) {
-      try {
-        await requestFullscreen.call(container, { navigationUI: "hide" });
-        setIsFullscreen(true);
-        try {
-          await window.screen.orientation?.lock?.("landscape");
-        } catch {
-          // CSS rotates the player on iOS and browsers without orientation lock.
-        }
-        return;
-      } catch {
-        // iPhone Safari can reject fullscreen for non-video elements.
-      }
-    }
-
-    setIsPseudoFullscreen(true);
-    setIsFullscreen(true);
   }
 
   if (isApiMovie && (detailQuery.isLoading || playbackQuery.isLoading)) {
