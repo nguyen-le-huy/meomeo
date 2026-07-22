@@ -4,10 +4,6 @@ function getFullscreenElement() {
   return document.fullscreenElement || document.webkitFullscreenElement || null;
 }
 
-function isIPhone() {
-  return /iPhone|iPod/i.test(window.navigator.userAgent);
-}
-
 export function useLandscapeFullscreen(containerRef) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
@@ -44,7 +40,7 @@ export function useLandscapeFullscreen(containerRef) {
 
   const leavePseudoFullscreen = useCallback(() => {
     pseudoFullscreenRef.current = false;
-    containerRef.current?.classList.remove("movie-player-pseudo-fullscreen", "movie-player-force-landscape");
+    containerRef.current?.classList.remove("movie-player-pseudo-fullscreen");
     setIsPseudoFullscreen(false);
     setIsFullscreen(false);
     unlockPage();
@@ -57,7 +53,7 @@ export function useLandscapeFullscreen(containerRef) {
     lockedScrollYRef.current = window.scrollY;
     document.body.style.setProperty("--movie-player-scroll-top", `-${lockedScrollYRef.current}px`);
     document.documentElement.classList.add("movie-player-lock-scroll", "movie-player-ios-lock");
-    container.classList.add("movie-player-pseudo-fullscreen", "movie-player-force-landscape");
+    container.classList.add("movie-player-pseudo-fullscreen");
     pseudoFullscreenRef.current = true;
     updateViewportSize();
     setIsPseudoFullscreen(true);
@@ -87,13 +83,6 @@ export function useLandscapeFullscreen(containerRef) {
       return;
     }
 
-    // iPhone Safari does not allow arbitrary elements/iframes to enter fullscreen.
-    // Enter the overlay synchronously so the tap has no rejected-promise delay or flash.
-    if (isIPhone()) {
-      enterPseudoFullscreen();
-      return;
-    }
-
     document.documentElement.classList.add("movie-player-lock-scroll");
     const requestFullscreen = container.requestFullscreen || container.webkitRequestFullscreen;
     if (requestFullscreen) {
@@ -103,7 +92,8 @@ export function useLandscapeFullscreen(containerRef) {
         try {
           await window.screen.orientation?.lock?.("landscape");
         } catch {
-          // The CSS fallback keeps the player landscape when orientation lock is unavailable.
+          // Safari versions without orientation locking still allow the user to rotate
+          // the native fullscreen view normally.
         }
         return;
       } catch {
@@ -145,7 +135,7 @@ export function useLandscapeFullscreen(containerRef) {
       window.removeEventListener("orientationchange", updateViewportSize);
       viewport?.removeEventListener("resize", updateViewportSize);
 
-      containerRef.current?.classList.remove("movie-player-pseudo-fullscreen", "movie-player-force-landscape");
+      containerRef.current?.classList.remove("movie-player-pseudo-fullscreen");
       pseudoFullscreenRef.current = false;
       unlockPage();
     };

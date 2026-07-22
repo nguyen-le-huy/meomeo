@@ -139,7 +139,7 @@ export default function BilingualWatchPage() {
 
           <div className="flex min-h-0 min-w-0 flex-none items-center justify-center overflow-hidden bg-[#11110f] lg:flex-1 lg:p-5 lg:[container-type:size] 2xl:p-7">
             <div
-              className={`movie-player-surface relative w-full max-w-full shrink-0 overflow-hidden bg-black shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:rounded-xl lg:w-[min(100cqw,calc(100cqh*16/9))] ${isFullscreen ? "movie-player-force-landscape" : ""} ${isPseudoFullscreen ? "movie-player-pseudo-fullscreen" : ""}`}
+              className={`movie-player-surface relative w-full max-w-full shrink-0 overflow-hidden bg-black shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:rounded-xl lg:w-[min(100cqw,calc(100cqh*16/9))] ${isPseudoFullscreen ? "movie-player-pseudo-fullscreen" : ""}`}
               ref={playerContainerRef}
             >
               <SegmentYoutubePlayer

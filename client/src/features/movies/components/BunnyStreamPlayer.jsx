@@ -77,7 +77,7 @@ const BunnyStreamPlayer = forwardRef(function BunnyStreamPlayer(
 
   return (
     <iframe
-      allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+      allow="accelerometer; gyroscope; autoplay; encrypted-media; fullscreen; picture-in-picture"
       allowFullScreen
       className="absolute inset-0 h-full w-full border-0"
       ref={iframeRef}

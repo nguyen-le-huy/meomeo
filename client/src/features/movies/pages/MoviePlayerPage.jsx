@@ -257,7 +257,7 @@ export default function MoviePlayerPage() {
   return (
     <div className="netflix-chill movie-player-shell grid h-[100dvh] min-w-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-black text-white lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-1">
       <main
-        className={`movie-player-surface relative aspect-video w-full min-h-0 min-w-0 self-center bg-black ${isFullscreen ? "movie-player-force-landscape" : ""} ${isPseudoFullscreen ? "movie-player-pseudo-fullscreen" : ""}`}
+        className={`movie-player-surface relative aspect-video w-full min-h-0 min-w-0 self-center bg-black ${isPseudoFullscreen ? "movie-player-pseudo-fullscreen" : ""}`}
         onFocusCapture={revealPlayerChrome}
         onPointerDown={revealPlayerChrome}
         onPointerMove={handlePointerMove}

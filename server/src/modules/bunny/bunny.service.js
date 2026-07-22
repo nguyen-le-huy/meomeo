@@ -114,7 +114,7 @@ export function createPlaybackData(videoId) {
   }
 
   return {
-    embedUrl: `https://iframe.mediadelivery.net/embed/${config.bunnyStream.libraryId}/${videoId}?${query}`,
+    embedUrl: `https://player.mediadelivery.net/embed/${config.bunnyStream.libraryId}/${videoId}?${query}`,
     expires,
   };
 }

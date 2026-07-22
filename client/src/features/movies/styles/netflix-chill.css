@@ -192,20 +192,6 @@ html.movie-player-ios-lock body {
   }
 }
 
-@media (orientation: portrait) and (max-width: 1023px) {
-  .movie-player-surface.movie-player-force-landscape:fullscreen,
-  .movie-player-surface.movie-player-force-landscape:-webkit-full-screen,
-  .movie-player-surface.movie-player-force-landscape.movie-player-pseudo-fullscreen {
-    inset: auto !important;
-    top: 0 !important;
-    left: var(--movie-player-viewport-width, 100vw) !important;
-    width: var(--movie-player-viewport-height, 100dvh) !important;
-    height: var(--movie-player-viewport-width, 100vw) !important;
-    transform: rotate(90deg);
-    transform-origin: top left;
-  }
-}
-
 /* Fullscreen Subtitle Overrides */
 .movie-player-surface:fullscreen .movie-subtitle-line,
 .movie-player-surface:-webkit-full-screen .movie-subtitle-line,
