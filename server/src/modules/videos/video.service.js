@@ -269,6 +269,8 @@ export async function analyzeVideoTranscript(id) {
   video.transcriptError = "";
   video.bilingualStatus = "none";
   video.bilingualError = "";
+  video.bilingualModel = "";
+  video.bilingualGeneratedAt = undefined;
   await video.save();
 
   try {

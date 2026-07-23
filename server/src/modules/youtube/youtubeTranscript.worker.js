@@ -1,7 +1,12 @@
 import { TranscriptSegment } from "../transcripts/transcriptSegment.model.js";
 import { VideoLesson } from "../videos/video.model.js";
 import { transcribeAudioFile } from "../speech/azureTranscription.service.js";
-import { analyzeYoutubeUrl, downloadYoutubeAudio, normalizeTranscriptSegments } from "./youtube.service.js";
+import {
+  analyzeYoutubeUrl,
+  downloadYoutubeAudio,
+  normalizeTranscriptSegments,
+  requiresAudioWordAlignment,
+} from "./youtube.service.js";
 import { YoutubeTranscriptJob } from "./youtubeTranscriptJob.model.js";
 
 const pollIntervalMs = 2000;
@@ -103,6 +108,9 @@ async function processJob(job) {
   try {
     await updateVideoStage(video._id, "transcribing_audio", 60);
     const transcription = await transcribeAudioFile(downloaded.audioPath, { locale: "en-US" });
+    if (requiresAudioWordAlignment(transcription.segments)) {
+      throw new Error("Azure Speech did not return word timestamps required to synchronize long transcript cues.");
+    }
     await updateVideoStage(video._id, "creating_segments", 90);
     await replaceSegments(video, transcription.segments, "azure_speech", transcription.language);
   } finally {

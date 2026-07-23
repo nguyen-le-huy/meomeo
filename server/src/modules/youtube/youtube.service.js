@@ -94,12 +94,28 @@ function normalizeSegment(segment, index) {
   const duration = Number(segment.duration ?? 0);
   const endTime = Number(segment.end ?? segment.endTime ?? startTime + duration);
   const text = normalizeTranscriptText(segment.text);
+  const words = Array.isArray(segment.words)
+    ? segment.words
+        .map((word) => ({
+          text: normalizeTranscriptText(word.text),
+          startTime: Number(word.startTime),
+          endTime: Number(word.endTime),
+        }))
+        .filter(
+          (word) =>
+            word.text &&
+            Number.isFinite(word.startTime) &&
+            Number.isFinite(word.endTime) &&
+            word.endTime > word.startTime,
+        )
+    : [];
 
   return {
     index,
     startTime,
     endTime,
     text,
+    words,
   };
 }
 
@@ -228,8 +244,9 @@ function parseJson3Subtitle(rawSubtitle) {
 
   return events
     .map((event) => {
+      const eventSegments = event.segs || [];
       const text = normalizeTranscriptText(
-        (event.segs || [])
+        eventSegments
           .map((segment) => segment.utf8 || "")
           .join("")
           .replace(/\n/g, " "),
@@ -237,10 +254,33 @@ function parseJson3Subtitle(rawSubtitle) {
 
       const startTime = Number(event.tStartMs || 0) / 1000;
       const duration = Number(event.dDurationMs || 0) / 1000;
+      const endTime = startTime + duration;
+      const words = eventSegments.flatMap((segment, segmentIndex) => {
+        const segmentText = normalizeTranscriptText(segment.utf8 || "");
+        const tokens = segmentText.split(/\s+/).filter(Boolean);
+        if (!tokens.length) return [];
+
+        const segmentStart = startTime + Number(segment.tOffsetMs || 0) / 1000;
+        const nextOffset = eventSegments
+          .slice(segmentIndex + 1)
+          .find((nextSegment) => Number.isFinite(Number(nextSegment.tOffsetMs)))?.tOffsetMs;
+        const segmentEnd = nextOffset === undefined
+          ? endTime
+          : Math.min(endTime, startTime + Number(nextOffset) / 1000);
+        const tokenDuration = Math.max(0.04, (segmentEnd - segmentStart) / tokens.length);
+
+        return tokens.map((token, tokenIndex) => ({
+          text: token,
+          startTime: segmentStart + tokenDuration * tokenIndex,
+          endTime: Math.min(segmentEnd, segmentStart + tokenDuration * (tokenIndex + 1)),
+        }));
+      });
+
       return {
         startTime,
-        endTime: startTime + duration,
+        endTime,
         text,
+        words,
       };
     })
     .filter((segment) => segment.text);
@@ -309,13 +349,73 @@ function mergeTwoSegments(current, next) {
     startTime: current.startTime,
     endTime: next.endTime,
     text: normalizeTranscriptText(`${current.text} ${next.text}`),
+    words: [...(current.words || []), ...(next.words || [])],
   };
+}
+
+const maxSegmentWords = 12;
+const minSegmentWords = 4;
+const strongBoundaryPattern = /[.!?][\"')\]]*$/;
+const softBoundaryPattern = /[,;:][\"')\]]*$/;
+
+function chooseChunkEnd(tokens, startIndex) {
+  const remaining = tokens.length - startIndex;
+  if (remaining <= maxSegmentWords) return tokens.length;
+
+  const maximumEnd = Math.min(tokens.length, startIndex + maxSegmentWords);
+  const minimumEnd = Math.min(maximumEnd, startIndex + minSegmentWords);
+  let softBoundary = -1;
+
+  for (let end = minimumEnd; end <= maximumEnd; end += 1) {
+    const token = tokens[end - 1]?.text || "";
+    if (strongBoundaryPattern.test(token)) return end;
+    if (softBoundaryPattern.test(token)) softBoundary = end;
+  }
+
+  let selectedEnd = softBoundary > 0 ? softBoundary : maximumEnd;
+  const wordsLeft = tokens.length - selectedEnd;
+  if (wordsLeft > 0 && wordsLeft < minSegmentWords) {
+    selectedEnd = Math.max(minimumEnd, tokens.length - minSegmentWords);
+  }
+  return selectedEnd;
+}
+
+function splitLongSegment(segment) {
+  const fallbackTokens = segment.text.split(/\s+/).filter(Boolean).map((text) => ({ text }));
+  const timedWords = segment.words?.length ? segment.words : null;
+  const tokens = timedWords || fallbackTokens;
+
+  if (tokens.length <= maxSegmentWords) return [segment];
+  // Never invent sub-cue timestamps. Long cues without word timing must be
+  // aligned from audio by the worker instead of being split proportionally.
+  if (!timedWords) return [segment];
+
+  const chunks = [];
+  let startIndex = 0;
+
+  while (startIndex < tokens.length) {
+    const endIndex = chooseChunkEnd(tokens, startIndex);
+    const chunkTokens = tokens.slice(startIndex, endIndex);
+    const chunkStart = chunkTokens[0].startTime;
+    const chunkEnd = chunkTokens[chunkTokens.length - 1].endTime;
+
+    chunks.push({
+      startTime: Math.max(segment.startTime, chunkStart),
+      endTime: Math.min(segment.endTime, Math.max(chunkStart + 0.04, chunkEnd)),
+      text: normalizeTranscriptText(chunkTokens.map((token) => token.text).join(" ")),
+      words: chunkTokens,
+    });
+    startIndex = endIndex;
+  }
+
+  return chunks;
 }
 
 export function mergeShortSegments(segments) {
   const normalizedSegments = segments
     .map((segment, index) => normalizeSegment(segment, index + 1))
-    .filter((segment) => segment.text && segment.endTime >= segment.startTime);
+    .filter((segment) => segment.text && segment.endTime >= segment.startTime)
+    .flatMap(splitLongSegment);
   const merged = [];
 
   for (const segment of normalizedSegments) {
@@ -325,9 +425,8 @@ export function mergeShortSegments(segments) {
     const mergedDuration = previous ? segment.endTime - previous.startTime : 0;
     const shouldMergeWithPrevious =
       previous &&
-      (previousWordCount < 2 ||
-        segmentWordCount < 2 ||
-        (previousWordCount + segmentWordCount <= 12 && mergedDuration <= 8));
+      previousWordCount + segmentWordCount <= maxSegmentWords &&
+      mergedDuration <= 8;
 
     if (shouldMergeWithPrevious) {
       merged[merged.length - 1] = mergeTwoSegments(previous, segment);
@@ -344,6 +443,14 @@ export function normalizeTranscriptSegments(segments) {
   return mergeShortSegments(segments);
 }
 
+export function requiresAudioWordAlignment(segments = []) {
+  return segments.some((segment) => {
+    const wordCount = getWordCount(segment.text);
+    const timedWordCount = Array.isArray(segment.words) ? segment.words.length : 0;
+    return wordCount > maxSegmentWords && timedWordCount < wordCount * 0.8;
+  });
+}
+
 export async function analyzeYoutubeUrl(youtubeUrl) {
   const youtubeVideoId = extractYoutubeVideoId(youtubeUrl);
 
@@ -352,6 +459,16 @@ export async function analyzeYoutubeUrl(youtubeUrl) {
 
     try {
       const transcript = await getYoutubeTranscript(metadata);
+      if (requiresAudioWordAlignment(transcript.transcripts)) {
+        return {
+          video: metadata.video,
+          transcriptLanguage: transcript.language,
+          transcriptSource: transcript.source,
+          transcripts: [],
+          transcriptError: "YouTube subtitles do not contain precise word timestamps for long cues.",
+          requiresAudioAlignment: true,
+        };
+      }
       const transcripts = normalizeTranscriptSegments(transcript.transcripts);
 
       return {

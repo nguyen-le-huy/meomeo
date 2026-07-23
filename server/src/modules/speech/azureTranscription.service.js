@@ -68,6 +68,15 @@ export async function transcribeAudioFile(audioPath, options = {}) {
           startTime,
           endTime: startTime + duration,
           text: String(phrase.text || "").trim(),
+          words: (phrase.words || []).map((word) => {
+            const wordStart = Number(word.offsetMilliseconds || 0) / 1000;
+            const wordDuration = Number(word.durationMilliseconds || 0) / 1000;
+            return {
+              text: String(word.text || "").trim(),
+              startTime: wordStart,
+              endTime: wordStart + wordDuration,
+            };
+          }),
         };
       })
       .filter((segment) => segment.text && segment.endTime > segment.startTime);

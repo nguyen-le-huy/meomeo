@@ -19,10 +19,22 @@ export default function BilingualAdminToolbar({
 }) {
   const isGenerating = generateVietsubMutation?.isPending;
   const mutationError = generateVietsubMutation?.error?.response?.data?.message || generateVietsubMutation?.error?.message;
-  const displayError = mutationError || bilingualError;
+  const analyzeError =
+    analyzeTranscriptMutation?.error?.response?.data?.message || analyzeTranscriptMutation?.error?.message;
+  const displayError = analyzeError || mutationError || bilingualError;
   const canGenerate =
     transcriptStatus === "completed" && !isGenerating && hasSegments && bilingualStatus !== "processing";
   const hasTranslation = bilingualStatus === "completed";
+
+  function handleAnalyzeTranscript() {
+    if (transcriptStatus === "completed") {
+      const confirmed = window.confirm(
+        "Phân tích lại sẽ thay toàn bộ transcript hiện tại và xoá Vietsub đã ghép. Bạn muốn tiếp tục?",
+      );
+      if (!confirmed) return;
+    }
+    analyzeTranscriptMutation?.mutate();
+  }
 
   return (
     <div className="space-y-3 rounded-xl bg-cream-soft p-4">
@@ -50,16 +62,16 @@ export default function BilingualAdminToolbar({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        {transcriptStatus === "failed" ? (
+        {transcriptStatus !== "pending" && transcriptStatus !== "processing" ? (
           <Button
             disabled={analyzeTranscriptMutation?.isPending}
-            onClick={() => analyzeTranscriptMutation?.mutate()}
+            onClick={handleAnalyzeTranscript}
             size="sm"
             type="button"
             variant="outline"
           >
             {analyzeTranscriptMutation?.isPending ? <Spinner size="sm" /> : <RefreshCw className="mr-1 h-3 w-3" />}
-            Thử lại transcript
+            {transcriptStatus === "completed" ? "Phân tích lại transcript" : "Thử lại transcript"}
           </Button>
         ) : null}
         <Button
