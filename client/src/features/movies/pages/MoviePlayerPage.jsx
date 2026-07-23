@@ -1,9 +1,8 @@
-import { ArrowLeft, Captions, Maximize, Minimize, Pause, Play, RefreshCw, RotateCcw } from "lucide-react";
+import { ArrowLeft, Captions, Pause, Play, RefreshCw, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
-import { useLandscapeFullscreen } from "../../../hooks/useLandscapeFullscreen.js";
 import BunnyStreamPlayer from "../components/BunnyStreamPlayer.jsx";
 import MoviePlayerAdminTools from "../components/MoviePlayerAdminTools.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
@@ -11,13 +10,6 @@ import { getMovieById } from "../data/netflixMockData.js";
 import { useMovieAdminMutations, useMovieDetail, useMoviePlayback } from "../hooks/useMovies.js";
 import { normalizeMovie } from "../utils/movieData.js";
 import "../styles/netflix-chill.css";
-
-const subtitleModes = [
-  { id: "bilingual", label: "Song ngữ" },
-  { id: "english", label: "English" },
-  { id: "vietnamese", label: "Tiếng Việt" },
-  { id: "off", label: "Tắt" },
-];
 
 function pollPendingPlayback(query) {
   return query.state.status === "error" ? 10_000 : false;
@@ -54,9 +46,7 @@ export default function MoviePlayerPage() {
   const isAdmin = useAuthStore((state) => state.user?.role === "admin");
   const movieMutations = useMovieAdminMutations();
   const playerRef = useRef(null);
-  const playerContainerRef = useRef(null);
   const transcriptScrollRef = useRef(null);
-  const playerChromeTimeoutRef = useRef(null);
   const isApiMovie = /^[0-9a-f]{24}$/i.test(movieId || "");
   const mockMovie = isApiMovie ? null : getMovieById(movieId);
   const detailQuery = useMovieDetail(movieId, { enabled: isApiMovie });
@@ -73,10 +63,7 @@ export default function MoviePlayerPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [subtitleMode, setSubtitleMode] = useState(() => localStorage.getItem("movie_subtitle_mode") || "bilingual");
   const [playerError, setPlayerError] = useState("");
-  const [showPlayerChrome, setShowPlayerChrome] = useState(true);
-  const { isFullscreen, isPseudoFullscreen, toggleFullscreen } = useLandscapeFullscreen(playerContainerRef);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [resumeTime, setResumeTime] = useState(0);
   const resumeTimeoutRef = useRef(null);
@@ -87,7 +74,6 @@ export default function MoviePlayerPage() {
     };
   }, []);
   const activeSegmentIndex = useMemo(() => findActiveSegmentIndex(segments, currentTime), [currentTime, segments]);
-  const activeSegment = activeSegmentIndex >= 0 ? segments[activeSegmentIndex] : null;
   const playbackPending = isApiMovie && playbackQuery.isError;
   const transcriptVirtualizer = useVirtualizer({
     count: segments.length,
@@ -96,49 +82,6 @@ export default function MoviePlayerPage() {
     getScrollElement: () => transcriptScrollRef.current,
     overscan: 6,
   });
-
-  const revealPlayerChrome = useCallback(() => {
-    window.clearTimeout(playerChromeTimeoutRef.current);
-    setShowPlayerChrome(true);
-    if (isPlaying) {
-      playerChromeTimeoutRef.current = window.setTimeout(() => setShowPlayerChrome(false), 2500);
-    }
-  }, [isPlaying]);
-
-  const lastMousePosRef = useRef({ x: 0, y: 0 });
-  const handlePointerMove = useCallback((e) => {
-    const { clientX, clientY } = e;
-    if (clientX === undefined || clientY === undefined) {
-      revealPlayerChrome();
-      return;
-    }
-    if (clientX === lastMousePosRef.current.x && clientY === lastMousePosRef.current.y) {
-      return;
-    }
-    lastMousePosRef.current = { x: clientX, y: clientY };
-    revealPlayerChrome();
-  }, [revealPlayerChrome]);
-
-  useEffect(() => {
-    localStorage.setItem("movie_subtitle_mode", subtitleMode);
-  }, [subtitleMode]);
-
-  useEffect(() => {
-    revealPlayerChrome();
-    return () => window.clearTimeout(playerChromeTimeoutRef.current);
-  }, [revealPlayerChrome]);
-
-  useEffect(() => {
-    const handleWindowBlur = () => {
-      if (document.activeElement?.tagName === "IFRAME") {
-        revealPlayerChrome();
-      }
-    };
-    window.addEventListener("blur", handleWindowBlur);
-    return () => {
-      window.removeEventListener("blur", handleWindowBlur);
-    };
-  }, [revealPlayerChrome]);
 
   // Force black background on html/body while in player to avoid white letterbox
   useEffect(() => {
@@ -199,13 +142,11 @@ export default function MoviePlayerPage() {
   }, []);
   const handlePlay = useCallback(() => {
     setIsPlaying(true);
-    revealPlayerChrome();
-  }, [revealPlayerChrome]);
+  }, []);
 
   const handlePause = useCallback(() => {
     setIsPlaying(false);
-    revealPlayerChrome();
-  }, [revealPlayerChrome]);
+  }, []);
 
   const handleEnded = useCallback(() => setIsPlaying(false), []);
   const handleError = useCallback(() => setPlayerError("Không thể phát phim. Hãy thử tải lại player."), []);
@@ -217,19 +158,6 @@ export default function MoviePlayerPage() {
   function toggleMockPlayback() {
     if (mockMovie) setIsPlaying((value) => !value);
   }
-
-  const togglePlayback = useCallback(() => {
-    if (mockMovie) {
-      setIsPlaying((value) => !value);
-      return;
-    }
-
-    if (isPlaying) {
-      playerRef.current?.pause?.();
-    } else {
-      playerRef.current?.play?.();
-    }
-  }, [isPlaying, mockMovie]);
 
   function seek(seconds) {
     setCurrentTime(seconds);
@@ -250,18 +178,10 @@ export default function MoviePlayerPage() {
   }
   if (!movie) return <Navigate replace to="/netflix" />;
 
-  const playerChromeClass = showPlayerChrome
-    ? "translate-y-0 opacity-100"
-    : "pointer-events-none -translate-y-2 opacity-0";
-
   return (
     <div className="netflix-chill movie-player-shell grid h-[100dvh] min-w-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-black text-white lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-1">
       <main
-        className={`movie-player-surface relative aspect-video w-full min-h-0 min-w-0 self-center bg-black ${isPseudoFullscreen ? "movie-player-pseudo-fullscreen" : ""}`}
-        onFocusCapture={revealPlayerChrome}
-        onPointerDown={revealPlayerChrome}
-        onPointerMove={handlePointerMove}
-        ref={playerContainerRef}
+        className="movie-player-surface relative aspect-video w-full min-h-0 min-w-0 self-center bg-black"
       >
         {playbackQuery.data?.embedUrl ? (
           <BunnyStreamPlayer
@@ -282,27 +202,10 @@ export default function MoviePlayerPage() {
           </>
         )}
 
-        <div aria-hidden="true" className="absolute inset-x-0 bottom-20 top-0 z-[19] cursor-pointer pointer-events-auto" onClick={togglePlayback} onPointerEnter={handlePointerMove} onPointerMove={handlePointerMove} />
-        <div className={`pointer-events-none absolute inset-x-0 top-0 z-10 h-28 bg-gradient-to-b from-black/80 to-transparent transition-opacity duration-300 ${showPlayerChrome ? "opacity-100" : "opacity-0"}`} />
-        <div className={`movie-player-top-controls absolute z-20 flex items-center gap-3 transition duration-300 ${playerChromeClass}`}>
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-black/65 to-transparent" />
+        <div className="movie-player-top-controls absolute z-20 flex items-center gap-3">
           <button aria-label="Quay lại thư viện phim" className="grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white/90 backdrop-blur transition hover:bg-black/70 hover:text-white" onClick={goBack} type="button"><ArrowLeft size={22} /></button>
-          <div className="hidden rounded-full bg-black/50 p-1 backdrop-blur sm:flex">
-            {subtitleModes.map((mode) => (
-              <button className={`h-8 rounded-full px-4 text-[13px] font-medium transition ${subtitleMode === mode.id ? "bg-white text-black shadow-sm" : "text-white/70 hover:text-white"}`} key={mode.id} onClick={() => setSubtitleMode(mode.id)} type="button">{mode.label}</button>
-            ))}
-          </div>
         </div>
-
-        <button
-          aria-label={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình ngang kèm phụ đề"}
-          className={`movie-player-fullscreen absolute z-30 grid h-12 w-12 place-items-center rounded-md text-white transition duration-300 ${showPlayerChrome ? "bg-black/65 opacity-100 backdrop-blur" : "bg-transparent opacity-0 pointer-events-none"}`}
-          onClick={toggleFullscreen}
-          onPointerEnter={revealPlayerChrome}
-          onPointerMove={revealPlayerChrome}
-          type="button"
-        >
-          {isFullscreen ? <Minimize size={21} /> : <Maximize size={21} />}
-        </button>
 
         {mockMovie ? (
           <div className="absolute inset-0 z-10 grid place-items-center">
@@ -320,23 +223,6 @@ export default function MoviePlayerPage() {
               <button className="mx-auto mt-4 inline-flex h-10 items-center gap-2 rounded-md bg-white px-4 text-sm font-bold text-black hover:bg-white/85" onClick={() => playbackQuery.refetch()} type="button">
                 <RefreshCw size={16} /> Thử lại
               </button>
-            </div>
-          </div>
-        ) : null}
-
-        {activeSegment && subtitleMode !== "off" ? (
-          <div className="movie-subtitle-overlay pointer-events-none absolute inset-x-0 z-20 px-5 text-center sm:px-10">
-            <div className="movie-subtitle-panel mx-auto flex max-w-4xl flex-col items-center gap-0">
-              {subtitleMode !== "vietnamese" ? (
-                <p className="movie-subtitle-line text-[12px] font-normal leading-snug text-white sm:text-[18px] lg:text-xl">
-                  <span className="movie-subtitle-caption">{activeSegment.text}</span>
-                </p>
-              ) : null}
-              {subtitleMode !== "english" && activeSegment.translationText ? (
-                <p className="movie-subtitle-line text-[12px] font-normal leading-snug text-[#ffd86b] sm:text-[18px] lg:text-xl">
-                  <span className="movie-subtitle-caption movie-subtitle-caption-secondary">{activeSegment.translationText}</span>
-                </p>
-              ) : null}
             </div>
           </div>
         ) : null}
@@ -400,11 +286,6 @@ export default function MoviePlayerPage() {
             translationCount={segments.filter((segment) => segment.translationText?.trim()).length}
           />
         ) : null}
-        <div className="movie-player-mobile-modes mx-4 my-3 flex rounded-lg bg-white/5 p-1 lg:hidden">
-          {subtitleModes.map((mode) => (
-            <button className={`flex-1 rounded-md py-1.5 text-xs font-medium transition ${subtitleMode === mode.id ? "bg-white/15 text-white shadow-sm" : "text-white/40"}`} key={mode.id} onClick={() => setSubtitleMode(mode.id)} type="button">{mode.label}</button>
-          ))}
-        </div>
         <div className="movie-transcript-scroll min-h-0 flex-1 overflow-y-auto px-4 pb-4" ref={transcriptScrollRef}>
           {segments.length ? (
             <div className="relative w-full" style={{ height: `${transcriptVirtualizer.getTotalSize()}px` }}>

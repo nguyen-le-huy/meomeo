@@ -4,12 +4,13 @@ import ImportViTextDialog from "./ImportViTextDialog.jsx";
 
 export default function MoviePlayerAdminTools({ eligibility, movie, mutations, segmentCount, segments, translationCount }) {
   const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busyAction, setBusyAction] = useState("");
   const [showViTextDialog, setShowViTextDialog] = useState(false);
+  const busy = Boolean(busyAction);
 
   async function importSubtitle(language, file) {
     if (!file) return;
-    setBusy(true);
+    setBusyAction(`import-${language}`);
     setMessage("");
     try {
       const previewResponse = await mutations.importSubtitle.mutateAsync({ id: movie._id, language, file, dryRun: true });
@@ -23,7 +24,7 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
     } catch (error) {
       setMessage(error.response?.data?.message || "Import phụ đề thất bại");
     } finally {
-      setBusy(false);
+      setBusyAction("");
     }
   }
 
@@ -33,7 +34,7 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
       ? `Phim đã có đủ ${translationCount} câu Vietsub. Tạo lại toàn bộ bằng AI?`
       : `Dùng AI để dịch ${Math.max(0, segmentCount - translationCount)} câu chưa có Vietsub?`;
     if (!window.confirm(prompt)) return;
-    setBusy(true);
+    setBusyAction("vietsub");
     setMessage(`AI đang dịch ${force ? segmentCount : Math.max(0, segmentCount - translationCount)} câu. Không đóng trang này...`);
     try {
       const response = await mutations.generateVietsub.mutateAsync({ id: movie._id, force });
@@ -42,20 +43,20 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
     } catch (error) {
       setMessage(error.response?.data?.message || "Không thể tạo Vietsub");
     } finally {
-      setBusy(false);
+      setBusyAction("");
     }
   }
 
   async function syncBunny() {
-    setBusy(true);
-    setMessage("Đang đồng bộ trạng thái video với Bunny...");
+    setBusyAction("sync");
+    setMessage("Đang đồng bộ video và 3 track phụ đề với Bunny...");
     try {
       await mutations.sync.mutateAsync(movie._id);
-      setMessage("Đã đồng bộ trạng thái video với Bunny.");
+      setMessage("Đã đồng bộ video và phụ đề Song ngữ / English / Tiếng Việt với Bunny.");
     } catch (error) {
       setMessage(error.response?.data?.message || "Không thể đồng bộ với Bunny");
     } finally {
-      setBusy(false);
+      setBusyAction("");
     }
   }
 
@@ -69,7 +70,7 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
   return (
     <div className="shrink-0 border-b border-white/10 bg-[#171717] p-2.5 sm:p-3">
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-        <button className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium disabled:opacity-40 sm:h-9 sm:w-auto sm:px-3 sm:text-xs" disabled={busy} onClick={syncBunny} type="button"><RefreshCw className={busy ? "animate-spin" : ""} size={14} /> Đồng bộ</button>
+        <button className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium disabled:opacity-40 sm:h-9 sm:w-auto sm:px-3 sm:text-xs" disabled={busy} onClick={syncBunny} type="button"><RefreshCw className={busyAction === "sync" ? "animate-spin" : ""} size={14} /> Đồng bộ Bunny</button>
         <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium sm:h-9 sm:w-auto sm:px-3 sm:text-xs"><Captions size={14} /> Import EN<input accept=".srt,.vtt" className="sr-only" disabled={busy} onChange={(event) => importSubtitle("en", event.target.files?.[0])} type="file" /></label>
         <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium sm:h-9 sm:w-auto sm:px-3 sm:text-xs"><Languages size={14} /> Import VI (.srt)<input accept=".srt,.vtt" className="sr-only" disabled={busy} onChange={(event) => importSubtitle("vi", event.target.files?.[0])} type="file" /></label>
         <button
@@ -88,8 +89,8 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
           title="Dịch phụ đề English sang tiếng Việt bằng AI"
           type="button"
         >
-          {busy ? <LoaderCircle className="animate-spin" size={14} /> : <Sparkles size={14} />}
-          {busy ? "AI đang dịch..." : "Tạo Vietsub bằng AI"}
+          {busyAction === "vietsub" ? <LoaderCircle className="animate-spin" size={14} /> : <Sparkles size={14} />}
+          {busyAction === "vietsub" ? "AI đang dịch..." : "Tạo Vietsub bằng AI"}
         </button>
         <button
           className={`col-span-2 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded px-3 text-[11px] font-semibold sm:h-9 sm:w-auto sm:text-xs ${movie.isPublished ? "bg-white/10 text-white" : "bg-[#e06f50] text-white"}`}

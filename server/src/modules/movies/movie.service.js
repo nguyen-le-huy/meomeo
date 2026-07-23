@@ -21,6 +21,7 @@ import { createHttpError } from "../../utils/createHttpError.js";
 import { cloudinary } from "../../config/cloudinary.js";
 import { parseSubtitle } from "./subtitleParser.js";
 import { parsePlainTextVi } from "./plainTextViParser.js";
+import { syncMovieCaptions } from "./movieCaption.service.js";
 
 const MOVIE_FILTER = { source: "bunny", contentType: "movie", deletedAt: { $exists: false } };
 
@@ -311,6 +312,7 @@ export async function syncMovieStreamStatus(id) {
   const remote = await getBunnyVideo(movie.bunnyVideoId);
   await applyBunnyMetadata(movie, remote);
   await movie.save();
+  if (movie.streamStatus === "ready") await syncMovieCaptions(movie);
   return movie;
 }
 
@@ -339,6 +341,11 @@ export async function getMoviePlayback(id, options = {}) {
   if (movie.streamStatus !== "ready") {
     throw createHttpError(409, `Video đang được Bunny encode (${movie.encodeProgress || 0}%)`);
   }
+  try {
+    await syncMovieCaptions(movie);
+  } catch (error) {
+    console.error(`[Bunny captions] Không thể đồng bộ phụ đề cho phim ${movie._id}:`, error.message);
+  }
   return createPlaybackData(movie.bunnyVideoId);
 }
 
@@ -352,6 +359,7 @@ export async function importEnglishSubtitle(id, content, dryRun) {
   movie.transcriptStatus = segments.length ? "completed" : "failed";
   movie.transcriptError = "";
   await movie.save();
+  await syncMovieCaptions(movie);
   return { ...preview, savedCount: segments.length };
 }
 
@@ -392,6 +400,7 @@ export async function importVietnameseSubtitle(id, content, dryRun) {
   movie.bilingualStatus = matches.length === englishSegments.length ? "completed" : "pending";
   movie.bilingualError = "";
   await movie.save();
+  await syncMovieCaptions(movie);
   return { ...preview, savedCount: matches.length };
 }
 
@@ -447,6 +456,7 @@ export async function importVietnamesePlainText(id, content, dryRun) {
   movie.bilingualStatus = totalTranslated >= englishSegments.length ? "completed" : "pending";
   movie.bilingualError = "";
   await movie.save();
+  await syncMovieCaptions(movie);
 
   return { ...preview, savedCount: updatedCount };
 }
@@ -454,6 +464,7 @@ export async function importVietnamesePlainText(id, content, dryRun) {
 export async function generateMovieVietsub(id, options = {}) {
   const movie = await getMovieDocument(id, { admin: true });
   const result = await generateVietsub(movie._id.toString(), options);
+  await syncMovieCaptions(movie);
   return {
     translatedCount: result.translatedCount,
     failedCount: result.failedCount,
@@ -465,6 +476,7 @@ export async function publishMovie(id, isPublished) {
   if (isPublished) {
     const eligibility = await getMoviePublishEligibility(movie);
     if (!eligibility.eligible) throw createHttpError(409, "Movie is not eligible for publishing", eligibility.reasons);
+    await syncMovieCaptions(movie);
     movie.publishedAt = new Date();
   }
   movie.isPublished = isPublished;

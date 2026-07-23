@@ -88,6 +88,14 @@ const videoLessonSchema = new mongoose.Schema(
     bilingualModel: { type: String, default: "" },
     bilingualError: { type: String, default: "" },
     bilingualGeneratedAt: { type: Date },
+    bunnyCaptionSyncStatus: {
+      type: String,
+      enum: ["pending", "processing", "synced", "failed"],
+      default: "pending",
+    },
+    bunnyCaptionSyncHash: { type: String, default: "" },
+    bunnyCaptionSyncError: { type: String, default: "" },
+    bunnyCaptionsSyncedAt: { type: Date },
   },
   { timestamps: true },
 );

@@ -2,6 +2,21 @@ import { TranscriptSegment } from "./transcriptSegment.model.js";
 import { VideoLesson } from "../videos/video.model.js";
 import { createHttpError } from "../../utils/createHttpError.js";
 
+async function markCaptionSyncPending(videoIds) {
+  const ids = [...new Set([videoIds].flat().filter(Boolean).map(String))];
+  if (!ids.length) return;
+  await VideoLesson.updateMany(
+    { _id: { $in: ids }, source: "bunny", contentType: "movie" },
+    {
+      $set: {
+        bunnyCaptionSyncStatus: "pending",
+        bunnyCaptionSyncHash: "",
+        bunnyCaptionSyncError: "",
+      },
+    },
+  );
+}
+
 function normalizeText(text) {
   return String(text || "")
     .toLowerCase()
@@ -51,6 +66,7 @@ export async function createSegment(data) {
   video.transcriptError = "";
   if (!video.transcriptLanguage) video.transcriptLanguage = "en";
   await video.save();
+  await markCaptionSyncPending(video._id);
 
   return segment;
 }
@@ -86,12 +102,13 @@ export async function updateSegment(segmentId, data) {
   }
 
   await segment.save();
+  await markCaptionSyncPending(segment.videoId);
   return segment;
 }
 
 export async function bulkUpdateTranslations(updates) {
   const segmentIds = updates.map(({ segmentId }) => segmentId);
-  const existingSegments = await TranscriptSegment.find({ _id: { $in: segmentIds } }).select("_id").lean();
+  const existingSegments = await TranscriptSegment.find({ _id: { $in: segmentIds } }).select("_id videoId").lean();
 
   if (existingSegments.length !== segmentIds.length) {
     throw createHttpError(404, "Some transcript segments were not found");
@@ -125,6 +142,7 @@ export async function bulkUpdateTranslations(updates) {
     }),
     { ordered: false },
   );
+  await markCaptionSyncPending(existingSegments.map((segment) => segment.videoId));
 
   return {
     matchedCount: result.matchedCount,
@@ -160,6 +178,7 @@ export async function mergeWithNextSegment(segmentId) {
       return item.save();
     }),
   );
+  await markCaptionSyncPending(segment.videoId);
 
   return segment;
 }
@@ -167,19 +186,21 @@ export async function mergeWithNextSegment(segmentId) {
 export async function deleteSegment(segmentId) {
   const segment = await getSegment(segmentId);
   await segment.deleteOne();
+  await markCaptionSyncPending(segment.videoId);
 
   return { id: segmentId };
 }
 
 export async function deleteSegments(segmentIds) {
   const uniqueSegmentIds = [...new Set(segmentIds)];
-  const segments = await TranscriptSegment.find({ _id: { $in: uniqueSegmentIds } }).select("_id");
+  const segments = await TranscriptSegment.find({ _id: { $in: uniqueSegmentIds } }).select("_id videoId");
 
   if (segments.length !== uniqueSegmentIds.length) {
     throw createHttpError(404, "Some transcript segments were not found");
   }
 
   await TranscriptSegment.deleteMany({ _id: { $in: uniqueSegmentIds } });
+  await markCaptionSyncPending(segments.map((segment) => segment.videoId));
 
   return { ids: uniqueSegmentIds, deletedCount: uniqueSegmentIds.length };
 }
@@ -204,6 +225,7 @@ export async function reorderSegments(segmentIds) {
       return segment.save();
     }),
   );
+  await markCaptionSyncPending(segments[0].videoId);
 
   return TranscriptSegment.find({ videoId: segments[0].videoId }).sort({ index: 1 });
 }

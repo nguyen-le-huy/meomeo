@@ -49,6 +49,7 @@ export function useMovieAdminMutations() {
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["movie-library"] });
     queryClient.invalidateQueries({ queryKey: ["movie"] });
+    queryClient.invalidateQueries({ queryKey: ["movie-playback"] });
   };
 
   return {

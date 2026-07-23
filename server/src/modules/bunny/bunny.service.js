@@ -83,6 +83,20 @@ export async function deleteBunnyVideo(videoId) {
   return bunnyRequest(`/library/${config.bunnyStream.libraryId}/videos/${videoId}`, { method: "DELETE" });
 }
 
+export async function upsertBunnyCaption(videoId, { srclang, label, content }) {
+  return bunnyRequest(
+    `/library/${config.bunnyStream.libraryId}/videos/${videoId}/captions/${encodeURIComponent(srclang)}`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        srclang,
+        label,
+        captionsFile: Buffer.from(content, "utf8").toString("base64"),
+      }),
+    },
+  );
+}
+
 export function createTusUploadCredentials(videoId) {
   assertConfigured();
   const expirationTime = Math.floor(Date.now() / 1000) + config.bunnyStream.uploadExpiresIn;
@@ -107,7 +121,11 @@ export function createPlaybackData(videoId) {
   const token = tokenKey
     ? crypto.createHash("sha256").update(`${tokenKey}${videoId}${expires}`).digest("hex")
     : "";
-  const query = new URLSearchParams({ autoplay: "false", preload: "true" });
+  const query = new URLSearchParams({
+    autoplay: "false",
+    captions: "bi",
+    preload: "true",
+  });
   if (token) {
     query.set("token", token);
     query.set("expires", String(expires));
