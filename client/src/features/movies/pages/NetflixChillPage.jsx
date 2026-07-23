@@ -1,5 +1,5 @@
 import { AlertTriangle, Info, Play, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
@@ -12,7 +12,6 @@ import MovieRow from "../components/MovieRow.jsx";
 import { useMovieAdminMutations, useMovieLibrary } from "../hooks/useMovies.js";
 import { flattenMovieLibrary, normalizeMovie } from "../utils/movieData.js";
 import { uploadMovieFile } from "../utils/tusMovieUpload.js";
-import { syncStreamStatus } from "../services/movieApi.js";
 import "../styles/netflix-chill.css";
 
 export default function NetflixChillPage() {
@@ -24,9 +23,24 @@ export default function NetflixChillPage() {
   const [adminError, setAdminError] = useState("");
   const libraryQuery = useMovieLibrary(
     { includeUnpublished: isAdmin || undefined },
-    { refetchInterval: isAdmin ? 5000 : false },
+    {
+          refetchInterval: isAdmin
+        ? (query) => {
+            const movies = query.state.data?.movies || [];
+            const hasActiveMovie = movies.some((movie) => {
+              if (movie.streamStatus === "processing") return true;
+              if (movie.streamStatus !== "uploading") return false;
+              if (movie.uploadProgress >= 100) return true;
+              const updatedAt = new Date(movie.uploadUpdatedAt || 0).getTime();
+              return updatedAt > Date.now() - 2 * 60 * 1000;
+            });
+            return hasActiveMovie
+              ? 5000
+              : false;
+          }
+        : false,
+    },
   );
-  const refetchLibrary = libraryQuery.refetch;
   const movieMutations = useMovieAdminMutations();
   const apiMovies = useMemo(() => flattenMovieLibrary(libraryQuery.data), [libraryQuery.data]);
   const isOfflineDemo = false;
@@ -37,18 +51,6 @@ export default function NetflixChillPage() {
     return allMovies.filter((movie) => `${movie.title} ${movie.description || ""}`.toLocaleLowerCase("vi").includes(term));
   }, [allMovies, search]);
   const featuredMovie = normalizeMovie(libraryQuery.data?.featuredMovie) || visibleMovies[0] || null;
-
-  useEffect(() => {
-    const processingIds = apiMovies
-      .filter((movie) => movie.streamStatus === "processing" || (movie.streamStatus === "uploading" && movie.uploadProgress >= 100))
-      .map((movie) => movie.id);
-    if (!isAdmin || !processingIds.length) return undefined;
-    const interval = window.setInterval(async () => {
-      await Promise.allSettled(processingIds.map((id) => syncStreamStatus(id)));
-      refetchLibrary();
-    }, 5000);
-    return () => window.clearInterval(interval);
-  }, [apiMovies, isAdmin, refetchLibrary]);
 
   function openPlayer(movie) {
     navigate(`/netflix/${movie.id || movie._id}`);

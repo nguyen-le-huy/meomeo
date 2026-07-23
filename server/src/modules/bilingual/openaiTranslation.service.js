@@ -1,20 +1,36 @@
 import OpenAI from "openai";
 import { config } from "../../config/env.js";
+import { getTranslationModel } from "./translationModels.js";
 
-let openaiClient;
+const clients = new Map();
 
-function getClient() {
-  if (!openaiClient) {
-    if (!config.openAi.apiKey) {
-      throw new Error("OPENAI_API_KEY is not configured");
-    }
-    openaiClient = new OpenAI({
-      apiKey: config.openAi.apiKey,
-      timeout: 60000,
-      maxRetries: 0,
-    });
+function getClient(provider) {
+  if (clients.has(provider)) return clients.get(provider);
+
+  const providerConfig = provider === "deepseek"
+    ? {
+        apiKey: config.deepSeek.apiKey,
+        baseURL: config.deepSeek.baseUrl,
+        keyName: "DEEPSEEK_API_KEY",
+      }
+    : {
+        apiKey: config.openAi.apiKey,
+        baseURL: undefined,
+        keyName: "OPENAI_API_KEY",
+      };
+
+  if (!providerConfig.apiKey) {
+    throw new Error(`${providerConfig.keyName} is not configured`);
   }
-  return openaiClient;
+
+  const client = new OpenAI({
+    apiKey: providerConfig.apiKey,
+    baseURL: providerConfig.baseURL,
+    timeout: 90000,
+    maxRetries: 1,
+  });
+  clients.set(provider, client);
+  return client;
 }
 
 function buildSystemPrompt() {
@@ -48,9 +64,11 @@ function buildUserPayload(segments, targetLanguage) {
 export async function translateSegmentsInBatches(segments, options = {}) {
   const targetLanguage = options.targetLanguage || config.openAi.translationTargetLanguage || "vi";
   const batchSize = options.batchSize || 20;
-  const model = config.openAi.translationModel;
+  const model = options.model || config.openAi.translationModel;
+  const modelConfig = getTranslationModel(model);
+  if (!modelConfig) throw new Error(`Unsupported translation model: ${model}`);
 
-  const client = getClient();
+  const client = getClient(modelConfig.provider);
   const systemPrompt = buildSystemPrompt();
   let translatedCount = 0;
   let failedCount = 0;
@@ -64,14 +82,23 @@ export async function translateSegmentsInBatches(segments, options = {}) {
 
     console.log(`[Vietsub] Batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(segments.length / batchSize)} (${batch.length} segments)`);
 
-    const completion = await client.chat.completions.create({
+    const request = {
       model,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: JSON.stringify(userPayload) },
       ],
-      temperature: 0.3,
-    });
+      response_format: { type: "json_object" },
+    };
+    if (modelConfig.provider === "deepseek") {
+      request.temperature = 0.3;
+      request.max_tokens = Math.max(2000, batch.length * 160);
+      request.thinking = { type: "disabled" };
+    } else {
+      request.reasoning_effort = model === "gpt-5.4-mini" ? "none" : "minimal";
+    }
+
+    const completion = await client.chat.completions.create(request);
 
     const content = completion.choices?.[0]?.message?.content;
     if (!content) {

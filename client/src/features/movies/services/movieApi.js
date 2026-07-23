@@ -32,20 +32,20 @@ export function setMovieHero(id, thumbnail) {
   });
 }
 
-export function getUploadCredentials(id) {
-  return apiClient.post(`/movies/${id}/upload-credentials`);
+export function getUploadCredentials(id, fileMetadata) {
+  return apiClient.post(`/movies/${id}/upload-credentials`, fileMetadata, { timeout: 15_000 });
 }
 
 export function markUploadCompleted(id) {
-  return apiClient.patch(`/movies/${id}/upload-completed`);
+  return apiClient.patch(`/movies/${id}/upload-completed`, undefined, { timeout: 10_000 });
 }
 
 export function reportUploadProgress(id, data) {
-  return apiClient.patch(`/movies/${id}/upload-progress`, data);
+  return apiClient.patch(`/movies/${id}/upload-progress`, data, { timeout: 8_000 });
 }
 
 export function syncStreamStatus(id) {
-  return apiClient.get(`/movies/${id}/stream-status`);
+  return apiClient.get(`/movies/${id}/stream-status`, { timeout: 15_000 });
 }
 
 export function publishMovie(id, isPublished) {

@@ -26,6 +26,7 @@ import {
   movieLibraryQuerySchema,
   publishMovieSchema,
   subtitleImportSchema,
+  uploadCredentialsSchema,
   uploadProgressSchema,
   updateMovieSchema,
   viPlainTextImportSchema,
@@ -56,7 +57,8 @@ const movieAssetUpload = multer({
   limits: { fileSize: 8 * 1024 * 1024 },
   fileFilter(req, file, callback) {
     const isPoster = file.fieldname === "poster" && file.mimetype.startsWith("image/");
-    const isSubtitle = file.fieldname === "subtitle" && (/\.srt$/i.test(file.originalname) || ["text/plain", "application/x-subrip"].includes(file.mimetype));
+    const isSubtitle = ["subtitle", "viSubtitle"].includes(file.fieldname)
+      && (/\.srt$/i.test(file.originalname) || ["text/plain", "application/x-subrip"].includes(file.mimetype));
     const allowed = isPoster || isSubtitle;
     callback(allowed ? null : new Error("Poster must be an image and subtitle must be an SRT file"), allowed);
   },
@@ -68,7 +70,11 @@ router.get("/library", optionalAuth, validate(movieLibraryQuerySchema), getMovie
 router.post(
   "/",
   ...adminOnly,
-  movieAssetUpload.fields([{ name: "poster", maxCount: 1 }, { name: "subtitle", maxCount: 1 }]),
+  movieAssetUpload.fields([
+    { name: "poster", maxCount: 1 },
+    { name: "subtitle", maxCount: 1 },
+    { name: "viSubtitle", maxCount: 1 },
+  ]),
   validate(createMovieSchema),
   createMovieController,
 );
@@ -83,7 +89,7 @@ router.post(
   setFeaturedMovieController,
 );
 router.delete("/:id", ...adminOnly, validate(movieIdParamSchema), deleteMovieController);
-router.post("/:id/upload-credentials", ...adminOnly, validate(movieIdParamSchema), getUploadCredentialsController);
+router.post("/:id/upload-credentials", ...adminOnly, validate(uploadCredentialsSchema), getUploadCredentialsController);
 router.patch("/:id/upload-completed", ...adminOnly, validate(movieIdParamSchema), markUploadCompletedController);
 router.patch("/:id/upload-progress", ...adminOnly, validate(uploadProgressSchema), reportUploadProgressController);
 router.get("/:id/stream-status", ...adminOnly, validate(movieIdParamSchema), getStreamStatusController);

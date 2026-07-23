@@ -76,7 +76,9 @@ export async function createTranscriptSegments(videoId, segments = [], source = 
             text: String(segment.text || "").trim(),
           }))
           .filter((segment) => segment.text && Number.isFinite(segment.startTime) && Number.isFinite(segment.endTime) && segment.endTime > segment.startTime)
-      : normalizeTranscriptSegments(segments);
+      : normalizeTranscriptSegments(segments, {
+          preserveCueBoundaries: source === "youtube",
+        });
   await TranscriptSegment.deleteMany({ videoId });
 
   if (!normalizedSegments.length) return [];

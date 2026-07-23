@@ -77,10 +77,14 @@ export const config = {
     apiKey: process.env.OPENAI_API_KEY || "",
     ttsModel: process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts",
     ttsVoice: process.env.OPENAI_TTS_VOICE || "alloy",
-    translationModel: process.env.OPENAI_TRANSLATION_MODEL || "gpt-4o-mini",
+    translationModel: process.env.OPENAI_TRANSLATION_MODEL || "deepseek-v4-pro",
     translationTargetLanguage: process.env.OPENAI_TRANSLATION_TARGET_LANGUAGE || "vi",
-    dictionaryModel: process.env.OPENAI_DICTIONARY_MODEL || process.env.OPENAI_TRANSLATION_MODEL || "gpt-4o-mini",
+    dictionaryModel: process.env.OPENAI_DICTIONARY_MODEL || "gpt-4o-mini",
     vocabularyModel: process.env.OPENAI_VOCABULARY_MODEL || process.env.OPENAI_DICTIONARY_MODEL || "gpt-4o-mini",
+  },
+  deepSeek: {
+    apiKey: process.env.DEEPSEEK_API_KEY || "",
+    baseUrl: process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com",
   },
   elevenLabs: {
     apiKey: process.env.ELEVENLABS_API_KEY || "",

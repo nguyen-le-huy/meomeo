@@ -21,7 +21,7 @@ import { createHttpError } from "../../utils/createHttpError.js";
 import { cloudinary } from "../../config/cloudinary.js";
 import { parseSubtitle } from "./subtitleParser.js";
 import { parsePlainTextVi } from "./plainTextViParser.js";
-import { syncMovieCaptions } from "./movieCaption.service.js";
+import { getBilingualCaptionCode, syncMovieCaptions } from "./movieCaption.service.js";
 
 const MOVIE_FILTER = { source: "bunny", contentType: "movie", deletedAt: { $exists: false } };
 
@@ -171,6 +171,7 @@ export async function createMovie(data, adminUser, files = {}) {
       bunnyVideoId: bunnyVideo.guid,
       bunnyLibraryId: String(bunnyVideo.videoLibraryId || bunnyVideo.libraryId || getBunnyLibraryId()),
       streamStatus: "created",
+      uploadBytesTotal: data.uploadFileSize,
       transcriptStatus: "pending",
       posterUrl: posterResult?.secure_url || data.posterUrl || "",
       posterPublicId: posterResult?.public_id || "",
@@ -180,6 +181,10 @@ export async function createMovie(data, adminUser, files = {}) {
     });
     if (files.subtitleFile) {
       await importEnglishSubtitle(movie._id.toString(), files.subtitleFile.buffer.toString("utf8"), false);
+      movie = await VideoLesson.findById(movie._id);
+    }
+    if (files.viSubtitleFile) {
+      await importVietnameseSubtitle(movie._id.toString(), files.viSubtitleFile.buffer.toString("utf8"), false);
       movie = await VideoLesson.findById(movie._id);
     }
     return { movie, upload: createTusUploadCredentials(movie.bunnyVideoId) };
@@ -243,9 +248,31 @@ export async function setFeaturedMovie(id, thumbnailFile) {
   return movie.populate("topicId");
 }
 
-export async function getMovieUploadCredentials(id) {
+export async function getMovieUploadCredentials(id, fileMetadata) {
   const movie = await getMovieDocument(id, { admin: true });
-  if (["ready"].includes(movie.streamStatus)) throw createHttpError(409, "Movie video is already ready");
+  if (["processing", "ready"].includes(movie.streamStatus)) {
+    throw createHttpError(409, "Movie video upload is already complete");
+  }
+
+  const expected = {
+    fileName: movie.uploadFileName,
+    fileSize: Number(movie.uploadFileSize || 0),
+    fileLastModified: Number(movie.uploadFileLastModified || 0),
+    fileType: movie.uploadFileType,
+  };
+  if (
+    (expected.fileName && expected.fileName !== fileMetadata.fileName)
+    || (expected.fileSize && expected.fileSize !== fileMetadata.fileSize)
+    || (expected.fileLastModified && fileMetadata.fileLastModified && expected.fileLastModified !== fileMetadata.fileLastModified)
+    || (expected.fileType && expected.fileType !== fileMetadata.fileType)
+  ) {
+    throw createHttpError(409, "File đã chọn không khớp với file video ban đầu. Hãy chọn đúng file để tiếp tục upload.");
+  }
+
+  movie.uploadFileName ||= fileMetadata.fileName;
+  movie.uploadFileSize ||= fileMetadata.fileSize;
+  movie.uploadFileLastModified ||= fileMetadata.fileLastModified;
+  movie.uploadFileType ||= fileMetadata.fileType;
   movie.streamStatus = "uploading";
   movie.streamError = "";
   movie.uploadUpdatedAt = new Date();
@@ -312,7 +339,9 @@ export async function syncMovieStreamStatus(id) {
   const remote = await getBunnyVideo(movie.bunnyVideoId);
   await applyBunnyMetadata(movie, remote);
   await movie.save();
-  if (movie.streamStatus === "ready") await syncMovieCaptions(movie);
+  if (movie.streamStatus === "ready") {
+    await syncMovieCaptions(movie, { force: true, replaceExisting: true });
+  }
   return movie;
 }
 
@@ -321,11 +350,31 @@ export async function handleBunnyWebhook(payload) {
   const movie = await VideoLesson.findOne({ ...MOVIE_FILTER, bunnyVideoId: payload.VideoGuid });
   if (!movie) return null;
   const mappedStatus = mapBunnyStatus(payload.Status);
-  // The webhook can arrive before the HLS manifest has propagated. A status sync
-  // confirms encodeProgress before playback is exposed.
-  const nextStatus = mappedStatus === "ready" ? "processing" : mappedStatus === "created" && movie.uploadProgress >= 100 ? "processing" : mappedStatus;
-  if (movie.streamStatus === nextStatus) return movie;
+  const nextStatus = mappedStatus === "created" && movie.uploadProgress >= 100 ? "processing" : mappedStatus;
+
+  // Bunny can deliver webhook events out of order (for example, a caption event
+  // after encoding finished). Never regress a playable video to processing.
+  if (movie.streamStatus === "ready" && nextStatus !== "failed") {
+    if (Number(payload.Status) === 3 && movie.encodeProgress < 100) {
+      movie.encodeProgress = 100;
+      await movie.save();
+    }
+    return movie;
+  }
+  if (movie.streamStatus === nextStatus && ![3, 4, 7].includes(Number(payload.Status))) return movie;
+
   movie.streamStatus = nextStatus;
+  if ([3, 4, 7].includes(Number(payload.Status))) {
+    movie.uploadProgress = 100;
+    movie.uploadBytesTotal ||= movie.uploadFileSize;
+    movie.uploadBytesUploaded = movie.uploadBytesTotal || movie.uploadFileSize || movie.uploadBytesUploaded;
+    movie.uploadUpdatedAt = new Date();
+  }
+  if (nextStatus === "ready") {
+    movie.streamReadyAt ||= new Date();
+    if (Number(payload.Status) === 3) movie.encodeProgress = 100;
+    movie.streamError = "";
+  }
   if (nextStatus === "failed") {
     movie.streamError = "Bunny Stream encoding failed";
   }
@@ -346,7 +395,10 @@ export async function getMoviePlayback(id, options = {}) {
   } catch (error) {
     console.error(`[Bunny captions] Không thể đồng bộ phụ đề cho phim ${movie._id}:`, error.message);
   }
-  return createPlaybackData(movie.bunnyVideoId);
+  return createPlaybackData(
+    movie.bunnyVideoId,
+    getBilingualCaptionCode(movie.bunnyCaptionSyncVersion),
+  );
 }
 
 export async function importEnglishSubtitle(id, content, dryRun) {
@@ -466,6 +518,7 @@ export async function generateMovieVietsub(id, options = {}) {
   const result = await generateVietsub(movie._id.toString(), options);
   await syncMovieCaptions(movie);
   return {
+    model: result.model,
     translatedCount: result.translatedCount,
     failedCount: result.failedCount,
   };

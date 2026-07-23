@@ -1,7 +1,12 @@
-import * as tus from "tus-js-client";
-import { getUploadCredentials, markUploadCompleted, reportUploadProgress } from "../services/movieApi.js";
+import {
+  getUploadCredentials,
+  markUploadCompleted,
+  reportUploadProgress,
+  syncStreamStatus,
+} from "../services/movieApi.js";
 
-const chunkSize = 20 * 1024 * 1024;
+const progressReportIntervalMs = 2000;
+const minimumProgressBytes = 5 * 1024 * 1024;
 
 function getUploadErrorMessage(error) {
   const status = error?.originalResponse?.getStatus?.();
@@ -13,30 +18,84 @@ function getUploadErrorMessage(error) {
   return status ? `${detail} (HTTP ${status})` : detail;
 }
 
-export async function uploadMovieFile({ file, movieId, onProgress, title }) {
-  const credentialsResponse = await getUploadCredentials(movieId);
-  const credentials = credentialsResponse.data.data.upload;
+function getFileMetadata(file) {
+  return {
+    fileName: file.name,
+    fileSize: file.size,
+    fileLastModified: file.lastModified || 0,
+    fileType: file.type || "video/mp4",
+  };
+}
+
+async function finishUpload(movieId, file) {
+  await reportUploadProgress(movieId, {
+    progress: 100,
+    bytesUploaded: file.size,
+    bytesTotal: file.size,
+  }).catch(() => undefined);
+
+  try {
+    await markUploadCompleted(movieId);
+    return;
+  } catch {
+    // Bunny is the source of truth once TUS has acknowledged the final byte.
+    // A temporary app API failure must not make the user upload the movie again.
+    await syncStreamStatus(movieId).catch(() => undefined);
+  }
+}
+
+export async function uploadMovieFile({ credentials: suppliedCredentials, file, movieId, onProgress, title }) {
+  const tus = await import("tus-js-client");
+  if (!tus.isSupported) {
+    throw new Error("Trình duyệt này không hỗ trợ upload có thể tiếp tục. Hãy dùng phiên bản Chrome, Edge, Firefox hoặc Safari mới.");
+  }
+
+  const credentials = suppliedCredentials
+    || (await getUploadCredentials(movieId, getFileMetadata(file))).data.data.upload;
   let lastReportedAt = 0;
+  let lastReportedBytes = 0;
   let latestProgress = 0;
   let latestUploaded = 0;
 
-  async function persistProgress(bytesUploaded, bytesTotal, force = false, error = "") {
-    const progress = bytesTotal ? Math.round((bytesUploaded / bytesTotal) * 100) : 0;
+  function updateProgress(bytesUploaded, bytesTotal) {
+    const progress = bytesTotal ? Math.min(100, Math.floor((bytesUploaded / bytesTotal) * 100)) : 0;
     latestProgress = progress;
     latestUploaded = bytesUploaded;
     onProgress?.(progress, bytesUploaded, bytesTotal);
+    return progress;
+  }
+
+  function persistProgress(bytesUploaded, bytesTotal) {
+    const progress = updateProgress(bytesUploaded, bytesTotal);
+    if (bytesUploaded >= bytesTotal) return;
     const now = Date.now();
-    if (!force && progress < 100 && now - lastReportedAt < 1500) return;
+    if (
+      (now - lastReportedAt < progressReportIntervalMs
+        || bytesUploaded - lastReportedBytes < minimumProgressBytes)
+    ) {
+      return;
+    }
     lastReportedAt = now;
-    await reportUploadProgress(movieId, { progress, bytesUploaded, bytesTotal, ...(error ? { error } : {}) }).catch(() => undefined);
+    lastReportedBytes = bytesUploaded;
+    void reportUploadProgress(movieId, { progress, bytesUploaded, bytesTotal }).catch(() => undefined);
   }
 
   return new Promise((resolve, reject) => {
     const upload = new tus.Upload(file, {
       endpoint: credentials.endpoint,
-      chunkSize,
       retryDelays: [0, 3000, 5000, 10000, 20000, 60000],
       removeFingerprintOnSuccess: true,
+      fingerprint: (selectedFile) => Promise.resolve(
+        [
+          "bunny-stream",
+          credentials.libraryId,
+          credentials.videoId,
+          selectedFile.name,
+          selectedFile.type,
+          selectedFile.size,
+          selectedFile.lastModified,
+        ].join("-"),
+      ),
       headers: {
         AuthorizationSignature: credentials.signature,
         AuthorizationExpire: String(credentials.expirationTime),
@@ -52,23 +111,31 @@ export async function uploadMovieFile({ file, movieId, onProgress, title }) {
         persistProgress(bytesUploaded, bytesTotal);
       },
       async onSuccess() {
-        try {
-          await persistProgress(file.size, file.size, true);
-          await markUploadCompleted(movieId);
-          resolve();
-        } catch (error) {
-          reject(error);
-        }
+        updateProgress(file.size, file.size);
+        await Promise.race([
+          finishUpload(movieId, file),
+          new Promise((done) => window.setTimeout(done, 3000)),
+        ]);
+        resolve();
       },
       onError(error) {
         const message = getUploadErrorMessage(error);
-        persistProgress(latestUploaded, file.size, true, message).finally(() => reject(new Error(message)));
+        void reportUploadProgress(movieId, {
+          progress: latestProgress,
+          bytesUploaded: latestUploaded,
+          bytesTotal: file.size,
+          error: message,
+        }).catch(() => undefined);
+        reject(new Error(message));
       },
     });
 
     upload.findPreviousUploads()
       .then((previousUploads) => {
-        if (previousUploads.length) upload.resumeFromPreviousUpload(previousUploads[0]);
+        const latestUpload = previousUploads
+          .slice()
+          .sort((a, b) => new Date(b.creationTime).getTime() - new Date(a.creationTime).getTime())[0];
+        if (latestUpload) upload.resumeFromPreviousUpload(latestUpload);
         upload.start();
       })
       .catch((error) => {

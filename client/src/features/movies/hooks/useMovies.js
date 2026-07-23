@@ -65,7 +65,7 @@ export function useMovieAdminMutations() {
       onSuccess: invalidate,
     }),
     generateVietsub: useMutation({
-      mutationFn: ({ id, force }) => generateMovieVietsub(id, { force }),
+      mutationFn: ({ id, force, model }) => generateMovieVietsub(id, { force, model }),
       onSuccess: invalidate,
     }),
     importViText: useMutation({

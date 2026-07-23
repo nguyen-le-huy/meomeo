@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { upsertBunnyCaption } from "../bunny/bunny.service.js";
+import { deleteBunnyCaption, upsertBunnyCaption } from "../bunny/bunny.service.js";
 import { TranscriptSegment } from "../transcripts/transcriptSegment.model.js";
 import { VideoLesson } from "../videos/video.model.js";
 import { createHttpError } from "../../utils/createHttpError.js";
@@ -10,17 +10,31 @@ const MOVIE_FILTER = {
   deletedAt: { $exists: false },
 };
 
-// Bunny requires a unique ISO 639-1 code per caption track. "bi" is used as
-// the stable key for the combined track; the player-facing label is "Song ngữ".
-const CAPTION_TRACKS = [
-  { srclang: "bi", label: "Song ngữ", mode: "bilingual" },
-  { srclang: "en", label: "English", mode: "english" },
-  { srclang: "vi", label: "Tiếng Việt", mode: "vietnamese" },
+// Versioned short codes give every upload a fresh CDN path while the labels
+// remain stable in the Bunny player.
+const CAPTION_TRACK_TEMPLATES = [
+  { prefix: "bi", label: "Song ngữ", mode: "bilingual" },
+  { prefix: "en", label: "English", mode: "english" },
+  { prefix: "vi", label: "Tiếng Việt", mode: "vietnamese" },
 ];
-const CAPTION_FORMAT_VERSION = 2;
+const LEGACY_CAPTION_CODES = ["bi", "en", "vi", "mul"];
+const CAPTION_FORMAT_VERSION = 6;
 const CUE_LAYOUT = "position:50% size:94% align:center";
 
 const activeSyncs = new Map();
+
+function getCaptionTracks(version) {
+  const value = Math.max(0, (Number(version) || 1) - 1) % (26 * 26);
+  const suffix = `${String.fromCharCode(97 + Math.floor(value / 26))}${String.fromCharCode(97 + (value % 26))}`;
+  return CAPTION_TRACK_TEMPLATES.map((track) => ({
+    ...track,
+    srclang: `${track.prefix[0]}${suffix}`,
+  }));
+}
+
+export function getBilingualCaptionCode(version) {
+  return Number(version) > 0 ? getCaptionTracks(version)[0].srclang : "bi";
+}
 
 function formatVttTimestamp(seconds) {
   const milliseconds = Math.max(0, Math.round((Number(seconds) || 0) * 1000));
@@ -41,21 +55,25 @@ function normalizeCueText(value) {
     .join(" ");
 }
 
-function getTrackText(segment, mode) {
+function getTrackTexts(segment, mode) {
   const english = normalizeCueText(segment.text);
   const vietnamese = normalizeCueText(segment.translationText);
-  if (mode === "english") return english;
-  if (mode === "vietnamese") return vietnamese;
-  return [english, vietnamese].filter(Boolean).join("\n");
+  if (mode === "english") return [english].filter(Boolean);
+  if (mode === "vietnamese") return [vietnamese].filter(Boolean);
+
+  // Bunny discards the second physical line inside one cue. Two simultaneous
+  // cues survive its processing and are stacked automatically by WebVTT.
+  // Bunny renders the later simultaneous cue on the lower row.
+  return [english, vietnamese].filter(Boolean);
 }
 
 export function createMovieCaptionVtt(segments, mode) {
   const cues = segments
-    .map((segment) => ({
-      startTime: Number(segment.startTime) || 0,
-      endTime: Math.max(Number(segment.endTime) || 0, Number(segment.startTime) || 0),
-      text: getTrackText(segment, mode),
-    }))
+    .flatMap((segment) => {
+      const startTime = Number(segment.startTime) || 0;
+      const endTime = Math.max(Number(segment.endTime) || 0, startTime);
+      return getTrackTexts(segment, mode).map((text) => ({ startTime, endTime, text }));
+    })
     .filter((cue) => cue.text && cue.endTime > cue.startTime)
     .map(
       (cue, index) =>
@@ -103,9 +121,20 @@ async function performSync(movieOrId, options = {}) {
     .sort({ index: 1 })
     .lean();
   const hash = getCaptionHash(segments);
+  const previousVersion = Number(movie.bunnyCaptionSyncVersion) || 0;
 
-  if (!options.force && movie.bunnyCaptionSyncStatus === "synced" && movie.bunnyCaptionSyncHash === hash) {
-    return { hash, skipped: true, trackCount: CAPTION_TRACKS.length };
+  if (
+    !options.force
+    && previousVersion > 0
+    && movie.bunnyCaptionSyncStatus === "synced"
+    && movie.bunnyCaptionSyncHash === hash
+  ) {
+    return {
+      captionCode: getBilingualCaptionCode(previousVersion),
+      hash,
+      skipped: true,
+      trackCount: CAPTION_TRACK_TEMPLATES.length,
+    };
   }
 
   movie.bunnyCaptionSyncStatus = "processing";
@@ -113,7 +142,9 @@ async function performSync(movieOrId, options = {}) {
   await movie.save();
 
   try {
-    for (const track of CAPTION_TRACKS) {
+    const nextVersion = previousVersion + 1;
+    const tracks = getCaptionTracks(nextVersion);
+    for (const track of tracks) {
       await upsertBunnyCaption(movie.bunnyVideoId, {
         srclang: track.srclang,
         label: track.label,
@@ -123,10 +154,31 @@ async function performSync(movieOrId, options = {}) {
 
     movie.bunnyCaptionSyncStatus = "synced";
     movie.bunnyCaptionSyncHash = hash;
+    movie.bunnyCaptionSyncVersion = nextVersion;
     movie.bunnyCaptionSyncError = "";
     movie.bunnyCaptionsSyncedAt = new Date();
     await movie.save();
-    return { hash, skipped: false, trackCount: CAPTION_TRACKS.length };
+
+    const previousCodes = previousVersion > 0
+      ? getCaptionTracks(previousVersion).map((track) => track.srclang)
+      : [];
+    const obsoleteCodes = [...new Set([...LEGACY_CAPTION_CODES, ...previousCodes])]
+      .filter((code) => !tracks.some((track) => track.srclang === code));
+    await Promise.all(
+      obsoleteCodes.map((code) =>
+        deleteBunnyCaption(movie.bunnyVideoId, code).catch((error) => {
+          if (error.statusCode !== 404) {
+            console.warn(`[Bunny captions] Không thể xóa track cũ ${code}: ${error.message}`);
+          }
+        })),
+    );
+
+    return {
+      captionCode: getBilingualCaptionCode(nextVersion),
+      hash,
+      skipped: false,
+      trackCount: tracks.length,
+    };
   } catch (error) {
     movie.bunnyCaptionSyncStatus = "failed";
     movie.bunnyCaptionSyncError = error.message || "Bunny caption sync failed";

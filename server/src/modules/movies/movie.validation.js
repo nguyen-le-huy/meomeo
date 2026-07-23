@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRANSLATION_MODEL_IDS } from "../bilingual/translationModels.js";
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
@@ -31,7 +32,16 @@ export const movieLibraryQuerySchema = z.object({
   }),
 });
 
-export const createMovieSchema = z.object({ body: movieMetadataSchema.strict() });
+const uploadFileMetadataSchema = z.object({
+  uploadFileName: z.string().trim().min(1).max(500),
+  uploadFileSize: z.coerce.number().int().positive(),
+  uploadFileLastModified: z.coerce.number().int().min(0),
+  uploadFileType: z.enum(["video/mp4", "video/quicktime", "video/webm"]),
+});
+
+export const createMovieSchema = z.object({
+  body: movieMetadataSchema.extend(uploadFileMetadataSchema.shape).strict(),
+});
 
 export const updateMovieSchema = z.object({
   params: movieIdParamSchema.shape.params,
@@ -53,6 +63,16 @@ export const uploadProgressSchema = z.object({
   }).strict(),
 });
 
+export const uploadCredentialsSchema = z.object({
+  params: movieIdParamSchema.shape.params,
+  body: z.object({
+    fileName: z.string().trim().min(1).max(500),
+    fileSize: z.coerce.number().int().positive(),
+    fileLastModified: z.coerce.number().int().min(0),
+    fileType: z.enum(["video/mp4", "video/quicktime", "video/webm"]),
+  }).strict(),
+});
+
 export const subtitleImportSchema = z.object({
   params: movieIdParamSchema.shape.params,
   query: z.object({ dryRun: z.preprocess(optionalBoolean, z.boolean().default(true)) }),
@@ -62,6 +82,7 @@ export const generateMovieVietsubSchema = z.object({
   params: movieIdParamSchema.shape.params,
   body: z.object({
     force: z.boolean().optional().default(false),
+    model: z.enum(TRANSLATION_MODEL_IDS).optional(),
     targetLanguage: z.string().trim().max(12).optional(),
   }).strict(),
 });
@@ -71,4 +92,3 @@ export const viPlainTextImportSchema = z.object({
   query: z.object({ dryRun: z.preprocess(optionalBoolean, z.boolean().default(true)) }),
   body: z.object({ content: z.string().min(1, "content is required") }),
 });
-

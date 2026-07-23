@@ -28,6 +28,13 @@ function segmentSource(transcriptSource) {
   return "youtube";
 }
 
+function getRecognitionPhrases(video) {
+  return String(video.title || "")
+    .split(/[|–—-]/)
+    .map((part) => part.replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim())
+    .filter((part) => part.length >= 2 && part.length <= 80);
+}
+
 async function updateVideoStage(videoId, transcriptStage, transcriptProgress) {
   await VideoLesson.updateOne(
     { _id: videoId, transcriptSource: { $ne: "manual" } },
@@ -39,7 +46,9 @@ async function replaceSegments(video, segments, transcriptSource, language) {
   const latestVideo = await VideoLesson.findById(video._id);
   if (!latestVideo || latestVideo.transcriptSource === "manual") return false;
 
-  const normalizedSegments = normalizeTranscriptSegments(segments);
+  const normalizedSegments = normalizeTranscriptSegments(segments, {
+    preserveCueBoundaries: transcriptSource === "youtube_manual",
+  });
   if (!normalizedSegments.length) throw new Error("No usable transcript segments were generated.");
 
   await TranscriptSegment.deleteMany({ videoId: video._id });
@@ -107,7 +116,10 @@ async function processJob(job) {
 
   try {
     await updateVideoStage(video._id, "transcribing_audio", 60);
-    const transcription = await transcribeAudioFile(downloaded.audioPath, { locale: "en-US" });
+    const transcription = await transcribeAudioFile(downloaded.audioPath, {
+      locales: ["en-US", "en-GB", "en-AU"],
+      phrases: getRecognitionPhrases(video),
+    });
     if (requiresAudioWordAlignment(transcription.segments)) {
       throw new Error("Azure Speech did not return word timestamps required to synchronize long transcript cues.");
     }

@@ -24,7 +24,13 @@ import VideoLibraryAdminActions from "../components/VideoLibraryAdminActions.jsx
 import VideoLibraryEmptyState from "../components/VideoLibraryEmptyState.jsx";
 import VideoLibraryErrorState from "../components/VideoLibraryErrorState.jsx";
 import { homeInitialDesktopVideoLimit, homeInitialMobileVideoLimit, homeVideoLoadBatchSize } from "../constants/videoLibrary.constants.js";
-import { buildTopicSections, getNewestVideoIds } from "../utils/videoLibrary.js";
+import { buildTopicSections, getNewestVideoIds, interleaveTopicSections } from "../utils/videoLibrary.js";
+
+const videosPerCategoryTurn = 3;
+
+function roundUpToCategoryTurn(value) {
+  return Math.ceil(value / videosPerCategoryTurn) * videosPerCategoryTurn;
+}
 
 function useIsDesktopViewport() {
   const [isDesktop, setIsDesktop] = useState(() =>
@@ -89,16 +95,26 @@ export default function VideoLibraryPage({ showCategoryList = true, title = "Há»
     return topicsWithCounts.filter((topic) => topic.videoCount > 0);
   }, [isAdmin, topicSections, visibleTopics]);
   const filteredTopicSections = useMemo(() => {
-    if (!showCategoryList || selectedTopicId === allTopicsValue) return topicSections;
+    if (!showCategoryList || selectedTopicId === allTopicsValue) {
+      return interleaveTopicSections(topicSections, videosPerCategoryTurn);
+    }
+
     return topicSections.filter((section) => section.topic?._id === selectedTopicId);
   }, [selectedTopicId, showCategoryList, topicSections]);
-  const initialVideoLimit = isDesktopViewport ? homeInitialDesktopVideoLimit : homeInitialMobileVideoLimit;
+  const isShowingAllTopics = !showCategoryList || selectedTopicId === allTopicsValue;
+  const baseInitialVideoLimit = isDesktopViewport ? homeInitialDesktopVideoLimit : homeInitialMobileVideoLimit;
+  const initialVideoLimit = isShowingAllTopics
+    ? roundUpToCategoryTurn(baseInitialVideoLimit)
+    : baseInitialVideoLimit;
+  const videoLoadBatchSize = isShowingAllTopics
+    ? roundUpToCategoryTurn(homeVideoLoadBatchSize)
+    : homeVideoLoadBatchSize;
   const {
     hasMoreSections,
     loadMoreRef,
     visibleSections: visibleTopicSections,
   } = useLazyTopicSections(filteredTopicSections, {
-    batchSize: homeVideoLoadBatchSize,
+    batchSize: videoLoadBatchSize,
     initialCount: initialVideoLimit,
   });
   const shadowingSessionByVideoId = useMemo(
@@ -106,16 +122,19 @@ export default function VideoLibraryPage({ showCategoryList = true, title = "Há»
     [myShadowingSessions],
   );
   const visibleVideoItems = useMemo(
-    () =>
-      visibleTopicSections.flatMap((section) => {
-        const newestVideoIds = getNewestVideoIds(section.videos);
+    () => {
+      const newestVideoIds = new Set(
+        topicSections.flatMap((section) => [...getNewestVideoIds(section.videos)]),
+      );
 
-        return section.videos.map((video) => ({
+      return visibleTopicSections.flatMap((section) =>
+        section.videos.map((video) => ({
           isNew: newestVideoIds.has(video._id),
           video,
-        }));
-      }),
-    [visibleTopicSections],
+        })),
+      );
+    },
+    [topicSections, visibleTopicSections],
   );
 
   useEffect(() => {

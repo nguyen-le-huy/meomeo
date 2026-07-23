@@ -2,6 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes app-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -0.75rem) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes app-toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.app-toast {
+  animation: app-toast-in 180ms ease-out;
+}
+
+.app-toast-progress {
+  animation: app-toast-progress 2800ms linear forwards;
+  transform-origin: left;
+}
+
+@media (min-width: 640px) {
+  @keyframes app-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(-0.75rem) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
+
 @font-face {
   font-display: swap;
   font-family: "BBC Reith Serif";

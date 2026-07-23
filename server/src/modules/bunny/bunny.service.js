@@ -42,7 +42,7 @@ async function bunnyRequest(path, options = {}) {
 
 export function mapBunnyStatus(status) {
   const value = Number(status);
-  if (value === 3) return "ready";
+  if ([3, 4].includes(value)) return "ready";
   if ([5, 8].includes(value)) return "failed";
   if (value === 6) return "uploading";
   if (value === 0) return "created";
@@ -50,7 +50,7 @@ export function mapBunnyStatus(status) {
 }
 
 export function isBunnyPlaybackReady(video) {
-  return [3, 4].includes(Number(video?.status)) && Number(video?.encodeProgress) >= 100;
+  return [3, 4].includes(Number(video?.status));
 }
 
 export async function isBunnyManifestReady(videoId) {
@@ -81,6 +81,13 @@ export async function getBunnyVideo(videoId) {
 
 export async function deleteBunnyVideo(videoId) {
   return bunnyRequest(`/library/${config.bunnyStream.libraryId}/videos/${videoId}`, { method: "DELETE" });
+}
+
+export async function deleteBunnyCaption(videoId, srclang) {
+  return bunnyRequest(
+    `/library/${config.bunnyStream.libraryId}/videos/${videoId}/captions/${encodeURIComponent(srclang)}`,
+    { method: "DELETE" },
+  );
 }
 
 export async function upsertBunnyCaption(videoId, { srclang, label, content }) {
@@ -114,7 +121,7 @@ export function createTusUploadCredentials(videoId) {
   };
 }
 
-export function createPlaybackData(videoId) {
+export function createPlaybackData(videoId, captions = "bi") {
   assertConfigured(["libraryId"]);
   const expires = Math.floor(Date.now() / 1000) + config.bunnyStream.playbackExpiresIn;
   const tokenKey = config.bunnyStream.tokenKey;
@@ -123,7 +130,7 @@ export function createPlaybackData(videoId) {
     : "";
   const query = new URLSearchParams({
     autoplay: "false",
-    captions: "bi",
+    captions,
     preload: "true",
   });
   if (token) {

@@ -1,12 +1,65 @@
-import { Captions, Languages, LoaderCircle, RefreshCw, Send, Sparkles, Type } from "lucide-react";
-import { useState } from "react";
+import { Captions, Copy, Languages, LoaderCircle, RefreshCw, Send, Sparkles, Type } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select.jsx";
+import { Toast } from "../../../components/ui/toast.jsx";
 import ImportViTextDialog from "./ImportViTextDialog.jsx";
+
+const TRANSLATION_MODELS = [
+  { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash", hint: "Rẻ nhất" },
+  { id: "deepseek-v4-pro", label: "DeepSeek V4 Pro", hint: "Chất lượng cao" },
+  { id: "gpt-5.4-mini", label: "GPT-5.4 mini", hint: "Chất lượng cao" },
+  { id: "gpt-5-mini", label: "GPT-5 mini", hint: "Cân bằng" },
+];
+
+async function copyToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Fall back to execCommand for browsers that expose but block Clipboard API.
+    }
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } finally {
+    textarea.remove();
+  }
+  if (!copied) throw new Error("Clipboard copy failed");
+}
 
 export default function MoviePlayerAdminTools({ eligibility, movie, mutations, segmentCount, segments, translationCount }) {
   const [message, setMessage] = useState("");
   const [busyAction, setBusyAction] = useState("");
   const [showViTextDialog, setShowViTextDialog] = useState(false);
+  const [translationModel, setTranslationModel] = useState("deepseek-v4-pro");
+  const [toast, setToast] = useState(null);
+  const toastIdRef = useRef(0);
+  const toastTimerRef = useRef(null);
   const busy = Boolean(busyAction);
+
+  useEffect(() => () => window.clearTimeout(toastTimerRef.current), []);
+
+  function dismissToast() {
+    window.clearTimeout(toastTimerRef.current);
+    setToast(null);
+  }
+
+  function showToast(messageText, variant = "success") {
+    window.clearTimeout(toastTimerRef.current);
+    toastIdRef.current += 1;
+    setToast({ id: toastIdRef.current, message: messageText, variant });
+    toastTimerRef.current = window.setTimeout(() => setToast(null), 2800);
+  }
 
   async function importSubtitle(language, file) {
     if (!file) return;
@@ -29,17 +82,18 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
   }
 
   async function createVietsub() {
+    const selectedModel = TRANSLATION_MODELS.find((item) => item.id === translationModel);
     const force = segmentCount > 0 && translationCount === segmentCount;
     const prompt = force
-      ? `Phim đã có đủ ${translationCount} câu Vietsub. Tạo lại toàn bộ bằng AI?`
-      : `Dùng AI để dịch ${Math.max(0, segmentCount - translationCount)} câu chưa có Vietsub?`;
+      ? `Phim đã có đủ ${translationCount} câu Vietsub. Tạo lại toàn bộ bằng ${selectedModel?.label || translationModel}?`
+      : `Dùng ${selectedModel?.label || translationModel} để dịch ${Math.max(0, segmentCount - translationCount)} câu chưa có Vietsub?`;
     if (!window.confirm(prompt)) return;
     setBusyAction("vietsub");
-    setMessage(`AI đang dịch ${force ? segmentCount : Math.max(0, segmentCount - translationCount)} câu. Không đóng trang này...`);
+    setMessage(`${selectedModel?.label || translationModel} đang dịch ${force ? segmentCount : Math.max(0, segmentCount - translationCount)} câu. Không đóng trang này...`);
     try {
-      const response = await mutations.generateVietsub.mutateAsync({ id: movie._id, force });
+      const response = await mutations.generateVietsub.mutateAsync({ id: movie._id, force, model: translationModel });
       const result = response.data.data;
-      setMessage(`AI đã dịch ${result.translatedCount} câu. Hãy kiểm tra lại trước khi publish.`);
+      setMessage(`${selectedModel?.label || result.model} đã dịch ${result.translatedCount} câu. Hãy kiểm tra lại trước khi publish.`);
     } catch (error) {
       setMessage(error.response?.data?.message || "Không thể tạo Vietsub");
     } finally {
@@ -67,11 +121,40 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
     }
   }
 
+  async function copyEnglishSubtitles() {
+    const englishLines = segments
+      .map((segment) => String(segment.text || "").trim())
+      .filter(Boolean);
+    const englishSubtitles = englishLines.join("\n");
+
+    if (!englishSubtitles) {
+      showToast("Chưa có phụ đề EN để sao chép.", "error");
+      return;
+    }
+
+    try {
+      await copyToClipboard(englishSubtitles);
+      showToast(`Đã sao chép ${englishLines.length.toLocaleString("vi-VN")} câu EN.`);
+    } catch {
+      showToast("Không thể sao chép. Trình duyệt đang chặn clipboard.", "error");
+    }
+  }
+
   return (
     <div className="shrink-0 border-b border-white/10 bg-[#171717] p-2.5 sm:p-3">
+      {toast ? <Toast key={toast.id} message={toast.message} onClose={dismissToast} variant={toast.variant} /> : null}
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <button className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium disabled:opacity-40 sm:h-9 sm:w-auto sm:px-3 sm:text-xs" disabled={busy} onClick={syncBunny} type="button"><RefreshCw className={busyAction === "sync" ? "animate-spin" : ""} size={14} /> Đồng bộ Bunny</button>
         <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium sm:h-9 sm:w-auto sm:px-3 sm:text-xs"><Captions size={14} /> Import EN<input accept=".srt,.vtt" className="sr-only" disabled={busy} onChange={(event) => importSubtitle("en", event.target.files?.[0])} type="file" /></label>
+        <button
+          className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium disabled:opacity-40 sm:h-9 sm:w-auto sm:px-3 sm:text-xs"
+          disabled={busy || !segmentCount}
+          onClick={copyEnglishSubtitles}
+          title="Copy toàn bộ phụ đề tiếng Anh, mỗi câu một dòng"
+          type="button"
+        >
+          <Copy size={14} /> Copy EN Sub
+        </button>
         <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium sm:h-9 sm:w-auto sm:px-3 sm:text-xs"><Languages size={14} /> Import VI (.srt)<input accept=".srt,.vtt" className="sr-only" disabled={busy} onChange={(event) => importSubtitle("vi", event.target.files?.[0])} type="file" /></label>
         <button
           className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded border border-[#e06f50]/40 bg-[#e06f50]/10 px-2 text-[11px] font-medium text-[#f3a38d] disabled:opacity-40 sm:h-9 sm:w-auto sm:px-3 sm:text-xs"
@@ -82,6 +165,22 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
         >
           <Type size={14} /> Import VI văn bản
         </button>
+        <Select disabled={busy} onValueChange={setTranslationModel} value={translationModel}>
+          <SelectTrigger
+            aria-label="Chọn model dịch phụ đề"
+            className="h-10 border-white/15 bg-white/[0.04] px-2 text-[11px] font-medium text-white focus:border-[#e06f50] focus:ring-[#e06f50]/20 sm:h-9 sm:w-52 sm:px-3 sm:text-xs"
+            title="Chọn model dùng để tạo Vietsub"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="min-w-64 border-white/15 bg-[#222] text-white" position="item-aligned">
+            {TRANSLATION_MODELS.map((model) => (
+              <SelectItem className="focus:bg-white/10" key={model.id} value={model.id}>
+                {model.label} · {model.hint}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <button
           className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded border border-[#e06f50]/55 bg-[#e06f50]/10 px-2 text-[11px] font-semibold text-[#f3a38d] disabled:opacity-40 sm:h-9 sm:w-auto sm:px-3 sm:text-xs"
           disabled={busy || segmentCount < 1}

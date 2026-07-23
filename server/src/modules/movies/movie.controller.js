@@ -51,6 +51,7 @@ export const createMovieController = asyncHandler(async (req, res) => {
   const data = await createMovie(req.validated.body, req.user, {
     posterFile: req.files?.poster?.[0],
     subtitleFile: req.files?.subtitle?.[0],
+    viSubtitleFile: req.files?.viSubtitle?.[0],
   });
   return successResponse(res, "Movie draft created successfully", data, 201);
 });
@@ -66,7 +67,7 @@ export const setFeaturedMovieController = asyncHandler(async (req, res) => {
 });
 
 export const getUploadCredentialsController = asyncHandler(async (req, res) => {
-  const upload = await getMovieUploadCredentials(req.validated.params.id);
+  const upload = await getMovieUploadCredentials(req.validated.params.id, req.validated.body);
   res.set("Cache-Control", "private, no-store");
   return successResponse(res, "Upload credentials created successfully", { upload });
 });

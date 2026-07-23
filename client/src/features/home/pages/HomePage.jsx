@@ -4,6 +4,8 @@ import { ArrowUpRight } from "lucide-react";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
+import { useMovieLibrary } from "../../movies/hooks/useMovies.js";
+import { normalizeMovie } from "../../movies/utils/movieData.js";
 import LearningModeDialog from "../../videos/components/LearningModeDialog.jsx";
 import LessonCard from "../../videos/components/LessonCard.jsx";
 import TopicCategoryChips, { allTopicsValue } from "../../videos/components/TopicCategoryChips.jsx";
@@ -31,7 +33,18 @@ import {
   useVideos,
 } from "../../videos/hooks/useVideoLearning.js";
 import { useLazyTopicSections } from "../../videos/hooks/useLazyTopicSections.js";
-import { buildTopicSections, getNewestVideoIds } from "../../videos/utils/videoLibrary.js";
+import {
+  buildTopicSections,
+  getNewestVideoIds,
+  interleaveTopicSections,
+} from "../../videos/utils/videoLibrary.js";
+import LatestMovieFeatureCard from "../components/LatestMovieFeatureCard.jsx";
+
+const videosPerCategoryTurn = 3;
+
+function roundUpToCategoryTurn(value) {
+  return Math.ceil(value / videosPerCategoryTurn) * videosPerCategoryTurn;
+}
 
 const lessonCategories = [
   {
@@ -124,6 +137,7 @@ export default function HomePage() {
     isLoading,
     refetch: refetchVideos,
   } = useVideos({ includeUnpublished: isAdmin || undefined });
+  const latestMovieQuery = useMovieLibrary({});
   const { data: topics = [], isLoading: isTopicsLoading } = useTopics({ includeUnpublished: isAdmin || undefined });
   const createVideoMutation = useCreateVideo();
   const createTopicMutation = useCreateTopic();
@@ -136,6 +150,11 @@ export default function HomePage() {
   const sessionId = getGuestSessionId();
   const { data: myShadowingSessions = [] } = useMyShadowingSessions(sessionId);
   const visibleTopics = useMemo(() => topics.filter((topic) => topic.slug !== "all-videos"), [topics]);
+  const latestMovie = useMemo(() => {
+    const newest = [...(latestMovieQuery.data?.movies || [])]
+      .sort((left, right) => new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime())[0];
+    return normalizeMovie(newest);
+  }, [latestMovieQuery.data]);
   const topicSections = useMemo(
     () => buildTopicSections({ isAdmin, topics: visibleTopics, videos }),
     [isAdmin, visibleTopics, videos],
@@ -156,16 +175,25 @@ export default function HomePage() {
     return topicsWithCounts.filter((topic) => topic.videoCount > 0);
   }, [isAdmin, topicSections, visibleTopics]);
   const filteredTopicSections = useMemo(() => {
-    if (selectedTopicId === allTopicsValue) return topicSections;
+    if (selectedTopicId === allTopicsValue) {
+      return interleaveTopicSections(topicSections, videosPerCategoryTurn);
+    }
+
     return topicSections.filter((section) => section.topic?._id === selectedTopicId);
   }, [selectedTopicId, topicSections]);
-  const initialVideoLimit = isDesktopTopicGrid ? homeInitialDesktopVideoLimit : homeInitialMobileVideoLimit;
+  const baseInitialVideoLimit = isDesktopTopicGrid ? homeInitialDesktopVideoLimit : homeInitialMobileVideoLimit;
+  const initialVideoLimit = selectedTopicId === allTopicsValue
+    ? roundUpToCategoryTurn(baseInitialVideoLimit)
+    : baseInitialVideoLimit;
+  const videoLoadBatchSize = selectedTopicId === allTopicsValue
+    ? roundUpToCategoryTurn(homeVideoLoadBatchSize)
+    : homeVideoLoadBatchSize;
   const {
     hasMoreSections,
     loadMoreRef,
     visibleSections: visibleTopicSections,
   } = useLazyTopicSections(filteredTopicSections, {
-    batchSize: homeVideoLoadBatchSize,
+    batchSize: videoLoadBatchSize,
     initialCount: initialVideoLimit,
   });
   const shadowingSessionByVideoId = useMemo(
@@ -173,16 +201,19 @@ export default function HomePage() {
     [myShadowingSessions],
   );
   const visibleVideoItems = useMemo(
-    () =>
-      visibleTopicSections.flatMap((section) => {
-        const newestVideoIds = getNewestVideoIds(section.videos);
+    () => {
+      const newestVideoIds = new Set(
+        topicSections.flatMap((section) => [...getNewestVideoIds(section.videos)]),
+      );
 
-        return section.videos.map((video) => ({
+      return visibleTopicSections.flatMap((section) =>
+        section.videos.map((video) => ({
           isNew: newestVideoIds.has(video._id),
           video,
-        }));
-      }),
-    [visibleTopicSections],
+        })),
+      );
+    },
+    [topicSections, visibleTopicSections],
   );
 
   useEffect(() => {
@@ -234,6 +265,12 @@ export default function HomePage() {
             />
           </div>
         </div>
+
+        <LatestMovieFeatureCard
+          movie={latestMovie}
+          onOpenLibrary={() => navigate("/netflix")}
+          onPlay={() => navigate(`/netflix/${latestMovie?.id}`)}
+        />
 
         <div className="border-b border-[#e6dfd8] py-8 sm:py-10">
           <div className="mb-5">

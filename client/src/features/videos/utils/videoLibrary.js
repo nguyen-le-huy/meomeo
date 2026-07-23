@@ -44,6 +44,33 @@ export function buildTopicSections({ isAdmin, topics, videos }) {
   return sections;
 }
 
+export function interleaveTopicSections(sections, videosPerCategory = 3) {
+  const groupSize = Math.max(1, Math.floor(Number(videosPerCategory)) || 3);
+  const longestSectionLength = sections.reduce(
+    (longestLength, section) => Math.max(longestLength, section.videos.length),
+    0,
+  );
+  const roundCount = Math.ceil(longestSectionLength / groupSize);
+  const interleavedSections = [];
+
+  for (let roundIndex = 0; roundIndex < roundCount; roundIndex += 1) {
+    const groupStartIndex = roundIndex * groupSize;
+
+    sections.forEach((section) => {
+      const groupedVideos = section.videos.slice(groupStartIndex, groupStartIndex + groupSize);
+      if (!groupedVideos.length) return;
+
+      interleavedSections.push({
+        ...section,
+        key: `${section.key}-round-${roundIndex}`,
+        videos: groupedVideos,
+      });
+    });
+  }
+
+  return interleavedSections;
+}
+
 export { getTopicId };
 
 export function getNewestVideoIds(videos, limit = 3) {

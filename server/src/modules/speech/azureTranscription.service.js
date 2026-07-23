@@ -34,13 +34,25 @@ export async function transcribeAudioFile(audioPath, options = {}) {
 
   const audio = await readFile(audioPath);
   const extension = path.extname(audioPath).toLowerCase();
+  const locales = Array.isArray(options.locales) && options.locales.length
+    ? options.locales
+    : [options.locale || "en-US"];
+  const phrases = [...new Set((options.phrases || []).map((phrase) => String(phrase).trim()).filter(Boolean))].slice(0, 50);
   const form = new FormData();
   form.append("audio", new Blob([audio], { type: audioMimeTypes[extension] || "application/octet-stream" }), path.basename(audioPath));
   form.append(
     "definition",
     JSON.stringify({
-      locales: [options.locale || "en-US"],
+      locales,
       profanityFilterMode: "None",
+      ...(phrases.length
+        ? {
+            phraseList: {
+              phrases,
+              biasingWeight: 1.2,
+            },
+          }
+        : {}),
     }),
   );
 
@@ -83,7 +95,7 @@ export async function transcribeAudioFile(audioPath, options = {}) {
 
     if (!segments.length) throw createHttpError(422, "Azure Speech did not return any usable English transcript segments.");
 
-    return { language: options.locale || "en-US", segments };
+    return { language: payload?.phrases?.find((phrase) => phrase.locale)?.locale || locales[0], segments };
   } catch (error) {
     if (error.name === "AbortError") throw createHttpError(504, "Azure Speech transcription timed out.");
     throw error;

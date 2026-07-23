@@ -27,13 +27,15 @@ export async function generateVietsub(videoId, options = {}) {
     throw createHttpError(400, "No transcript segments need translation");
   }
 
+  const model = options.model || config.openAi.translationModel;
   video.bilingualStatus = "processing";
   video.bilingualError = "";
-  video.bilingualModel = config.openAi.translationModel;
+  video.bilingualModel = model;
   await video.save();
 
   try {
     const result = await translateSegmentsInBatches(segments, {
+      model,
       targetLanguage: options.targetLanguage || config.openAi.translationTargetLanguage,
     });
 
@@ -45,7 +47,7 @@ export async function generateVietsub(videoId, options = {}) {
     video.bilingualError = result.translatedCount > 0 ? "" : "No subtitles were translated";
     await video.save();
 
-    return { video, translatedCount: result.translatedCount, failedCount: result.failedCount, segments: result.segments };
+    return { video, model, translatedCount: result.translatedCount, failedCount: result.failedCount, segments: result.segments };
   } catch (error) {
     console.error("[Vietsub] Lỗi OpenAI:", error.message);
     video.bilingualStatus = "failed";
