@@ -133,8 +133,10 @@ export async function getMovieLibrary(query = {}, options = {}) {
   if (!adminView) movies = movies.filter((movie) => playableSet.has(String(movie._id)));
 
   const featuredMovie = movies.find((movie) => movie.isFeatured) || movies[0] || null;
+  const homeFeaturedMovie = movies.find((movie) => movie.isHomeFeatured) || movies[0] || null;
   return {
     featuredMovie,
+    homeFeaturedMovie,
     movies,
     categories: [],
     counts: adminView
@@ -245,6 +247,14 @@ export async function setFeaturedMovie(id, thumbnailFile) {
   if (previousPublicId && previousPublicId !== upload.public_id) {
     cloudinary.uploader.destroy(previousPublicId, { resource_type: "image" }).catch(() => undefined);
   }
+  return movie.populate("topicId");
+}
+
+export async function setHomeFeaturedMovie(id) {
+  const movie = await getMovieDocument(id, { admin: true });
+  await VideoLesson.updateMany({ ...MOVIE_FILTER, _id: { $ne: movie._id }, isHomeFeatured: true }, { $set: { isHomeFeatured: false } });
+  movie.isHomeFeatured = true;
+  await movie.save();
   return movie.populate("topicId");
 }
 

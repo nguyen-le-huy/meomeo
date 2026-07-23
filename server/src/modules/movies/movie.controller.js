@@ -14,6 +14,7 @@ import {
   publishMovie,
   reportMovieUploadProgress,
   setFeaturedMovie,
+  setHomeFeaturedMovie,
   syncMovieStreamStatus,
   updateMovie,
 } from "./movie.service.js";
@@ -62,8 +63,14 @@ export const updateMovieController = asyncHandler(async (req, res) => {
 });
 
 export const setFeaturedMovieController = asyncHandler(async (req, res) => {
+  if (!req.file) throw createHttpError(400, "Hero thumbnail is required");
   const movie = await setFeaturedMovie(req.validated.params.id, req.file);
   return successResponse(res, "Featured movie and hero thumbnail updated successfully", { movie });
+});
+
+export const setHomeFeaturedMovieController = asyncHandler(async (req, res) => {
+  const movie = await setHomeFeaturedMovie(req.validated.params.id);
+  return successResponse(res, "Home featured movie updated successfully", { movie });
 });
 
 export const getUploadCredentialsController = asyncHandler(async (req, res) => {

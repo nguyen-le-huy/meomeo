@@ -17,6 +17,7 @@ import {
   publishMovieController,
   reportUploadProgressController,
   setFeaturedMovieController,
+  setHomeFeaturedMovieController,
   updateMovieController,
 } from "./movie.controller.js";
 import {
@@ -87,6 +88,12 @@ router.post(
   heroThumbnailUpload.single("thumbnail"),
   validate(movieIdParamSchema),
   setFeaturedMovieController,
+);
+router.post(
+  "/:id/home-hero",
+  ...adminOnly,
+  validate(movieIdParamSchema),
+  setHomeFeaturedMovieController,
 );
 router.delete("/:id", ...adminOnly, validate(movieIdParamSchema), deleteMovieController);
 router.post("/:id/upload-credentials", ...adminOnly, validate(uploadCredentialsSchema), getUploadCredentialsController);

@@ -50,6 +50,7 @@ const videoLessonSchema = new mongoose.Schema(
     ageRating: { type: String, default: "13+", trim: true, maxlength: 12 },
     rating: { type: Number, default: 0, min: 0, max: 10 },
     isFeatured: { type: Boolean, default: false },
+    isHomeFeatured: { type: Boolean, default: false },
     level: { type: String, enum: ["A1", "A2", "B1", "B2", "C1"], default: "A2" },
     source: { type: String, enum: ["youtube", "bunny"], default: "youtube" },
     transcriptStatus: {

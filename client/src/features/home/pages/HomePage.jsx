@@ -4,8 +4,9 @@ import { ArrowUpRight } from "lucide-react";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
-import { useMovieLibrary } from "../../movies/hooks/useMovies.js";
+import { useMovieAdminMutations, useMovieLibrary } from "../../movies/hooks/useMovies.js";
 import { normalizeMovie } from "../../movies/utils/movieData.js";
+import ManageHomeHeroDialog from "../../movies/components/ManageHomeHeroDialog.jsx";
 import LearningModeDialog from "../../videos/components/LearningModeDialog.jsx";
 import LessonCard from "../../videos/components/LessonCard.jsx";
 import TopicCategoryChips, { allTopicsValue } from "../../videos/components/TopicCategoryChips.jsx";
@@ -138,6 +139,7 @@ export default function HomePage() {
     refetch: refetchVideos,
   } = useVideos({ includeUnpublished: isAdmin || undefined });
   const latestMovieQuery = useMovieLibrary({});
+  const movieMutations = useMovieAdminMutations();
   const { data: topics = [], isLoading: isTopicsLoading } = useTopics({ includeUnpublished: isAdmin || undefined });
   const createVideoMutation = useCreateVideo();
   const createTopicMutation = useCreateTopic();
@@ -151,9 +153,12 @@ export default function HomePage() {
   const { data: myShadowingSessions = [] } = useMyShadowingSessions(sessionId);
   const visibleTopics = useMemo(() => topics.filter((topic) => topic.slug !== "all-videos"), [topics]);
   const latestMovie = useMemo(() => {
+    if (latestMovieQuery.data?.homeFeaturedMovie) {
+      return normalizeMovie(latestMovieQuery.data.homeFeaturedMovie);
+    }
     const newest = [...(latestMovieQuery.data?.movies || [])]
       .sort((left, right) => new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime())[0];
-    return normalizeMovie(newest);
+    return newest ? normalizeMovie(newest) : null;
   }, [latestMovieQuery.data]);
   const topicSections = useMemo(
     () => buildTopicSections({ isAdmin, topics: visibleTopics, videos }),
@@ -266,11 +271,22 @@ export default function HomePage() {
           </div>
         </div>
 
-        <LatestMovieFeatureCard
-          movie={latestMovie}
-          onOpenLibrary={() => navigate("/netflix")}
-          onPlay={() => navigate(`/netflix/${latestMovie?.id}`)}
-        />
+        <div className="relative">
+          {isAdmin ? (
+            <div className="absolute right-4 top-12 z-20 sm:right-6 sm:top-14 lg:right-8 lg:top-14">
+              <ManageHomeHeroDialog
+                featuredMovie={latestMovieQuery.data?.homeFeaturedMovie}
+                movies={latestMovieQuery.data?.movies || []}
+                mutation={movieMutations.setHomeHero}
+              />
+            </div>
+          ) : null}
+          <LatestMovieFeatureCard
+            movie={latestMovie}
+            onOpenLibrary={() => navigate("/netflix")}
+            onPlay={() => navigate(`/netflix/${latestMovie?.id}`)}
+          />
+        </div>
 
         <div className="border-b border-[#e6dfd8] py-8 sm:py-10">
           <div className="mb-5">

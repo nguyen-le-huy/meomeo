@@ -32,6 +32,10 @@ export function setMovieHero(id, thumbnail) {
   });
 }
 
+export function setHomeMovieHero(id) {
+  return apiClient.post(`/movies/${id}/home-hero`);
+}
+
 export function getUploadCredentials(id, fileMetadata) {
   return apiClient.post(`/movies/${id}/upload-credentials`, fileMetadata, { timeout: 15_000 });
 }
