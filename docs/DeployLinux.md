@@ -25,6 +25,10 @@ CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 AZURE_SPEECH_KEY=
 AZURE_SPEECH_REGION=southeastasia
+
+# Cần thiết nếu YouTube chặn IP server với lỗi "Sign in to confirm you're not a bot".
+YOUTUBE_COOKIES_PATH=/run/secrets/youtube-cookies.txt
+
 ADMIN_USERNAME=admin
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=123456
@@ -39,6 +43,38 @@ R2_ENDPOINT=
 R2_EBOOK_PREFIX=ebooks
 R2_PUBLIC_BASE_URL=
 ```
+
+### Cấu hình YouTube cookies cho `yt-dlp`
+
+Trên máy cá nhân đã đăng nhập YouTube, xuất cookies theo định dạng Netscape
+`cookies.txt`. Không commit file này vào Git và không gửi nội dung cookies vào log.
+
+Tạo thư mục riêng trên server, chép file vào đó và giới hạn quyền đọc:
+
+```bash
+sudo install -d -m 700 /opt/meomeo/secrets
+sudo install -m 600 youtube-cookies.txt /opt/meomeo/secrets/youtube-cookies.txt
+```
+
+Sau đó thêm volume chỉ đọc cho service `server` trong `docker-compose.yml`:
+
+```yaml
+services:
+  server:
+    volumes:
+      - /opt/meomeo/secrets/youtube-cookies.txt:/run/secrets/youtube-cookies.txt:ro
+```
+
+Nếu nền tảng deploy không hỗ trợ mount file, có thể dùng
+`YOUTUBE_COOKIES_BASE64` thay cho `YOUTUBE_COOKIES_PATH`:
+
+```bash
+base64 < youtube-cookies.txt | tr -d '\n'
+```
+
+Đặt kết quả làm secret `YOUTUBE_COOKIES_BASE64`, bỏ
+`YOUTUBE_COOKIES_PATH`, rồi khởi động lại backend. Cookies YouTube có thể hết hạn;
+khi lỗi xác thực xuất hiện lại, hãy xuất file mới và restart service.
 
 **B. Tạo/Sửa file `client/.env.production`:**
 ```env

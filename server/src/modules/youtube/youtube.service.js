@@ -8,6 +8,7 @@ import { promisify } from "node:util";
 import ffmpegPath from "ffmpeg-static";
 import ytdlp from "yt-dlp-exec";
 import { createHttpError } from "../../utils/createHttpError.js";
+import { withYoutubeCookies } from "./youtubeCookies.js";
 
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
@@ -39,7 +40,34 @@ async function ensureYtDlpBinary() {
 
 async function runYtDlp(youtubeUrl, options) {
   await ensureYtDlpBinary();
-  return ytdlp(youtubeUrl, options);
+
+  try {
+    return await withYoutubeCookies(options, (authenticatedOptions) =>
+      ytdlp(youtubeUrl, authenticatedOptions),
+    );
+  } catch (error) {
+    const message = String(error?.message || error);
+
+    if (
+      message.includes("YOUTUBE_COOKIES_PATH") ||
+      message.includes("YOUTUBE_COOKIES_BASE64")
+    ) {
+      throw createHttpError(500, `Invalid YouTube cookies configuration: ${message}`);
+    }
+
+    if (
+      /sign in to confirm you(?:'|’)re not a bot/i.test(message) ||
+      /sign in to confirm your age/i.test(message) ||
+      /cookies.*authentication/i.test(message)
+    ) {
+      throw createHttpError(
+        502,
+        "YouTube blocked this server request. Configure YOUTUBE_COOKIES_PATH or YOUTUBE_COOKIES_BASE64 with a fresh Netscape cookies.txt export, restart the server, and retry.",
+      );
+    }
+
+    throw error;
+  }
 }
 
 export function extractYoutubeVideoId(url) {
