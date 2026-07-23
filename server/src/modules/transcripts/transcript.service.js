@@ -86,6 +86,49 @@ export async function updateSegment(segmentId, data) {
   return segment;
 }
 
+export async function bulkUpdateTranslations(updates) {
+  const segmentIds = updates.map(({ segmentId }) => segmentId);
+  const existingSegments = await TranscriptSegment.find({ _id: { $in: segmentIds } }).select("_id").lean();
+
+  if (existingSegments.length !== segmentIds.length) {
+    throw createHttpError(404, "Some transcript segments were not found");
+  }
+
+  const translatedAt = new Date();
+  const result = await TranscriptSegment.bulkWrite(
+    updates.map(({ segmentId, translationText }) => {
+      const text = translationText.trim();
+      const update = {
+        $set: {
+          translationText: text,
+          translationStatus: text ? "edited" : "none",
+          translationError: "",
+          updatedAt: translatedAt,
+        },
+      };
+
+      if (text) {
+        update.$set.translatedAt = translatedAt;
+      } else {
+        update.$unset = { translatedAt: 1 };
+      }
+
+      return {
+        updateOne: {
+          filter: { _id: segmentId },
+          update,
+        },
+      };
+    }),
+    { ordered: false },
+  );
+
+  return {
+    matchedCount: result.matchedCount,
+    modifiedCount: result.modifiedCount,
+  };
+}
+
 export async function mergeWithNextSegment(segmentId) {
   const segment = await getSegment(segmentId);
   const nextSegment = await TranscriptSegment.findOne({

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  bulkUpdateTranslationsController,
   createSegmentController,
   deleteSegmentController,
   deleteSegmentsController,
@@ -8,6 +9,7 @@ import {
   updateSegmentController,
 } from "./transcript.controller.js";
 import {
+  bulkUpdateTranslationsSchema,
   createSegmentSchema,
   deleteSegmentsSchema,
   reorderSegmentsSchema,
@@ -21,6 +23,13 @@ import { validate } from "../../middlewares/validate.middleware.js";
 const router = Router();
 
 router.post("/", requireAuth, requireRole("admin"), validate(createSegmentSchema), createSegmentController);
+router.patch(
+  "/translations/bulk",
+  requireAuth,
+  requireRole("admin"),
+  validate(bulkUpdateTranslationsSchema),
+  bulkUpdateTranslationsController,
+);
 router.patch("/:segmentId", requireAuth, requireRole("admin"), validate(updateSegmentSchema), updateSegmentController);
 router.post(
   "/:segmentId/merge-next",

@@ -1,4 +1,5 @@
 import {
+  bulkUpdateTranslations,
   createSegment,
   deleteSegment,
   deleteSegments,
@@ -17,6 +18,11 @@ export const createSegmentController = asyncHandler(async (req, res) => {
 export const updateSegmentController = asyncHandler(async (req, res) => {
   const segment = await updateSegment(req.validated.params.segmentId, req.validated.body);
   return successResponse(res, "Transcript segment updated successfully", { segment });
+});
+
+export const bulkUpdateTranslationsController = asyncHandler(async (req, res) => {
+  const data = await bulkUpdateTranslations(req.validated.body.updates);
+  return successResponse(res, "Transcript translations updated successfully", data);
 });
 
 export const mergeSegmentController = asyncHandler(async (req, res) => {

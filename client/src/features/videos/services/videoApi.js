@@ -50,6 +50,10 @@ export function updateTranscriptSegment(segmentId, data) {
   return apiClient.patch(`/transcripts/${segmentId}`, data);
 }
 
+export function bulkUpdateTranscriptTranslations(updates) {
+  return apiClient.patch("/transcripts/translations/bulk", { updates });
+}
+
 export function deleteTranscriptSegments(segmentIds) {
   return apiClient.delete("/transcripts", { data: { segmentIds } });
 }

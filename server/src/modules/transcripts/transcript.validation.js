@@ -43,6 +43,25 @@ export const updateSegmentSchema = z.object({
     .refine((value) => Object.keys(value).length > 0, { message: "At least one field is required" }),
 });
 
+const translationUpdateSchema = z
+  .object({
+    segmentId: z.string().regex(objectIdRegex, "Invalid segment id"),
+    translationText: z.string(),
+  })
+  .strict();
+
+export const bulkUpdateTranslationsSchema = z.object({
+  body: z
+    .object({
+      updates: z.array(translationUpdateSchema).min(1).max(5000),
+    })
+    .strict()
+    .refine(
+      ({ updates }) => new Set(updates.map(({ segmentId }) => segmentId)).size === updates.length,
+      { message: "Each segment can only be updated once", path: ["updates"] },
+    ),
+});
+
 export const reorderSegmentsSchema = z.object({
   body: z.object({
     segmentIds: z.array(z.string().regex(objectIdRegex, "Invalid segment id")).min(1),
