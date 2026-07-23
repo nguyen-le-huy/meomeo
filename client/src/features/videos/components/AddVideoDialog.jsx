@@ -71,7 +71,7 @@ export default function AddVideoDialog({ createVideoMutation, onVideoCreated, to
         <DialogHeader>
           <DialogTitle>Thêm video YouTube</DialogTitle>
           <DialogDescription>
-            Có thể để trống transcript để hệ thống tự lấy, hoặc dán transcript thủ công theo từng dòng.
+            Nếu để trống, hệ thống sẽ ưu tiên phụ đề YouTube rồi tự nhận dạng audio khi video không có phụ đề.
           </DialogDescription>
         </DialogHeader>
 
@@ -167,7 +167,7 @@ export default function AddVideoDialog({ createVideoMutation, onVideoCreated, to
             </p>
           ) : null}
           <Button disabled={!videoForm.youtubeUrl.trim()} isLoading={createVideoMutation.isPending} type="submit">
-            Thêm video
+            Thêm video và xem song ngữ
           </Button>
         </form>
       </DialogContent>

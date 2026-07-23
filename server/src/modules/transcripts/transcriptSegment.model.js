@@ -10,7 +10,11 @@ const transcriptSegmentSchema = new mongoose.Schema(
     text: { type: String, required: true, trim: true },
     normalizedText: { type: String, default: "", trim: true },
     wordCount: { type: Number, default: 0 },
-    source: { type: String, enum: ["youtube", "manual", "edited"], default: "youtube" },
+    source: {
+      type: String,
+      enum: ["youtube", "youtube_auto", "azure_speech", "manual", "edited"],
+      default: "youtube",
+    },
     isPublished: { type: Boolean, default: true },
     translationText: { type: String, default: "", trim: true },
     translationLanguage: { type: String, default: "vi" },

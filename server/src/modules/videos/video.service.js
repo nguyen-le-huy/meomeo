@@ -1,6 +1,14 @@
 import { Topic } from "../topics/topic.model.js";
 import { TranscriptSegment } from "../transcripts/transcriptSegment.model.js";
-import { analyzeYoutubeUrl, normalizeTranscriptSegments } from "../youtube/youtube.service.js";
+import {
+  extractYoutubeVideoId,
+  getYoutubeMetadata,
+  normalizeTranscriptSegments,
+} from "../youtube/youtube.service.js";
+import {
+  deleteYoutubeTranscriptJob,
+  enqueueYoutubeTranscript,
+} from "../youtube/youtubeTranscriptJob.service.js";
 import { VideoLesson } from "./video.model.js";
 import { createHttpError } from "../../utils/createHttpError.js";
 
@@ -116,45 +124,79 @@ export async function getVideoTranscripts(id, options = {}) {
 
 export async function createVideo(data, adminUser) {
   const topic = data.topicId ? await assertTopic(data.topicId, { admin: true }) : await getDefaultTopic();
-  const analyzed = await analyzeYoutubeUrl(data.youtubeUrl);
-  const existingVideo = await VideoLesson.findOne({ youtubeVideoId: analyzed.video.youtubeVideoId });
+  const youtubeVideoId = extractYoutubeVideoId(data.youtubeUrl);
+  let metadata;
+  let analysisWarning = "";
+
+  try {
+    metadata = await getYoutubeMetadata(data.youtubeUrl);
+  } catch (error) {
+    analysisWarning = `yt-dlp metadata fallback used: ${error.message}`;
+    metadata = {
+      video: {
+        youtubeUrl: data.youtubeUrl,
+        youtubeVideoId,
+        title: `YouTube video ${youtubeVideoId}`,
+        description: "",
+        thumbnailUrl: `https://img.youtube.com/vi/${youtubeVideoId}/hqdefault.jpg`,
+        duration: 0,
+        viewCount: 0,
+      },
+    };
+  }
+
+  const existingVideo = await VideoLesson.findOne({ youtubeVideoId });
 
   if (existingVideo) {
     throw createHttpError(409, "Video already exists");
   }
 
   const hasManualTranscripts = Boolean(data.transcripts?.length);
-  const transcriptInputs = data.transcripts || analyzed.transcripts || [];
-  const transcriptStatus = transcriptInputs.length ? "completed" : "failed";
+  const transcriptInputs = data.transcripts || [];
+  const transcriptStatus = hasManualTranscripts ? "completed" : "pending";
   const requestedPublish = data.isPublished ?? false;
-
-  if (requestedPublish && transcriptStatus !== "completed") {
-    throw createHttpError(400, analyzed.transcriptError || "Cannot publish video before transcript is completed");
-  }
 
   const video = await VideoLesson.create({
     topicId: topic._id,
-    youtubeUrl: analyzed.video.youtubeUrl,
-    youtubeVideoId: analyzed.video.youtubeVideoId,
-    title: data.title || analyzed.video.title,
+    youtubeUrl: metadata.video.youtubeUrl,
+    youtubeVideoId: metadata.video.youtubeVideoId,
+    title: data.title || metadata.video.title,
     description: data.description || "",
-    thumbnailUrl: analyzed.video.thumbnailUrl,
-    duration: analyzed.video.duration,
-    viewCount: analyzed.video.viewCount || 0,
+    thumbnailUrl: metadata.video.thumbnailUrl,
+    duration: metadata.video.duration,
+    viewCount: metadata.video.viewCount || 0,
     level: data.level || "A2",
     transcriptStatus,
-    transcriptLanguage: analyzed.transcriptLanguage || "en",
-    transcriptError: transcriptInputs.length ? "" : analyzed.transcriptError || "No English transcript found for this video.",
-    isPublished: requestedPublish,
+    transcriptLanguage: "en",
+    transcriptSource: hasManualTranscripts ? "manual" : "",
+    transcriptStage: hasManualTranscripts ? "" : "queued",
+    transcriptProgress: hasManualTranscripts ? 100 : 0,
+    transcriptError: "",
+    publishWhenReady: !hasManualTranscripts && requestedPublish,
+    isPublished: hasManualTranscripts && requestedPublish,
     createdBy: adminUser.id,
   });
 
-  const segments = await createTranscriptSegments(video._id, transcriptInputs, hasManualTranscripts ? "manual" : "youtube");
+  const segments = hasManualTranscripts
+    ? await createTranscriptSegments(video._id, transcriptInputs, "manual")
+    : [];
+
+  if (!hasManualTranscripts) {
+    try {
+      await enqueueYoutubeTranscript(video._id);
+    } catch (error) {
+      video.transcriptStatus = "failed";
+      video.transcriptStage = "";
+      video.transcriptError = `Could not queue transcript processing: ${error.message}`;
+      await video.save();
+    }
+  }
+
   return {
     video,
     segments,
     transcriptsCount: segments.length,
-    analysisWarning: analyzed.warning,
+    analysisWarning,
   };
 }
 
@@ -166,18 +208,24 @@ export async function updateVideo(id, data) {
     video.topicId = topic._id;
   }
   if (data.youtubeUrl !== undefined) {
-    const analyzed = await analyzeYoutubeUrl(data.youtubeUrl);
-    video.youtubeUrl = analyzed.video.youtubeUrl;
-    video.youtubeVideoId = analyzed.video.youtubeVideoId;
-    if (!data.title) video.title = analyzed.video.title;
-    video.thumbnailUrl = analyzed.video.thumbnailUrl;
-    video.duration = analyzed.video.duration;
-    if (analyzed.video.viewCount !== undefined) video.viewCount = analyzed.video.viewCount;
+    const metadata = await getYoutubeMetadata(data.youtubeUrl);
+    video.youtubeUrl = metadata.video.youtubeUrl;
+    video.youtubeVideoId = metadata.video.youtubeVideoId;
+    if (!data.title) video.title = metadata.video.title;
+    video.thumbnailUrl = metadata.video.thumbnailUrl;
+    video.duration = metadata.video.duration;
+    if (metadata.video.viewCount !== undefined) video.viewCount = metadata.video.viewCount;
   }
   if (data.title !== undefined) video.title = data.title;
   if (data.description !== undefined) video.description = data.description;
   if (data.level !== undefined) video.level = data.level;
-  if (data.isPublished !== undefined) video.isPublished = data.isPublished;
+  if (data.isPublished !== undefined) {
+    if (data.isPublished && video.transcriptStatus !== "completed") {
+      throw createHttpError(400, "Cannot publish video before transcript is completed");
+    }
+    video.isPublished = data.isPublished;
+    if (!data.isPublished) video.publishWhenReady = false;
+  }
 
   await video.save();
   return video;
@@ -185,6 +233,7 @@ export async function updateVideo(id, data) {
 
 export async function deleteVideo(id) {
   const video = await getVideoById(id, { admin: true });
+  await deleteYoutubeTranscriptJob(video._id);
   await TranscriptSegment.deleteMany({ videoId: video._id });
   await video.deleteOne();
   return { id };
@@ -202,21 +251,35 @@ export async function publishVideo(id, isPublished) {
   }
 
   video.isPublished = isPublished;
+  if (!isPublished) video.publishWhenReady = false;
   await video.save();
   return video;
 }
 
 export async function analyzeVideoTranscript(id) {
   const video = await getVideoById(id, { admin: true });
-  video.transcriptStatus = "processing";
+  const publishWhenReady = video.isPublished || video.publishWhenReady;
+  await TranscriptSegment.deleteMany({ videoId: video._id });
+  video.isPublished = false;
+  video.publishWhenReady = publishWhenReady;
+  video.transcriptStatus = "pending";
+  video.transcriptSource = "";
+  video.transcriptStage = "queued";
+  video.transcriptProgress = 0;
+  video.transcriptError = "";
+  video.bilingualStatus = "none";
+  video.bilingualError = "";
   await video.save();
 
-  const analyzed = await analyzeYoutubeUrl(video.youtubeUrl);
-  const segments = await createTranscriptSegments(video._id, analyzed.transcripts || []);
-  video.transcriptStatus = segments.length ? "completed" : "failed";
-  video.transcriptLanguage = analyzed.transcriptLanguage || video.transcriptLanguage;
-  video.transcriptError = segments.length ? "" : analyzed.transcriptError || "No English transcript found for this video.";
-  await video.save();
+  try {
+    await enqueueYoutubeTranscript(video._id);
+  } catch (error) {
+    video.transcriptStatus = "failed";
+    video.transcriptStage = "";
+    video.transcriptError = `Could not queue transcript processing: ${error.message}`;
+    await video.save();
+    throw error;
+  }
 
-  return { video, segments, transcriptsCount: segments.length, analysisWarning: analyzed.warning };
+  return { video, segments: [], transcriptsCount: 0 };
 }

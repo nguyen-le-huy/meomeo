@@ -1,9 +1,11 @@
 import { execFile } from "node:child_process";
 import { constants as fsConstants } from "node:fs";
-import { access } from "node:fs/promises";
+import { access, mkdtemp, readdir, rm } from "node:fs/promises";
 import { createRequire } from "node:module";
+import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import ffmpegPath from "ffmpeg-static";
 import ytdlp from "yt-dlp-exec";
 import { createHttpError } from "../../utils/createHttpError.js";
 
@@ -13,13 +15,6 @@ const ytDlpPostinstallPath = require.resolve("yt-dlp-exec/scripts/postinstall.js
 const ytDlpPackageRoot = path.dirname(path.dirname(ytDlpPostinstallPath));
 const ytDlpBinaryPath = path.join(ytDlpPackageRoot, "bin", process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp");
 let ytDlpBinaryPromise;
-
-const transcriptLanguagePriority = [
-  { container: "subtitles", language: "en" },
-  { container: "subtitles", language: "en-US" },
-  { container: "automatic_captions", language: "en" },
-  { container: "automatic_captions", language: "en-US" },
-];
 
 const transcriptExtensionPriority = ["json3", "vtt", "srv3", "ttml"];
 
@@ -109,22 +104,31 @@ function normalizeSegment(segment, index) {
 }
 
 function pickPreferredSubtitleTrack(metadata) {
-  for (const { container, language } of transcriptLanguagePriority) {
-    const tracks = metadata[container]?.[language];
-    if (!tracks?.length) continue;
+  for (const container of ["subtitles", "automatic_captions"]) {
+    const availableTracks = metadata[container] || {};
+    const languages = [
+      "en",
+      "en-US",
+      ...Object.keys(availableTracks).filter((language) => /^en(?:[-_]|$)/i.test(language)),
+    ].filter((language, index, values) => values.indexOf(language) === index);
 
-    for (const ext of transcriptExtensionPriority) {
-      const track = tracks.find((item) => item.ext === ext && item.url);
-      if (track) return { ...track, language, source: container === "subtitles" ? "manual" : "auto" };
-    }
+    for (const language of languages) {
+      const tracks = availableTracks[language];
+      if (!tracks?.length) continue;
 
-    const fallbackTrack = tracks.find((item) => item.url);
-    if (fallbackTrack) {
-      return {
-        ...fallbackTrack,
-        language,
-        source: container === "subtitles" ? "manual" : "auto",
-      };
+      for (const ext of transcriptExtensionPriority) {
+        const track = tracks.find((item) => item.ext === ext && item.url);
+        if (track) return { ...track, language, source: container === "subtitles" ? "manual" : "auto" };
+      }
+
+      const fallbackTrack = tracks.find((item) => item.url);
+      if (fallbackTrack) {
+        return {
+          ...fallbackTrack,
+          language,
+          source: container === "subtitles" ? "manual" : "auto",
+        };
+      }
     }
   }
 
@@ -181,6 +185,41 @@ export async function getYoutubeTranscript(metadata) {
     source: track.source,
     transcripts,
   };
+}
+
+export async function downloadYoutubeAudio(youtubeUrl) {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "meomeo-youtube-audio-"));
+  const sourceTemplate = path.join(directory, "source.%(ext)s");
+  const outputPath = path.join(directory, "audio.flac");
+
+  try {
+    await runYtDlp(youtubeUrl, {
+      format: "bestaudio/best",
+      output: sourceTemplate,
+      noPlaylist: true,
+      noWarnings: true,
+    });
+
+    const files = await readdir(directory);
+    const sourceName = files.find((name) => name.startsWith("source."));
+    if (!sourceName) throw createHttpError(502, "yt-dlp did not produce an audio file.");
+    const ffmpegBinary = process.env.FFMPEG_PATH || ffmpegPath || "ffmpeg";
+
+    await execFileAsync(
+      ffmpegBinary,
+      ["-y", "-i", path.join(directory, sourceName), "-vn", "-ac", "1", "-ar", "16000", "-c:a", "flac", outputPath],
+      { timeout: 15 * 60 * 1000, maxBuffer: 10 * 1024 * 1024 },
+    );
+
+    return {
+      audioPath: outputPath,
+      cleanup: () => rm(directory, { recursive: true, force: true }),
+    };
+  } catch (error) {
+    await rm(directory, { recursive: true, force: true });
+    if (error.statusCode) throw error;
+    throw createHttpError(502, `Failed to download YouTube audio: ${error.message}`);
+  }
 }
 
 function parseJson3Subtitle(rawSubtitle) {

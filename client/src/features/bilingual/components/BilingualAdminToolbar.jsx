@@ -7,6 +7,7 @@ import ManualVietsubDialog from "./ManualVietsubDialog.jsx";
 import TranscriptImportTools from "./TranscriptImportTools.jsx";
 
 export default function BilingualAdminToolbar({
+  analyzeTranscriptMutation,
   bilingualError,
   bilingualStatus,
   generateVietsubMutation,
@@ -49,6 +50,18 @@ export default function BilingualAdminToolbar({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
+        {transcriptStatus === "failed" ? (
+          <Button
+            disabled={analyzeTranscriptMutation?.isPending}
+            onClick={() => analyzeTranscriptMutation?.mutate()}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            {analyzeTranscriptMutation?.isPending ? <Spinner size="sm" /> : <RefreshCw className="mr-1 h-3 w-3" />}
+            Thử lại transcript
+          </Button>
+        ) : null}
         <Button
           disabled={!canGenerate}
           onClick={() => generateVietsubMutation?.mutate({ force: false })}

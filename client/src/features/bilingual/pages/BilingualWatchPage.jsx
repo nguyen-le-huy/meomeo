@@ -13,6 +13,7 @@ import BilingualAdminToolbar from "../components/BilingualAdminToolbar.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import {
   useBilingualVideo,
+  useAnalyzeBilingualTranscript,
   useDeleteBilingualSegments,
   useGenerateVietsub,
   useUpdateBilingualSegment,
@@ -34,11 +35,20 @@ export default function BilingualWatchPage() {
 
   const { data, isLoading, error } = useBilingualVideo(id);
   const generateVietsubMutation = useGenerateVietsub(id);
+  const analyzeTranscriptMutation = useAnalyzeBilingualTranscript(id);
   const updateSegmentMutation = useUpdateBilingualSegment(id);
   const deleteSegmentsMutation = useDeleteBilingualSegments(id);
 
   const video = data?.video;
   const segments = data?.segments || [];
+  const transcriptIsProcessing = video?.transcriptStatus === "pending" || video?.transcriptStatus === "processing";
+  const transcriptStageLabels = {
+    queued: "Đang xếp hàng phân tích transcript…",
+    fetching_youtube_subtitle: "Đang tìm phụ đề trên YouTube…",
+    downloading_audio: "Không có phụ đề — đang tải audio…",
+    transcribing_audio: "Đang nhận dạng giọng nói từ audio…",
+    creating_segments: "Đang tạo các đoạn transcript…",
+  };
 
   const activeIndex = segments.findIndex(
     (segment) => currentTime >= segment.startTime && currentTime < segment.endTime,
@@ -156,7 +166,34 @@ export default function BilingualWatchPage() {
               />
 
               <div className="pointer-events-auto absolute inset-0 z-10" onClick={handleTogglePlay}>
-              {!isPlaying ? (
+              {transcriptIsProcessing && segments.length === 0 ? (
+                <div className="flex h-full w-full items-center justify-center bg-black/45 px-5">
+                  <div className="max-w-sm rounded-2xl border border-white/15 bg-[#181715]/95 p-5 text-center shadow-2xl backdrop-blur-md">
+                    <RefreshCw className="mx-auto mb-3 h-7 w-7 animate-spin text-coral" />
+                    <p className="text-sm font-semibold text-white sm:text-base">
+                      {transcriptStageLabels[video.transcriptStage] || "Đang chuẩn bị transcript…"}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-white/55">
+                      Trang sẽ tự cập nhật khi xử lý hoàn tất. Bạn có thể chờ tại đây.
+                    </p>
+                    <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-coral transition-all duration-500"
+                        style={{ width: `${Math.max(5, video.transcriptProgress || 0)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : video.transcriptStatus === "failed" && segments.length === 0 ? (
+                <div className="flex h-full w-full items-center justify-center bg-black/45 px-5">
+                  <div className="max-w-md rounded-2xl border border-red-400/25 bg-[#181715]/95 p-5 text-center shadow-2xl backdrop-blur-md">
+                    <p className="text-sm font-semibold text-white sm:text-base">Không thể tự tạo transcript</p>
+                    <p className="mt-2 text-xs leading-5 text-white/60">
+                      {video.transcriptError || "Hãy thử phân tích lại hoặc nhập transcript thủ công."}
+                    </p>
+                  </div>
+                </div>
+              ) : !isPlaying ? (
                 <div className="flex h-full w-full items-center justify-center bg-black/10">
                   <button
                     className="group flex items-center gap-3 rounded-full border border-white/15 bg-[#181715]/90 py-2.5 pl-2.5 pr-5 text-left shadow-2xl backdrop-blur-md transition hover:bg-[#252320] sm:gap-4 sm:py-3 sm:pl-3 sm:pr-6"
@@ -221,6 +258,7 @@ export default function BilingualWatchPage() {
           {isAdmin ? (
             <div className="shrink-0 border-t border-white/10 bg-[#1b1a18] px-4 py-3 text-canvas sm:px-6">
               <BilingualAdminToolbar
+                analyzeTranscriptMutation={analyzeTranscriptMutation}
                 bilingualError={video.bilingualError}
                 bilingualStatus={video.bilingualStatus}
                 generateVietsubMutation={generateVietsubMutation}

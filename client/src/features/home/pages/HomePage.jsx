@@ -270,7 +270,7 @@ export default function HomePage() {
               createTopicMutation={createTopicMutation}
               createVideoMutation={createVideoMutation}
               deleteTopicMutation={deleteTopicMutation}
-              onVideoCreated={(video) => navigate(`/videos/${video._id}`)}
+              onVideoCreated={(video) => navigate(`/videos/${video._id}/bilingual`)}
               reorderTopicsMutation={reorderTopicsMutation}
               topics={visibleTopics}
               updateTopicMutation={updateTopicMutation}

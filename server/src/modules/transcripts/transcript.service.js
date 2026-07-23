@@ -45,6 +45,9 @@ export async function createSegment(data) {
   });
 
   video.transcriptStatus = "completed";
+  video.transcriptSource = "manual";
+  video.transcriptStage = "";
+  video.transcriptProgress = 100;
   video.transcriptError = "";
   if (!video.transcriptLanguage) video.transcriptLanguage = "en";
   await video.save();

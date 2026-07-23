@@ -148,7 +148,7 @@ export default function VideoLibraryPage({ showCategoryList = true, title = "Há»
               createVideoMutation={createVideoMutation}
               deleteTopicMutation={deleteTopicMutation}
               reorderTopicsMutation={reorderTopicsMutation}
-              onVideoCreated={(video) => navigate(`/videos/${video._id}`)}
+              onVideoCreated={(video) => navigate(`/videos/${video._id}/bilingual`)}
               topics={visibleTopics}
               updateTopicMutation={updateTopicMutation}
             />
