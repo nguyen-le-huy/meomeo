@@ -245,7 +245,7 @@ export default function BilingualWatchPage() {
 
               <button
                 aria-label={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình ngang kèm phụ đề"}
-                className="movie-player-fullscreen absolute bottom-3 right-3 z-30 grid h-10 w-10 place-items-center rounded-md bg-black/65 text-white shadow-lg backdrop-blur transition duration-300 hover:bg-black/85"
+                className="movie-player-fullscreen absolute bottom-3 right-3 z-30 hidden h-10 w-10 place-items-center rounded-md bg-black/65 text-white shadow-lg backdrop-blur transition duration-300 hover:bg-black/85 lg:grid"
                 onClick={handleToggleFullscreen}
                 type="button"
               >
