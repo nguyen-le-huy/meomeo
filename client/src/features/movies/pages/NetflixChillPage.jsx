@@ -1,5 +1,5 @@
 import { AlertTriangle, Info, Play, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
@@ -13,6 +13,23 @@ import { useMovieAdminMutations, useMovieLibrary } from "../hooks/useMovies.js";
 import { flattenMovieLibrary, normalizeMovie } from "../utils/movieData.js";
 import { uploadMovieFile } from "../utils/tusMovieUpload.js";
 import "../styles/netflix-chill.css";
+
+function useIsDesktopViewport() {
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window === "undefined" ? true : window.matchMedia("(min-width: 1024px)").matches,
+  );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    const handleChange = () => setIsDesktop(mediaQuery.matches);
+
+    handleChange();
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  return isDesktop;
+}
 
 export default function NetflixChillPage() {
   const navigate = useNavigate();
@@ -51,6 +68,37 @@ export default function NetflixChillPage() {
     return allMovies.filter((movie) => `${movie.title} ${movie.description || ""}`.toLocaleLowerCase("vi").includes(term));
   }, [allMovies, search]);
   const featuredMovie = normalizeMovie(libraryQuery.data?.featuredMovie) || visibleMovies[0] || null;
+
+  const isDesktop = useIsDesktopViewport();
+  const limit = isDesktop ? 8 : 6;
+  const batchSize = isDesktop ? 8 : 6;
+  const [visibleCount, setVisibleCount] = useState(limit);
+  const loadMoreRef = useRef(null);
+
+  useEffect(() => {
+    setVisibleCount(limit);
+  }, [limit, search]);
+
+  const lazyVisibleMovies = useMemo(() => {
+    return visibleMovies.slice(0, visibleCount);
+  }, [visibleMovies, visibleCount]);
+
+  const hasMore = visibleCount < visibleMovies.length;
+
+  useEffect(() => {
+    if (!hasMore) return;
+    const node = loadMoreRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setVisibleCount((current) => Math.min(current + batchSize, visibleMovies.length));
+      }
+    }, { rootMargin: "640px 0px" });
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, batchSize, visibleMovies.length]);
 
   function openPlayer(movie) {
     navigate(`/netflix/${movie.id || movie._id}`);
@@ -147,17 +195,20 @@ export default function NetflixChillPage() {
 
       {adminError ? <div className="mx-auto mt-4 max-w-[1720px] px-4 text-sm text-red-300 sm:px-6 lg:px-10">{adminError}</div> : null}
 
-      {visibleMovies.length ? (
-        <MovieRow
-          deletingId={deletingId}
-          editMutation={movieMutations.update}
-          isAdmin={isAdmin}
-          movies={visibleMovies}
-          onDelete={deleteMovie}
-          onResume={resumeUpload}
-          onSelect={openPlayer}
-          title="Tất cả"
-        />
+      {lazyVisibleMovies.length ? (
+        <>
+          <MovieRow
+            deletingId={deletingId}
+            editMutation={movieMutations.update}
+            isAdmin={isAdmin}
+            movies={lazyVisibleMovies}
+            onDelete={deleteMovie}
+            onResume={resumeUpload}
+            onSelect={openPlayer}
+            title="Tất cả"
+          />
+          {hasMore ? <div aria-hidden="true" className="h-8" ref={loadMoreRef} /> : null}
+        </>
       ) : (
         <div className="mx-auto max-w-[1720px] px-4 py-20 text-center sm:px-6 lg:px-10">
           <p className="text-xl font-semibold">{search ? "Không tìm thấy phim phù hợp" : "Chưa có phim sẵn sàng"}</p>

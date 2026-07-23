@@ -1,4 +1,4 @@
-import { Play, RefreshCw, Trash2, UploadCloud } from "lucide-react";
+import { Clock, Play, RefreshCw, Trash2, UploadCloud } from "lucide-react";
 import { useState } from "react";
 import EditMovieDialog from "./EditMovieDialog.jsx";
 
@@ -55,7 +55,15 @@ export default function MoviePosterCard({ editMutation, isAdmin, isDeleting, mov
           ) : null}
         </span>
         <h3 className="mt-2 truncate text-sm font-semibold text-white/90 sm:text-base">{movie.title} ({movie.year})</h3>
-        <span className="mt-1 flex min-w-0 items-center gap-2 text-xs text-white/50 sm:text-sm"><span className="rounded border border-white/30 px-1 py-0.5 text-[10px] leading-none sm:text-xs">1080p</span><span>{movie.year}</span><span aria-hidden="true">•</span><span className="truncate">{movie.duration}</span></span>
+        <span className="mt-1 flex min-w-0 items-center gap-2 text-xs text-white/50 sm:text-sm">
+          <span className="rounded border border-white/30 px-1 py-0.5 text-[10px] leading-none sm:text-xs">1080p</span>
+          <span>{movie.year}</span>
+          <span aria-hidden="true">•</span>
+          <span className="inline-flex items-center gap-1 truncate">
+            <Clock size={12} className="shrink-0 text-white/45" />
+            {movie.duration}
+          </span>
+        </span>
       </button>
 
       {isAdmin ? (
