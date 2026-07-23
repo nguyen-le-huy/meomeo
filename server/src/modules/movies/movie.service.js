@@ -516,7 +516,11 @@ export async function importVietnamesePlainText(id, content, dryRun) {
 export async function generateMovieVietsub(id, options = {}) {
   const movie = await getMovieDocument(id, { admin: true });
   const result = await generateVietsub(movie._id.toString(), options);
-  await syncMovieCaptions(movie);
+  // Sync captions to Bunny after translation — failures are non-fatal:
+  // translation data is already saved so we only warn instead of throwing.
+  await syncMovieCaptions(movie).catch((syncError) => {
+    console.warn("[generateMovieVietsub] Bunny caption sync failed after successful translation:", syncError?.message);
+  });
   return {
     model: result.model,
     translatedCount: result.translatedCount,
