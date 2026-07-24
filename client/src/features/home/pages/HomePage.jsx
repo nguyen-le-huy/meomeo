@@ -41,7 +41,7 @@ import {
 } from "../../videos/utils/videoLibrary.js";
 import LatestMovieFeatureCard from "../components/LatestMovieFeatureCard.jsx";
 
-const videosPerCategoryTurn = 3;
+const videosPerCategoryTurn = 2;
 
 function roundUpToCategoryTurn(value) {
   return Math.ceil(value / videosPerCategoryTurn) * videosPerCategoryTurn;

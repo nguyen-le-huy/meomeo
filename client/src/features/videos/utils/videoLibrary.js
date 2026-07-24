@@ -44,8 +44,8 @@ export function buildTopicSections({ isAdmin, topics, videos }) {
   return sections;
 }
 
-export function interleaveTopicSections(sections, videosPerCategory = 3) {
-  const groupSize = Math.max(1, Math.floor(Number(videosPerCategory)) || 3);
+export function interleaveTopicSections(sections, videosPerCategory = 2) {
+  const groupSize = Math.max(1, Math.floor(Number(videosPerCategory)) || 2);
   const longestSectionLength = sections.reduce(
     (longestLength, section) => Math.max(longestLength, section.videos.length),
     0,

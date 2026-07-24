@@ -26,7 +26,7 @@ import VideoLibraryErrorState from "../components/VideoLibraryErrorState.jsx";
 import { homeInitialDesktopVideoLimit, homeInitialMobileVideoLimit, homeVideoLoadBatchSize } from "../constants/videoLibrary.constants.js";
 import { buildTopicSections, getNewestVideoIds, interleaveTopicSections } from "../utils/videoLibrary.js";
 
-const videosPerCategoryTurn = 3;
+const videosPerCategoryTurn = 2;
 
 function roundUpToCategoryTurn(value) {
   return Math.ceil(value / videosPerCategoryTurn) * videosPerCategoryTurn;
