@@ -203,8 +203,8 @@ export default function MoviePlayerPage() {
         )}
 
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-black/65 to-transparent" />
-        <div className="movie-player-top-controls absolute z-20 flex items-center gap-3">
-          <button aria-label="Quay lại thư viện phim" className="grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white/90 backdrop-blur transition hover:bg-black/70 hover:text-white" onClick={goBack} type="button"><ArrowLeft size={22} /></button>
+        <div className="movie-player-top-controls pointer-events-none absolute z-30 flex items-center gap-3">
+          <button aria-label="Quay lại thư viện phim" className="pointer-events-auto grid h-10 w-10 place-items-center rounded-full bg-black/50 text-white/90 backdrop-blur transition hover:bg-black/70 hover:text-white" onClick={goBack} type="button"><ArrowLeft size={22} /></button>
         </div>
 
         {mockMovie ? (
