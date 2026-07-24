@@ -9,6 +9,7 @@ import {
   getMoviePlaybackController,
   getPublishEligibilityController,
   getStreamStatusController,
+  getReuploadCredentialsController,
   getUploadCredentialsController,
   importEnglishSubtitleController,
   importVietnameseSubtitleController,
@@ -97,6 +98,7 @@ router.post(
 );
 router.delete("/:id", ...adminOnly, validate(movieIdParamSchema), deleteMovieController);
 router.post("/:id/upload-credentials", ...adminOnly, validate(uploadCredentialsSchema), getUploadCredentialsController);
+router.post("/:id/reupload-credentials", ...adminOnly, validate(uploadCredentialsSchema), getReuploadCredentialsController);
 router.patch("/:id/upload-completed", ...adminOnly, validate(movieIdParamSchema), markUploadCompletedController);
 router.patch("/:id/upload-progress", ...adminOnly, validate(uploadProgressSchema), reportUploadProgressController);
 router.get("/:id/stream-status", ...adminOnly, validate(movieIdParamSchema), getStreamStatusController);

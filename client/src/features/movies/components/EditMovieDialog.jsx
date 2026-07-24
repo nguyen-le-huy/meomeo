@@ -1,4 +1,4 @@
-import { Check, ImagePlus, LoaderCircle, Pencil, Star } from "lucide-react";
+import { Check, ImagePlus, LoaderCircle, Pencil, Star, UploadCloud } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Alert } from "../../../components/ui/alert.jsx";
 import { Button } from "../../../components/ui/button.jsx";
@@ -12,6 +12,7 @@ import {
 } from "../../../components/ui/dialog.jsx";
 import { Input } from "../../../components/ui/input.jsx";
 import { Textarea } from "../../../components/ui/textarea.jsx";
+import ReuploadMovieVideoDialog from "./ReuploadMovieVideoDialog.jsx";
 
 function createForm(movie) {
   return {
@@ -30,6 +31,7 @@ export default function EditMovieDialog({ movie, mutation }) {
   const [poster, setPoster] = useState(null);
   const [posterPreview, setPosterPreview] = useState("");
   const [error, setError] = useState("");
+  const [showReuploadDialog, setShowReuploadDialog] = useState(false);
 
   useEffect(() => {
     if (!poster) {
@@ -106,12 +108,30 @@ export default function EditMovieDialog({ movie, mutation }) {
           {poster ? <p className="truncate text-xs text-[#f3a38d]">Poster mới: {poster.name}</p> : null}
           {error ? <Alert className="border-red-300/20 bg-red-300/10 text-red-100" variant="error">{error}</Alert> : null}
 
-          <div className="flex justify-end">
+          <div className="flex items-center justify-between gap-3 pt-2">
+            <button
+              className="inline-flex h-9 items-center gap-1.5 rounded border border-white/20 bg-white/5 px-3 text-xs font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
+              onClick={() => setShowReuploadDialog(true)}
+              type="button"
+            >
+              <UploadCloud size={15} /> Upload lại video mới
+            </button>
             <Button className="bg-[#e06f50] text-white hover:bg-[#c95f43]" isLoading={mutation.isPending} type="submit">
               Lưu thay đổi
             </Button>
           </div>
         </form>
+
+        {showReuploadDialog && (
+          <ReuploadMovieVideoDialog
+            movie={movie}
+            onOpenChange={setShowReuploadDialog}
+            open={showReuploadDialog}
+            onSuccess={() => {
+              setOpen(false);
+            }}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

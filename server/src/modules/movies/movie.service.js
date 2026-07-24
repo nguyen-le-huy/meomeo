@@ -290,6 +290,32 @@ export async function getMovieUploadCredentials(id, fileMetadata) {
   return createTusUploadCredentials(movie.bunnyVideoId);
 }
 
+export async function getMovieReuploadCredentials(id, fileMetadata) {
+  const movie = await getMovieDocument(id, { admin: true });
+  const bunnyVideo = await createBunnyVideo(movie.title);
+
+  if (movie.bunnyVideoId) {
+    movie.previousBunnyVideoId = movie.bunnyVideoId;
+  }
+
+  movie.bunnyVideoId = bunnyVideo.guid;
+  movie.bunnyLibraryId = getBunnyLibraryId();
+  movie.uploadFileName = fileMetadata.fileName;
+  movie.uploadFileSize = fileMetadata.fileSize;
+  movie.uploadFileLastModified = fileMetadata.fileLastModified;
+  movie.uploadFileType = fileMetadata.fileType;
+  movie.uploadProgress = 0;
+  movie.uploadBytesUploaded = 0;
+  movie.uploadBytesTotal = fileMetadata.fileSize;
+  movie.encodeProgress = 0;
+  movie.streamStatus = "uploading";
+  movie.streamError = "";
+  movie.uploadUpdatedAt = new Date();
+
+  await movie.save();
+  return createTusUploadCredentials(movie.bunnyVideoId);
+}
+
 export async function reportMovieUploadProgress(id, data) {
   const movie = await getMovieDocument(id, { admin: true });
   if (movie.streamStatus === "ready") return movie;
@@ -337,6 +363,10 @@ async function applyBunnyMetadata(movie, remote) {
     movie.uploadProgress = 100;
     movie.encodeProgress = 100;
     movie.streamError = "";
+    if (movie.previousBunnyVideoId) {
+      deleteBunnyVideo(movie.previousBunnyVideoId).catch(() => undefined);
+      movie.previousBunnyVideoId = "";
+    }
   } else if (movie.streamStatus === "processing") {
     movie.streamError = "";
   } else if (movie.streamStatus === "failed") {
@@ -384,6 +414,10 @@ export async function handleBunnyWebhook(payload) {
     movie.streamReadyAt ||= new Date();
     if (Number(payload.Status) === 3) movie.encodeProgress = 100;
     movie.streamError = "";
+    if (movie.previousBunnyVideoId) {
+      deleteBunnyVideo(movie.previousBunnyVideoId).catch(() => undefined);
+      movie.previousBunnyVideoId = "";
+    }
   }
   if (nextStatus === "failed") {
     movie.streamError = "Bunny Stream encoding failed";

@@ -21,6 +21,7 @@ const videoLessonSchema = new mongoose.Schema(
     },
     bunnyVideoId: { type: String, trim: true, default: "" },
     bunnyLibraryId: { type: String, trim: true, default: "" },
+    previousBunnyVideoId: { type: String, trim: true, default: "" },
     streamStatus: {
       type: String,
       enum: ["created", "uploading", "processing", "ready", "failed"],

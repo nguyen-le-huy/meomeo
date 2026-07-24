@@ -1,4 +1,5 @@
 import {
+  getReuploadCredentials,
   getUploadCredentials,
   markUploadCompleted,
   reportUploadProgress,
@@ -44,14 +45,18 @@ async function finishUpload(movieId, file) {
   }
 }
 
-export async function uploadMovieFile({ credentials: suppliedCredentials, file, movieId, onProgress, title }) {
+export async function uploadMovieFile({ credentials: suppliedCredentials, file, isReupload = false, movieId, onProgress, title }) {
   const tus = await import("tus-js-client");
   if (!tus.isSupported) {
     throw new Error("Trình duyệt này không hỗ trợ upload có thể tiếp tục. Hãy dùng phiên bản Chrome, Edge, Firefox hoặc Safari mới.");
   }
 
   const credentials = suppliedCredentials
-    || (await getUploadCredentials(movieId, getFileMetadata(file))).data.data.upload;
+    || (
+      isReupload
+        ? (await getReuploadCredentials(movieId, getFileMetadata(file))).data.data.upload
+        : (await getUploadCredentials(movieId, getFileMetadata(file))).data.data.upload
+    );
   let lastReportedAt = 0;
   let lastReportedBytes = 0;
   let latestProgress = 0;

@@ -1,8 +1,9 @@
-import { Captions, Copy, Languages, LoaderCircle, RefreshCw, Send, Sparkles, Type } from "lucide-react";
+import { Captions, Copy, Languages, LoaderCircle, RefreshCw, Send, Sparkles, Type, UploadCloud } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select.jsx";
 import { Toast } from "../../../components/ui/toast.jsx";
 import ImportViTextDialog from "./ImportViTextDialog.jsx";
+import ReuploadMovieVideoDialog from "./ReuploadMovieVideoDialog.jsx";
 
 const TRANSLATION_MODELS = [
   { id: "deepseek-v4-flash", label: "DeepSeek V4 Flash", hint: "Rẻ nhất" },
@@ -41,6 +42,7 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
   const [message, setMessage] = useState("");
   const [busyAction, setBusyAction] = useState("");
   const [showViTextDialog, setShowViTextDialog] = useState(false);
+  const [showReuploadDialog, setShowReuploadDialog] = useState(false);
   const [translationModel, setTranslationModel] = useState("deepseek-v4-pro");
   const [toast, setToast] = useState(null);
   const toastIdRef = useRef(0);
@@ -192,6 +194,15 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
           {busyAction === "vietsub" ? "AI đang dịch..." : "Tạo Vietsub bằng AI"}
         </button>
         <button
+          className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium disabled:opacity-40 sm:h-9 sm:w-auto sm:px-3 sm:text-xs"
+          disabled={busy}
+          onClick={() => setShowReuploadDialog(true)}
+          title="Upload file video mới (độ phân giải cao hơn) nhưng vẫn giữ nguyên phụ đề hiện tại"
+          type="button"
+        >
+          <UploadCloud size={14} /> Thay video
+        </button>
+        <button
           className={`col-span-2 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded px-3 text-[11px] font-semibold sm:h-9 sm:w-auto sm:text-xs ${movie.isPublished ? "bg-white/10 text-white" : "bg-[#e06f50] text-white"}`}
           disabled={busy || (!movie.isPublished && !eligibility?.eligible)}
           onClick={() => mutations.publish.mutate({ id: movie._id, isPublished: !movie.isPublished })}
@@ -209,6 +220,17 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
           mutation={mutations.importViText}
           onClose={handleViTextClose}
           segments={segments}
+        />
+      )}
+
+      {showReuploadDialog && (
+        <ReuploadMovieVideoDialog
+          movie={movie}
+          onOpenChange={setShowReuploadDialog}
+          open={showReuploadDialog}
+          onSuccess={() => {
+            setMessage("Đã gửi file video mới. Video đang được Bunny Stream xử lý...");
+          }}
         />
       )}
     </div>

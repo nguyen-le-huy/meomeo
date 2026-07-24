@@ -40,6 +40,10 @@ export function getUploadCredentials(id, fileMetadata) {
   return apiClient.post(`/movies/${id}/upload-credentials`, fileMetadata, { timeout: 15_000 });
 }
 
+export function getReuploadCredentials(id, fileMetadata) {
+  return apiClient.post(`/movies/${id}/reupload-credentials`, fileMetadata, { timeout: 15_000 });
+}
+
 export function markUploadCompleted(id) {
   return apiClient.patch(`/movies/${id}/upload-completed`, undefined, { timeout: 10_000 });
 }

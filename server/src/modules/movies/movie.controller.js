@@ -6,6 +6,7 @@ import {
   getMovieLibrary,
   getMoviePlayback,
   getMoviePublishEligibility,
+  getMovieReuploadCredentials,
   getMovieUploadCredentials,
   importEnglishSubtitle,
   importVietnamesePlainText,
@@ -77,6 +78,12 @@ export const getUploadCredentialsController = asyncHandler(async (req, res) => {
   const upload = await getMovieUploadCredentials(req.validated.params.id, req.validated.body);
   res.set("Cache-Control", "private, no-store");
   return successResponse(res, "Upload credentials created successfully", { upload });
+});
+
+export const getReuploadCredentialsController = asyncHandler(async (req, res) => {
+  const upload = await getMovieReuploadCredentials(req.validated.params.id, req.validated.body);
+  res.set("Cache-Control", "private, no-store");
+  return successResponse(res, "Re-upload credentials created successfully", { upload });
 });
 
 export const markUploadCompletedController = asyncHandler(async (req, res) => {
