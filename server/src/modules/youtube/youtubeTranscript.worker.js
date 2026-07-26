@@ -1,6 +1,6 @@
 import { TranscriptSegment } from "../transcripts/transcriptSegment.model.js";
 import { VideoLesson } from "../videos/video.model.js";
-import { transcribeAudioFile } from "../speech/azureTranscription.service.js";
+import { transcribeAudioFileWithOpenAI } from "../speech/openaiTranscription.service.js";
 import {
   analyzeYoutubeUrl,
   downloadYoutubeAudio,
@@ -24,6 +24,7 @@ function normalizeText(text) {
 
 function segmentSource(transcriptSource) {
   if (transcriptSource === "youtube_auto") return "youtube_auto";
+  if (transcriptSource === "openai_whisper") return "openai_whisper";
   if (transcriptSource === "azure_speech") return "azure_speech";
   return "youtube";
 }
@@ -47,6 +48,7 @@ async function replaceSegments(video, segments, transcriptSource, language) {
   if (!latestVideo || latestVideo.transcriptSource === "manual") return false;
 
   const normalizedSegments = normalizeTranscriptSegments(segments, {
+    profile: transcriptSource === "youtube_auto" ? "youtube_auto" : "default",
     preserveCueBoundaries: transcriptSource === "youtube_manual",
   });
   if (!normalizedSegments.length) throw new Error("No usable transcript segments were generated.");
@@ -96,19 +98,8 @@ async function processJob(job) {
   await updateVideoStage(video._id, "fetching_youtube_subtitle", 15);
   const analyzed = await analyzeYoutubeUrl(video.youtubeUrl);
 
-  if (analyzed.transcripts?.length) {
-    await updateVideoStage(video._id, "creating_segments", 85);
-    await replaceSegments(
-      video,
-      analyzed.transcripts,
-      analyzed.transcriptSource === "auto" ? "youtube_auto" : "youtube_manual",
-      analyzed.transcriptLanguage,
-    );
-    return;
-  }
-
   if (Number(analyzed.video?.duration || 0) >= 2 * 60 * 60) {
-    throw new Error("Video is too long for Azure Fast Transcription (maximum 2 hours).");
+    throw new Error("Video is too long for OpenAI Whisper transcription in this pipeline (maximum 2 hours).");
   }
 
   await updateVideoStage(video._id, "downloading_audio", 35);
@@ -116,15 +107,14 @@ async function processJob(job) {
 
   try {
     await updateVideoStage(video._id, "transcribing_audio", 60);
-    const transcription = await transcribeAudioFile(downloaded.audioPath, {
-      locales: ["en-US", "en-GB", "en-AU"],
-      phrases: getRecognitionPhrases(video),
+    const transcription = await transcribeAudioFileWithOpenAI(downloaded.audioPath, {
+      prompt: getRecognitionPhrases(video).join(". "),
     });
     if (requiresAudioWordAlignment(transcription.segments)) {
-      throw new Error("Azure Speech did not return word timestamps required to synchronize long transcript cues.");
+      throw new Error("OpenAI Whisper did not return word timestamps required to synchronize long transcript cues.");
     }
     await updateVideoStage(video._id, "creating_segments", 90);
-    await replaceSegments(video, transcription.segments, "azure_speech", transcription.language);
+    await replaceSegments(video, transcription.segments, "openai_whisper", transcription.language);
   } finally {
     await downloaded.cleanup();
   }

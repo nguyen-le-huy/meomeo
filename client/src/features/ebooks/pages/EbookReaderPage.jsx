@@ -23,10 +23,13 @@ export default function EbookReaderPage() {
   const [bookmarkStatus, setBookmarkStatus] = useState(null);
   const [pageInfo, setPageInfo] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenDictionaryOpen, setFullscreenDictionaryOpen] = useState(false);
 
   useEffect(() => {
     const syncFullscreenState = () => {
-      setIsFullscreen(document.fullscreenElement === readerShellRef.current);
+      const fullscreen = document.fullscreenElement === readerShellRef.current;
+      setIsFullscreen(fullscreen);
+      if (!fullscreen) setFullscreenDictionaryOpen(false);
     };
 
     document.addEventListener("fullscreenchange", syncFullscreenState);
@@ -140,9 +143,12 @@ export default function EbookReaderPage() {
     >
       <EbookToolbar
         bookmarkCount={reader.bookmarks.length}
+        dictionaryOpen={fullscreenDictionaryOpen}
         isFullscreen={isFullscreen}
         onBack={() => navigate("/ebooks")}
         onBookmark={() => setBookmarksOpen(true)}
+        onDictionaryClose={() => setFullscreenDictionaryOpen(false)}
+        onDictionaryToggle={() => setFullscreenDictionaryOpen((current) => !current)}
         onFullscreen={onToggleFullscreen}
         onNext={readerControls?.next}
         onPrev={readerControls?.prev}

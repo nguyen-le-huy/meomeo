@@ -12,7 +12,7 @@ const transcriptSegmentSchema = new mongoose.Schema(
     wordCount: { type: Number, default: 0 },
     source: {
       type: String,
-      enum: ["youtube", "youtube_auto", "azure_speech", "manual", "edited"],
+      enum: ["youtube", "youtube_auto", "azure_speech", "openai_whisper", "manual", "edited"],
       default: "youtube",
     },
     isPublished: { type: Boolean, default: true },

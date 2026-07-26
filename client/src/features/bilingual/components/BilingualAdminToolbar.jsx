@@ -17,6 +17,7 @@ export default function BilingualAdminToolbar({
   hasSegments,
   onVietsubDone,
   segments,
+  transcriptSource,
   transcriptStatus,
   videoId,
 }) {
@@ -45,6 +46,11 @@ export default function BilingualAdminToolbar({
         <Badge variant={transcriptStatus === "completed" ? "success" : "warning"}>
           Transcript: {transcriptStatus}
         </Badge>
+        {transcriptSource ? (
+          <Badge variant={transcriptSource === "openai_whisper" ? "success" : "secondary"}>
+            Source: {transcriptSource}
+          </Badge>
+        ) : null}
         <Badge
           variant={
             bilingualStatus === "completed"

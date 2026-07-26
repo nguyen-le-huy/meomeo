@@ -1,7 +1,6 @@
 import {
   createMovie,
   deleteMovie,
-  generateMovieVietsub,
   getMovieDetail,
   getMovieLibrary,
   getMoviePlayback,
@@ -16,6 +15,7 @@ import {
   reportMovieUploadProgress,
   setFeaturedMovie,
   setHomeFeaturedMovie,
+  startMovieVietsubGeneration,
   syncMovieStreamStatus,
   updateMovie,
 } from "./movie.service.js";
@@ -130,8 +130,8 @@ export const importViPlainTextController = asyncHandler(async (req, res) => {
 });
 
 export const generateMovieVietsubController = asyncHandler(async (req, res) => {
-  const data = await generateMovieVietsub(req.validated.params.id, req.validated.body);
-  return successResponse(res, "AI Vietsub generated and synced to Bunny", data);
+  const data = await startMovieVietsubGeneration(req.validated.params.id, req.validated.body);
+  return successResponse(res, "AI Vietsub generation started", data, 202);
 });
 
 export const deleteMovieController = asyncHandler(async (req, res) => {

@@ -1,4 +1,4 @@
-import { generateVietsub, getBilingualVideoData } from "./bilingual.service.js";
+import { getBilingualVideoData, startVietsubGeneration } from "./bilingual.service.js";
 import { successResponse } from "../../utils/apiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 
@@ -10,6 +10,6 @@ export const getBilingualVideoController = asyncHandler(async (req, res) => {
 });
 
 export const generateVietsubController = asyncHandler(async (req, res) => {
-  const data = await generateVietsub(req.validated.params.id, req.validated.body);
-  return successResponse(res, "Vietnamese subtitles generated successfully", data);
+  const data = await startVietsubGeneration(req.validated.params.id, req.validated.body);
+  return successResponse(res, "Vietnamese subtitle generation started", data, 202);
 });

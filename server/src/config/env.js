@@ -77,6 +77,7 @@ export const config = {
     apiKey: process.env.OPENAI_API_KEY || "",
     ttsModel: process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts",
     ttsVoice: process.env.OPENAI_TTS_VOICE || "alloy",
+    transcriptionModel: process.env.OPENAI_TRANSCRIPTION_MODEL || "whisper-1",
     translationModel: process.env.OPENAI_TRANSLATION_MODEL || "deepseek-v4-pro",
     translationTargetLanguage: process.env.OPENAI_TRANSLATION_TARGET_LANGUAGE || "vi",
     dictionaryModel: process.env.OPENAI_DICTIONARY_MODEL || "gpt-4o-mini",

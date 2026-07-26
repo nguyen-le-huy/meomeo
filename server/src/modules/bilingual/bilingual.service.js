@@ -4,12 +4,15 @@ import { translateSegmentsInBatches } from "./openaiTranslation.service.js";
 import { config } from "../../config/env.js";
 import { createHttpError } from "../../utils/createHttpError.js";
 
-export async function generateVietsub(videoId, options = {}) {
+async function prepareVietsubGeneration(videoId, options = {}) {
   const video = await VideoLesson.findById(videoId);
   if (!video) throw createHttpError(404, "Video not found");
 
   if (video.transcriptStatus !== "completed") {
     throw createHttpError(400, "Cannot generate Vietnamese subtitles before transcript is completed");
+  }
+  if (video.bilingualStatus === "processing") {
+    throw createHttpError(409, "Vietnamese subtitle generation is already in progress");
   }
 
   const filter = { videoId: video._id, isPublished: true };
@@ -36,18 +39,48 @@ export async function generateVietsub(videoId, options = {}) {
 
   let currentTranslated = initialTranslated;
   const model = options.model || config.openAi.translationModel;
-  video.bilingualStatus = "processing";
-  video.bilingualError = "";
-  video.bilingualModel = model;
-  video.bilingualTotalCount = totalCount;
-  video.bilingualTranslatedCount = currentTranslated;
-  video.bilingualProgress = totalCount > 0 ? Math.round((currentTranslated / totalCount) * 100) : 0;
-  await video.save();
+  const claimedVideo = await VideoLesson.findOneAndUpdate(
+    { _id: video._id, bilingualStatus: { $ne: "processing" } },
+    {
+      $set: {
+        bilingualStatus: "processing",
+        bilingualError: "",
+        bilingualModel: model,
+        bilingualTotalCount: totalCount,
+        bilingualTranslatedCount: currentTranslated,
+        bilingualProgress: totalCount > 0 ? Math.round((currentTranslated / totalCount) * 100) : 0,
+      },
+    },
+    { new: true },
+  );
+  if (!claimedVideo) {
+    throw createHttpError(409, "Vietnamese subtitle generation is already in progress");
+  }
+
+  return {
+    video: claimedVideo,
+    segments,
+    totalCount,
+    currentTranslated,
+    model,
+    targetLanguage: options.targetLanguage || config.openAi.translationTargetLanguage,
+  };
+}
+
+async function runPreparedVietsubGeneration(prepared) {
+  const {
+    video,
+    segments,
+    totalCount,
+    model,
+    targetLanguage,
+  } = prepared;
+  let { currentTranslated } = prepared;
 
   try {
     const result = await translateSegmentsInBatches(segments, {
       model,
-      targetLanguage: options.targetLanguage || config.openAi.translationTargetLanguage,
+      targetLanguage,
       onChunkCompleted: async ({ chunkSegments, chunkTranslatedCount }) => {
         if (chunkSegments.length) {
           await Promise.all(chunkSegments.map((segment) => segment.save()));
@@ -74,6 +107,28 @@ export async function generateVietsub(videoId, options = {}) {
     await video.save();
     throw error;
   }
+}
+
+export async function startVietsubGeneration(videoId, options = {}, hooks = {}) {
+  const prepared = await prepareVietsubGeneration(videoId, options);
+
+  setImmediate(() => {
+    runPreparedVietsubGeneration(prepared)
+      .then(async (result) => {
+        await hooks.onCompleted?.(result);
+      })
+      .catch((error) => {
+        console.error(`[Vietsub] Background job failed for video ${videoId}:`, error.message);
+      });
+  });
+
+  return {
+    accepted: true,
+    model: prepared.model,
+    totalCount: prepared.totalCount,
+    translatedCount: prepared.currentTranslated,
+    progress: prepared.video.bilingualProgress || 0,
+  };
 }
 
 export async function getBilingualVideoData(videoId, options = {}) {

@@ -15,7 +15,7 @@ import {
   isBunnyPlaybackReady,
   mapBunnyStatus,
 } from "../bunny/bunny.service.js";
-import { generateVietsub } from "../bilingual/bilingual.service.js";
+import { startVietsubGeneration } from "../bilingual/bilingual.service.js";
 import { createTranscriptSegments } from "../videos/video.service.js";
 import { createHttpError } from "../../utils/createHttpError.js";
 import { cloudinary } from "../../config/cloudinary.js";
@@ -557,19 +557,15 @@ export async function importVietnamesePlainText(id, content, dryRun) {
   return { ...preview, savedCount: updatedCount };
 }
 
-export async function generateMovieVietsub(id, options = {}) {
+export async function startMovieVietsubGeneration(id, options = {}) {
   const movie = await getMovieDocument(id, { admin: true });
-  const result = await generateVietsub(movie._id.toString(), options);
-  // Sync captions to Bunny after translation — failures are non-fatal:
-  // translation data is already saved so we only warn instead of throwing.
-  await syncMovieCaptions(movie).catch((syncError) => {
-    console.warn("[generateMovieVietsub] Bunny caption sync failed after successful translation:", syncError?.message);
+  return startVietsubGeneration(movie._id.toString(), options, {
+    onCompleted: async () => {
+      await syncMovieCaptions(movie).catch((syncError) => {
+        console.warn("[startMovieVietsubGeneration] Bunny caption sync failed after successful translation:", syncError?.message);
+      });
+    },
   });
-  return {
-    model: result.model,
-    translatedCount: result.translatedCount,
-    failedCount: result.failedCount,
-  };
 }
 
 export async function publishMovie(id, isPublished) {

@@ -102,23 +102,13 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
     if (!window.confirm(prompt)) return;
     setBusyAction("vietsub");
     setMessage(`${selectedModel?.label || translationModel} đang dịch ${force ? segmentCount : Math.max(0, segmentCount - translationCount)} câu. Vui lòng đợi...`);
-    const startedAt = Date.now();
     try {
       const response = await mutations.generateVietsub.mutateAsync({ id: movie._id, force, model: translationModel });
       const result = response.data.data;
-      setMessage(`${selectedModel?.label || result.model} đã dịch ${result.translatedCount} câu. Hãy kiểm tra lại trước khi publish.`);
-      setBusyAction("");
+      setMessage(`${selectedModel?.label || result.model} đã bắt đầu dịch ở background. Trang sẽ tự động cập nhật tiến độ...`);
     } catch (error) {
-      const status = Number(error.response?.status || 0);
-      const isGatewayTimeout = [502, 503, 504, 524].includes(status);
-      const isLongNetworkFailure = !error.response && Date.now() - startedAt >= 30_000;
-
-      if (isGatewayTimeout || isLongNetworkFailure) {
-        setMessage(`${selectedModel?.label || translationModel} vẫn đang dịch ở background. Kết nối chờ phản hồi đã hết hạn nhưng trang sẽ tự động cập nhật khi hoàn tất...`);
-      } else {
-        setMessage(error.response?.data?.message || "Không thể tạo Vietsub");
-        setBusyAction("");
-      }
+      setMessage(error.response?.data?.message || "Không thể bắt đầu tạo Vietsub");
+      setBusyAction("");
     }
   }
 

@@ -23,6 +23,11 @@ JWT_EXPIRES_IN=7d
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
+
+OPENAI_API_KEY=
+OPENAI_TRANSCRIPTION_MODEL=whisper-1
+
+# Dùng cho pronunciation assessment/shadowing.
 AZURE_SPEECH_KEY=
 AZURE_SPEECH_REGION=southeastasia
 
@@ -48,6 +53,11 @@ R2_PUBLIC_BASE_URL=
 
 Trên máy cá nhân đã đăng nhập YouTube, xuất cookies theo định dạng Netscape
 `cookies.txt`. Không commit file này vào Git và không gửi nội dung cookies vào log.
+
+Transcript YouTube được căn lại bằng OpenAI Whisper word timestamps từ audio,
+không dùng timeline subtitle/caption của YouTube. Vì vậy backend production phải có
+`OPENAI_API_KEY`; sau deploy hãy bấm **Phân tích lại transcript** và kiểm tra
+`transcriptSource` của video là `openai_whisper`.
 
 Tạo thư mục riêng trên server, chép file vào đó và giới hạn quyền đọc:
 
@@ -153,7 +163,11 @@ ingress:
 ```
 
 > **Lưu ý về Timeout khi tạo Vietsub bằng AI:**
-> Cloudflare Tunnel / Nginx có thời gian timeout mặc định (thường 60s - 100s). Nếu video quá dài (>1000 câu), tác vụ dịch AI ở backend vẫn tiếp tục chạy ngầm trong Docker cho đến khi lưu xong vào Database. Hệ thống Frontend đã tích hợp cơ chế tự động Polling trạng thái (`bilingualStatus === "processing"`), giúp tự đồng bộ Vietsub mới khi backend dịch xong ngay cả khi request bị timeout ban đầu.
+> API tạo Vietsub trả `202 Accepted` ngay sau khi khởi tạo tác vụ nên không giữ
+> kết nối qua Cloudflare Tunnel / Nginx trong suốt thời gian dịch. Backend tiếp tục
+> lưu tiến độ theo từng batch; frontend tự polling khi
+> `bilingualStatus === "processing"` và cập nhật Vietsub khi hoàn tất. Không cần
+> tăng proxy timeout cho endpoint này.
 
 ### 5.5. Cài đặt Service tự chạy bằng Systemd
 ```bash

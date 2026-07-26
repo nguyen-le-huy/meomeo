@@ -62,7 +62,7 @@ const videoLessonSchema = new mongoose.Schema(
     transcriptLanguage: { type: String, default: "en" },
     transcriptSource: {
       type: String,
-      enum: ["", "manual", "youtube_manual", "youtube_auto", "azure_speech"],
+      enum: ["", "manual", "youtube_manual", "youtube_auto", "azure_speech", "openai_whisper"],
       default: "",
     },
     transcriptStage: {

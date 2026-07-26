@@ -279,7 +279,7 @@ export async function getYoutubeTranscript(metadata) {
 export async function downloadYoutubeAudio(youtubeUrl) {
   const directory = await mkdtemp(path.join(os.tmpdir(), "meomeo-youtube-audio-"));
   const sourceTemplate = path.join(directory, "source.%(ext)s");
-  const outputPath = path.join(directory, "audio.flac");
+  const outputPath = path.join(directory, "audio.mp3");
 
   try {
     await runYtDlp(youtubeUrl, {
@@ -296,7 +296,7 @@ export async function downloadYoutubeAudio(youtubeUrl) {
 
     await execFileAsync(
       ffmpegBinary,
-      ["-y", "-i", path.join(directory, sourceName), "-vn", "-ac", "1", "-ar", "16000", "-c:a", "flac", outputPath],
+      ["-y", "-i", path.join(directory, sourceName), "-vn", "-ac", "1", "-ar", "16000", "-b:a", "32k", outputPath],
       { timeout: 15 * 60 * 1000, maxBuffer: 10 * 1024 * 1024 },
     );
 
@@ -426,30 +426,50 @@ function mergeTwoSegments(current, next) {
   };
 }
 
-const maxSegmentWords = 12;
-const minSegmentWords = 3;
-const targetSegmentWords = 8;
-const maxSegmentDuration = 8;
+const defaultSegmentationConfig = {
+  maxSegmentWords: 12,
+  minSegmentWords: 3,
+  targetSegmentWords: 8,
+  maxSegmentDuration: 8,
+  maxMergeGap: 0.35,
+  mergeAdjacentCues: false,
+};
+const youtubeAutoSegmentationConfig = {
+  maxSegmentWords: 22,
+  minSegmentWords: 4,
+  targetSegmentWords: 16,
+  maxSegmentDuration: 11,
+  maxMergeGap: 0.75,
+  mergeAdjacentCues: true,
+};
 const strongBoundaryPattern = /[.!?][\"')\]]*$/;
 const softBoundaryPattern = /[,;:][\"')\]]*$/;
 
-function chooseChunkEnd(tokens, startIndex) {
+function getSegmentationConfig(options = {}) {
+  if (options.profile === "youtube_auto") {
+    return { ...defaultSegmentationConfig, ...youtubeAutoSegmentationConfig };
+  }
+
+  return defaultSegmentationConfig;
+}
+
+function chooseChunkEnd(tokens, startIndex, config) {
   const remaining = tokens.length - startIndex;
   const firstToken = tokens[startIndex];
   const lastToken = tokens[tokens.length - 1];
   const hasTiming = Number.isFinite(firstToken?.startTime) && Number.isFinite(lastToken?.endTime);
   const remainingDuration = hasTiming ? lastToken.endTime - firstToken.startTime : 0;
-  if (remaining <= maxSegmentWords && (!hasTiming || remainingDuration <= maxSegmentDuration)) {
+  if (remaining <= config.maxSegmentWords && (!hasTiming || remainingDuration <= config.maxSegmentDuration)) {
     return tokens.length;
   }
 
-  let maximumEnd = Math.min(tokens.length, startIndex + maxSegmentWords);
-  const minimumEnd = Math.min(maximumEnd, startIndex + minSegmentWords);
-  if (remaining <= maxSegmentWords && hasTiming && remainingDuration > maxSegmentDuration) {
-    maximumEnd = Math.max(minimumEnd, tokens.length - minSegmentWords);
+  let maximumEnd = Math.min(tokens.length, startIndex + config.maxSegmentWords);
+  const minimumEnd = Math.min(maximumEnd, startIndex + config.minSegmentWords);
+  if (remaining <= config.maxSegmentWords && hasTiming && remainingDuration > config.maxSegmentDuration) {
+    maximumEnd = Math.max(minimumEnd, tokens.length - config.minSegmentWords);
   }
-  if (tokens.length - maximumEnd > 0 && tokens.length - maximumEnd < minSegmentWords) {
-    maximumEnd = Math.max(minimumEnd, tokens.length - minSegmentWords);
+  if (tokens.length - maximumEnd > 0 && tokens.length - maximumEnd < config.minSegmentWords) {
+    maximumEnd = Math.max(minimumEnd, tokens.length - config.minSegmentWords);
   }
 
   let bestEnd = maximumEnd;
@@ -459,7 +479,7 @@ function chooseChunkEnd(tokens, startIndex) {
     const token = tokens[end - 1];
     const nextToken = tokens[end];
     const chunkWordCount = end - startIndex;
-    let score = -Math.abs(chunkWordCount - targetSegmentWords) * 4;
+    let score = -Math.abs(chunkWordCount - config.targetSegmentWords) * 4;
 
     if (strongBoundaryPattern.test(token?.text || "")) score += 90;
     else if (softBoundaryPattern.test(token?.text || "")) score += 45;
@@ -473,7 +493,7 @@ function chooseChunkEnd(tokens, startIndex) {
 
     if (hasTiming) {
       const chunkDuration = token.endTime - firstToken.startTime;
-      if (chunkDuration > maxSegmentDuration) score -= 160 + (chunkDuration - maxSegmentDuration) * 20;
+      if (chunkDuration > config.maxSegmentDuration) score -= 160 + (chunkDuration - config.maxSegmentDuration) * 20;
       else score += 10;
     }
 
@@ -486,7 +506,7 @@ function chooseChunkEnd(tokens, startIndex) {
   return bestEnd;
 }
 
-function splitLongSegment(segment) {
+function splitLongSegment(segment, config) {
   const fallbackTokens = segment.text.split(/\s+/).filter(Boolean).map((text) => ({ text }));
   const timedWords = segment.words?.length ? segment.words : null;
   const tokens = timedWords || fallbackTokens;
@@ -494,9 +514,9 @@ function splitLongSegment(segment) {
     ? timedWords[timedWords.length - 1].endTime - timedWords[0].startTime
     : 0;
   const shouldSplitForDuration =
-    Boolean(timedWords) && tokens.length >= minSegmentWords * 2 && timedDuration > maxSegmentDuration;
+    Boolean(timedWords) && tokens.length >= config.minSegmentWords * 2 && timedDuration > config.maxSegmentDuration;
 
-  if (tokens.length <= maxSegmentWords && !shouldSplitForDuration) {
+  if (tokens.length <= config.maxSegmentWords && !shouldSplitForDuration) {
     return [segment];
   }
   // Never invent sub-cue timestamps. Long cues without word timing must be
@@ -507,7 +527,7 @@ function splitLongSegment(segment) {
   let startIndex = 0;
 
   while (startIndex < tokens.length) {
-    const endIndex = chooseChunkEnd(tokens, startIndex);
+    const endIndex = chooseChunkEnd(tokens, startIndex, config);
     const chunkTokens = tokens.slice(startIndex, endIndex);
     const chunkStart = chunkTokens[0].startTime;
     const chunkEnd = chunkTokens[chunkTokens.length - 1].endTime;
@@ -525,10 +545,11 @@ function splitLongSegment(segment) {
 }
 
 export function mergeShortSegments(segments, options = {}) {
+  const config = getSegmentationConfig(options);
   const normalizedSegments = segments
     .map((segment, index) => normalizeSegment(segment, index + 1))
     .filter((segment) => segment.text && segment.endTime >= segment.startTime)
-    .flatMap(splitLongSegment);
+    .flatMap((segment) => splitLongSegment(segment, config));
   const merged = [];
 
   for (const segment of normalizedSegments) {
@@ -539,15 +560,24 @@ export function mergeShortSegments(segments, options = {}) {
     const gap = previous ? segment.startTime - previous.endTime : Number.POSITIVE_INFINITY;
     const previousHasSentenceBoundary = previous ? /[.!?]["')\]]*$/.test(previous.text) : false;
     const hasShortFragment = previousWordCount <= 2 || segmentWordCount <= 2;
+    const shouldMergeAutoCue =
+      config.mergeAdjacentCues &&
+      previous &&
+      !options.preserveCueBoundaries &&
+      !previousHasSentenceBoundary &&
+      gap >= -0.15 &&
+      gap <= config.maxMergeGap &&
+      previousWordCount + segmentWordCount <= config.maxSegmentWords &&
+      mergedDuration <= config.maxSegmentDuration;
     const shouldMergeWithPrevious =
       previous &&
       !options.preserveCueBoundaries &&
-      hasShortFragment &&
+      (hasShortFragment || shouldMergeAutoCue) &&
       !previousHasSentenceBoundary &&
       gap >= -0.1 &&
-      gap <= 0.35 &&
-      previousWordCount + segmentWordCount <= maxSegmentWords &&
-      mergedDuration <= 8;
+      gap <= config.maxMergeGap &&
+      previousWordCount + segmentWordCount <= config.maxSegmentWords &&
+      mergedDuration <= config.maxSegmentDuration;
 
     if (shouldMergeWithPrevious) {
       merged[merged.length - 1] = mergeTwoSegments(previous, segment);
@@ -565,6 +595,7 @@ export function normalizeTranscriptSegments(segments, options = {}) {
 }
 
 export function requiresAudioWordAlignment(segments = []) {
+  const { maxSegmentWords } = defaultSegmentationConfig;
   return segments.some((segment) => {
     const wordCount = getWordCount(segment.text);
     const timedWordCount = Array.isArray(segment.words) ? segment.words.length : 0;
@@ -580,6 +611,17 @@ export async function analyzeYoutubeUrl(youtubeUrl) {
 
     try {
       const transcript = await getYoutubeTranscript(metadata);
+      if (transcript.source === "auto") {
+        return {
+          video: metadata.video,
+          transcriptLanguage: transcript.language,
+          transcriptSource: transcript.source,
+          transcripts: [],
+          transcriptError: "YouTube automatic captions are available, but audio transcription is required for accurate timing.",
+          requiresAudioAlignment: true,
+        };
+      }
+
       if (requiresAudioWordAlignment(transcript.transcripts)) {
         return {
           video: metadata.video,
@@ -591,6 +633,7 @@ export async function analyzeYoutubeUrl(youtubeUrl) {
         };
       }
       const transcripts = normalizeTranscriptSegments(transcript.transcripts, {
+        profile: transcript.source === "auto" ? "youtube_auto" : "default",
         preserveCueBoundaries: transcript.source === "manual",
       });
 

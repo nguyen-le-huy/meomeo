@@ -268,6 +268,7 @@ export default function BilingualWatchPage() {
                 hasSegments={segments.length > 0}
                 onVietsubDone={handleVietsubDone}
                 segments={segments}
+                transcriptSource={video?.transcriptSource}
                 transcriptStatus={video?.transcriptStatus}
                 videoId={id}
               />

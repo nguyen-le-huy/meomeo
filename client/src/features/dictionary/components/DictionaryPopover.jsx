@@ -34,7 +34,7 @@ function ResultList({ items, title }) {
   );
 }
 
-export default function DictionaryPopover({ mobile = false, onClose }) {
+export default function DictionaryPopover({ align = "center", mobile = false, onClose }) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [result, setResult] = useState(null);
@@ -98,8 +98,12 @@ export default function DictionaryPopover({ mobile = false, onClose }) {
     <div
       className={`pointer-events-auto z-50 flex flex-col overflow-hidden border-[#d8d0c6] bg-canvas shadow-2xl ${
         mobile
-          ? "fixed inset-x-4 top-14 max-h-[calc(100dvh-4.5rem)] w-auto rounded-xl border"
-          : "absolute left-1/2 top-[calc(100%+0.5rem)] max-h-[min(78vh,720px)] w-[min(92vw,420px)] -translate-x-1/2 rounded-xl border"
+          ? `fixed inset-x-3 top-14 max-h-[calc(100dvh-4.5rem)] w-auto rounded-xl border sm:inset-x-4 md:absolute md:inset-x-auto md:top-[calc(100%+0.5rem)] md:max-h-[min(78vh,720px)] md:w-[min(92vw,420px)] ${
+              align === "right" ? "md:right-0" : "md:left-1/2 md:-translate-x-1/2"
+            }`
+          : `absolute top-[calc(100%+0.5rem)] max-h-[min(78vh,720px)] w-[min(92vw,420px)] rounded-xl border ${
+              align === "right" ? "right-0" : "left-1/2 -translate-x-1/2"
+            }`
       }`}
     >
       <div className="flex items-center justify-between border-b border-[#e6dfd8] bg-cream-soft px-4 py-3">

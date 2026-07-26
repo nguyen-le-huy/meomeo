@@ -1,14 +1,18 @@
 import { BookMarked, Check, Library, Maximize2, Minimize2, Minus, Plus, Settings2, Trash2, X } from "lucide-react";
 import { Button } from "../../../components/ui/button.jsx";
+import DictionaryPopover from "../../dictionary/components/DictionaryPopover.jsx";
 import { READER_FONTS, READER_THEMES } from "../config/readerAppearance.js";
 
 export default function EbookToolbar({
   bookmarkCount = 0,
+  dictionaryOpen = false,
   isFullscreen = false,
   settings,
   onSettings,
   onBookmark,
   onBack,
+  onDictionaryClose,
+  onDictionaryToggle,
   onFullscreen,
 }) {
   return (
@@ -20,6 +24,33 @@ export default function EbookToolbar({
         </Button>
 
         <div className="flex min-w-0 items-center justify-end gap-1 rounded-xl border border-[#e8e0d7] bg-cream-soft/55 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] sm:gap-1.5">
+          {isFullscreen ? (
+            <>
+              <div className="relative">
+                <Button
+                  aria-expanded={dictionaryOpen}
+                  aria-label="Mở từ điển"
+                  className="reader-static-button"
+                  onClick={onDictionaryToggle}
+                  size="icon"
+                  title="Từ điển Anh-Việt"
+                  type="button"
+                  variant="ghost"
+                >
+                  <img
+                    alt=""
+                    aria-hidden="true"
+                    className="h-5 w-5"
+                    src="https://res.cloudinary.com/dknin0hhf/image/upload/v1783514800/translate_zo4sh6.png"
+                  />
+                </Button>
+                {dictionaryOpen ? <DictionaryPopover align="right" mobile onClose={onDictionaryClose} /> : null}
+              </div>
+
+              <div className="mx-0.5 h-6 w-px bg-[#ddd5cc]" />
+            </>
+          ) : null}
+
           <Button aria-label="Mở danh sách bookmark" className="reader-static-button relative" onClick={onBookmark} size="icon" title="Danh sách bookmark" type="button" variant="ghost">
             <BookMarked size={17} />
             {bookmarkCount ? <span className="absolute right-0.5 top-0.5 min-w-3.5 rounded-full bg-coral px-1 text-[9px] font-bold leading-3.5 text-white">{bookmarkCount > 99 ? "99+" : bookmarkCount}</span> : null}
