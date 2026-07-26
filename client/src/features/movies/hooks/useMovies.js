@@ -31,6 +31,11 @@ export function useMovieDetail(id, options = {}) {
     queryFn: () => getMovie(id).then((response) => response.data.data),
     enabled: Boolean(id) && options.enabled !== false,
     retry: 1,
+    refetchInterval: options.refetchInterval || ((query) => {
+      const bStatus = query.state.data?.movie?.bilingualStatus;
+      const tStatus = query.state.data?.movie?.transcriptStatus;
+      return bStatus === "processing" || tStatus === "processing" || tStatus === "pending" ? 3000 : false;
+    }),
   });
 }
 
@@ -68,7 +73,24 @@ export function useMovieAdminMutations() {
     }),
     generateVietsub: useMutation({
       mutationFn: ({ id, force, model }) => generateMovieVietsub(id, { force, model }),
+      onMutate: async ({ id }) => {
+        await queryClient.cancelQueries({ queryKey: ["movie", id] });
+        queryClient.setQueryData(["movie", id], (current) => {
+          if (!current?.movie) return current;
+          return {
+            ...current,
+            movie: {
+              ...current.movie,
+              bilingualStatus: "processing",
+              bilingualError: "",
+            },
+          };
+        });
+      },
       onSuccess: invalidate,
+      // A gateway timeout does not cancel the translation running on the server.
+      // Refresh the movie so its persisted processing/completed/failed state remains authoritative.
+      onError: invalidate,
     }),
     importViText: useMutation({
       mutationFn: ({ id, content, dryRun }) => importViPlainText(id, content, dryRun),

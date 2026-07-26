@@ -51,6 +51,16 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
 
   useEffect(() => () => window.clearTimeout(toastTimerRef.current), []);
 
+  useEffect(() => {
+    if (movie?.bilingualStatus === "completed" && busyAction === "vietsub") {
+      setMessage("AI đã dịch xong Vietsub! Hãy kiểm tra lại trước khi publish.");
+      setBusyAction("");
+    } else if (movie?.bilingualStatus === "failed" && busyAction === "vietsub") {
+      setMessage(movie.bilingualError || "Không thể tạo Vietsub");
+      setBusyAction("");
+    }
+  }, [movie?.bilingualError, movie?.bilingualStatus, busyAction]);
+
   function dismissToast() {
     window.clearTimeout(toastTimerRef.current);
     setToast(null);
@@ -91,15 +101,24 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
       : `Dùng ${selectedModel?.label || translationModel} để dịch ${Math.max(0, segmentCount - translationCount)} câu chưa có Vietsub?`;
     if (!window.confirm(prompt)) return;
     setBusyAction("vietsub");
-    setMessage(`${selectedModel?.label || translationModel} đang dịch ${force ? segmentCount : Math.max(0, segmentCount - translationCount)} câu. Không đóng trang này...`);
+    setMessage(`${selectedModel?.label || translationModel} đang dịch ${force ? segmentCount : Math.max(0, segmentCount - translationCount)} câu. Vui lòng đợi...`);
+    const startedAt = Date.now();
     try {
       const response = await mutations.generateVietsub.mutateAsync({ id: movie._id, force, model: translationModel });
       const result = response.data.data;
       setMessage(`${selectedModel?.label || result.model} đã dịch ${result.translatedCount} câu. Hãy kiểm tra lại trước khi publish.`);
-    } catch (error) {
-      setMessage(error.response?.data?.message || "Không thể tạo Vietsub");
-    } finally {
       setBusyAction("");
+    } catch (error) {
+      const status = Number(error.response?.status || 0);
+      const isGatewayTimeout = [502, 503, 504, 524].includes(status);
+      const isLongNetworkFailure = !error.response && Date.now() - startedAt >= 30_000;
+
+      if (isGatewayTimeout || isLongNetworkFailure) {
+        setMessage(`${selectedModel?.label || translationModel} vẫn đang dịch ở background. Kết nối chờ phản hồi đã hết hạn nhưng trang sẽ tự động cập nhật khi hoàn tất...`);
+      } else {
+        setMessage(error.response?.data?.message || "Không thể tạo Vietsub");
+        setBusyAction("");
+      }
     }
   }
 
@@ -211,6 +230,25 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
           <Send size={14} /> {movie.isPublished ? "Unpublish" : "Publish"}
         </button>
       </div>
+      {movie.bilingualStatus === "processing" || busyAction === "vietsub" ? (
+        <div className="mt-2.5 rounded-md border border-[#e06f50]/30 bg-[#e06f50]/10 p-2.5">
+          <div className="mb-1.5 flex items-center justify-between text-xs text-[#f3a38d]">
+            <span className="inline-flex items-center gap-1.5 font-medium">
+              <LoaderCircle className="animate-spin" size={13} />
+              Đang tạo Vietsub bằng AI...
+            </span>
+            <span className="font-semibold text-white">
+              {movie.bilingualTranslatedCount || translationCount || 0} / {movie.bilingualTotalCount || segmentCount || 0} câu ({movie.bilingualProgress || 0}%)
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-black/40">
+            <div
+              className="h-full rounded-full bg-[#e06f50] transition-all duration-500 ease-out"
+              style={{ width: `${Math.max(3, movie.bilingualProgress || 0)}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
       {!movie.isPublished && eligibility?.reasons?.length ? <p className="mt-2 text-xs text-amber-300/75">{eligibility.reasons.map((reason) => reason.message).join(" · ")}</p> : null}
       {message ? <p className="mt-2 text-xs text-white/55">{message}</p> : null}
 

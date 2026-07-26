@@ -1,5 +1,5 @@
 import { ArrowLeft, BookmarkPlus, ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
@@ -11,6 +11,7 @@ import PdfReader from "../components/PdfReader.jsx";
 import { getReaderTheme } from "../config/readerAppearance.js";
 
 export default function EbookReaderPage() {
+  const readerShellRef = useRef(null);
   const { slug } = useParams();
   const navigate = useNavigate();
   const { data: ebook, isLoading, isError } = useEbook(slug);
@@ -21,6 +22,16 @@ export default function EbookReaderPage() {
   const [readerControls, setReaderControls] = useState(null);
   const [bookmarkStatus, setBookmarkStatus] = useState(null);
   const [pageInfo, setPageInfo] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const syncFullscreenState = () => {
+      setIsFullscreen(document.fullscreenElement === readerShellRef.current);
+    };
+
+    document.addEventListener("fullscreenchange", syncFullscreenState);
+    return () => document.removeEventListener("fullscreenchange", syncFullscreenState);
+  }, []);
 
   const saveProgress = useCallback((data) => {
     if (ebook?._id) reader.saveProgress(data);
@@ -103,6 +114,18 @@ export default function EbookReaderPage() {
     }
   };
 
+  const onToggleFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await readerShellRef.current?.requestFullscreen();
+      }
+    } catch {
+      showBookmarkStatus("error", "Trình duyệt không thể bật chế độ toàn màn hình.");
+    }
+  };
+
   const readerTheme = getReaderTheme(reader.settings.theme);
   const readingProgress = Math.max(0, Math.min(1, Number(reader.progress?.progress) || 0));
   const pageLabel = pageInfo?.current
@@ -110,11 +133,17 @@ export default function EbookReaderPage() {
     : "";
 
   return (
-    <section className="ebook-reader-shell flex h-full min-h-0 flex-col overflow-hidden" style={{ backgroundColor: readerTheme.background, color: readerTheme.foreground }}>
+    <section
+      className={`ebook-reader-shell flex min-h-0 flex-col overflow-hidden ${isFullscreen ? "h-[100dvh]" : "h-full"}`}
+      ref={readerShellRef}
+      style={{ backgroundColor: readerTheme.background, color: readerTheme.foreground }}
+    >
       <EbookToolbar
         bookmarkCount={reader.bookmarks.length}
+        isFullscreen={isFullscreen}
         onBack={() => navigate("/ebooks")}
         onBookmark={() => setBookmarksOpen(true)}
+        onFullscreen={onToggleFullscreen}
         onNext={readerControls?.next}
         onPrev={readerControls?.prev}
         onSettings={(patch) => (patch.panel ? setSettingsOpen((current) => !current) : reader.updateSettings(patch))}

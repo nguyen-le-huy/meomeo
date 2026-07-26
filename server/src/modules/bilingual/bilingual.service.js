@@ -27,24 +27,43 @@ export async function generateVietsub(videoId, options = {}) {
     throw createHttpError(400, "No transcript segments need translation");
   }
 
+  const totalCount = await TranscriptSegment.countDocuments({ videoId: video._id, isPublished: true });
+  const initialTranslated = await TranscriptSegment.countDocuments({
+    videoId: video._id,
+    isPublished: true,
+    translationStatus: { $in: ["translated", "edited"] },
+  });
+
+  let currentTranslated = initialTranslated;
   const model = options.model || config.openAi.translationModel;
   video.bilingualStatus = "processing";
   video.bilingualError = "";
   video.bilingualModel = model;
+  video.bilingualTotalCount = totalCount;
+  video.bilingualTranslatedCount = currentTranslated;
+  video.bilingualProgress = totalCount > 0 ? Math.round((currentTranslated / totalCount) * 100) : 0;
   await video.save();
 
   try {
     const result = await translateSegmentsInBatches(segments, {
       model,
       targetLanguage: options.targetLanguage || config.openAi.translationTargetLanguage,
+      onChunkCompleted: async ({ chunkSegments, chunkTranslatedCount }) => {
+        if (chunkSegments.length) {
+          await Promise.all(chunkSegments.map((segment) => segment.save()));
+        }
+        currentTranslated += chunkTranslatedCount;
+        video.bilingualTranslatedCount = currentTranslated;
+        video.bilingualProgress = totalCount > 0 ? Math.min(100, Math.round((currentTranslated / totalCount) * 100)) : 100;
+        await video.save();
+      },
     });
-
-    const savePromises = result.segments.map((segment) => segment.save());
-    await Promise.all(savePromises);
 
     video.bilingualStatus = result.translatedCount > 0 ? "completed" : "failed";
     video.bilingualGeneratedAt = new Date();
     video.bilingualError = result.translatedCount > 0 ? "" : "No subtitles were translated";
+    video.bilingualTranslatedCount = currentTranslated;
+    video.bilingualProgress = result.translatedCount > 0 ? 100 : video.bilingualProgress;
     await video.save();
 
     return { video, model, translatedCount: result.translatedCount, failedCount: result.failedCount, segments: result.segments };
@@ -112,6 +131,10 @@ export async function getBilingualVideoData(videoId, options = {}) {
       bilingualStatus: video.bilingualStatus,
       bilingualSourceLanguage: video.bilingualSourceLanguage,
       bilingualTargetLanguage: video.bilingualTargetLanguage,
+      bilingualModel: video.bilingualModel,
+      bilingualProgress: video.bilingualProgress || 0,
+      bilingualTranslatedCount: video.bilingualTranslatedCount || 0,
+      bilingualTotalCount: video.bilingualTotalCount || 0,
       bilingualGeneratedAt: video.bilingualGeneratedAt,
     },
     segments: publicSegments,

@@ -152,6 +152,9 @@ ingress:
   - service: http_status:404
 ```
 
+> **Lưu ý về Timeout khi tạo Vietsub bằng AI:**
+> Cloudflare Tunnel / Nginx có thời gian timeout mặc định (thường 60s - 100s). Nếu video quá dài (>1000 câu), tác vụ dịch AI ở backend vẫn tiếp tục chạy ngầm trong Docker cho đến khi lưu xong vào Database. Hệ thống Frontend đã tích hợp cơ chế tự động Polling trạng thái (`bilingualStatus === "processing"`), giúp tự đồng bộ Vietsub mới khi backend dịch xong ngay cả khi request bị timeout ban đầu.
+
 ### 5.5. Cài đặt Service tự chạy bằng Systemd
 ```bash
 sudo mkdir -p /etc/cloudflared

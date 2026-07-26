@@ -259,13 +259,16 @@ export default function BilingualWatchPage() {
             <div className="shrink-0 border-t border-white/10 bg-[#1b1a18] px-4 py-3 text-canvas sm:px-6">
               <BilingualAdminToolbar
                 analyzeTranscriptMutation={analyzeTranscriptMutation}
-                bilingualError={video.bilingualError}
-                bilingualStatus={video.bilingualStatus}
+                bilingualError={video?.bilingualError}
+                bilingualProgress={video?.bilingualProgress}
+                bilingualStatus={video?.bilingualStatus}
+                bilingualTotalCount={video?.bilingualTotalCount}
+                bilingualTranslatedCount={video?.bilingualTranslatedCount}
                 generateVietsubMutation={generateVietsubMutation}
                 hasSegments={segments.length > 0}
                 onVietsubDone={handleVietsubDone}
                 segments={segments}
-                transcriptStatus={video.transcriptStatus}
+                transcriptStatus={video?.transcriptStatus}
                 videoId={id}
               />
             </div>

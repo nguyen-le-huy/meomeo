@@ -14,7 +14,8 @@ export function useBilingualVideo(id) {
     retry: 1,
     refetchInterval: (query) => {
       const status = query.state.data?.video?.transcriptStatus;
-      return status === "pending" || status === "processing" ? 3000 : false;
+      const bStatus = query.state.data?.video?.bilingualStatus;
+      return status === "pending" || status === "processing" || bStatus === "processing" ? 3000 : false;
     },
   });
 }

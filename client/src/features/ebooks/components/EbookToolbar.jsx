@@ -1,10 +1,18 @@
-import { BookMarked, Check, Library, Minus, Plus, Settings2, Trash2, X } from "lucide-react";
+import { BookMarked, Check, Library, Maximize2, Minimize2, Minus, Plus, Settings2, Trash2, X } from "lucide-react";
 import { Button } from "../../../components/ui/button.jsx";
 import { READER_FONTS, READER_THEMES } from "../config/readerAppearance.js";
 
-export default function EbookToolbar({ bookmarkCount = 0, settings, onSettings, onBookmark, onBack }) {
+export default function EbookToolbar({
+  bookmarkCount = 0,
+  isFullscreen = false,
+  settings,
+  onSettings,
+  onBookmark,
+  onBack,
+  onFullscreen,
+}) {
   return (
-    <div className="fixed inset-x-0 top-12 z-30 h-14 border-b border-[#e6dfd8] bg-canvas/95 text-coal shadow-[0_1px_8px_rgba(20,20,19,0.04)] backdrop-blur-md md:top-16">
+    <div className={`fixed inset-x-0 z-30 h-14 border-b border-[#e6dfd8] bg-canvas/95 text-coal shadow-[0_1px_8px_rgba(20,20,19,0.04)] backdrop-blur-md ${isFullscreen ? "top-0" : "top-12 md:top-16"}`}>
       <div className="mx-auto flex h-full w-full max-w-[1440px] items-center justify-between gap-3 px-2 sm:px-4">
         <Button aria-label="Quay lại thư viện" className="reader-static-button h-9 px-2 sm:px-3" onClick={onBack} title="Quay lại thư viện" type="button" variant="ghost">
           <Library size={17} />
@@ -24,6 +32,21 @@ export default function EbookToolbar({ bookmarkCount = 0, settings, onSettings, 
             <span className="min-w-9 text-center text-[11px] font-bold tabular-nums sm:min-w-11">{settings.fontSize}<span className="hidden sm:inline"> px</span></span>
             <Button aria-label="Tăng cỡ chữ" className="reader-static-button h-8 w-8 rounded-md" onClick={() => onSettings({ fontSize: Math.min(30, settings.fontSize + 1) })} size="icon" title="Tăng cỡ chữ" type="button" variant="ghost"><Plus size={14} /></Button>
           </div>
+
+          <div className="mx-0.5 h-6 w-px bg-[#ddd5cc]" />
+
+          <Button
+            aria-label={isFullscreen ? "Thoát toàn màn hình" : "Đọc toàn màn hình"}
+            aria-pressed={isFullscreen}
+            className="reader-static-button"
+            onClick={onFullscreen}
+            size="icon"
+            title={isFullscreen ? "Thoát toàn màn hình" : "Đọc toàn màn hình"}
+            type="button"
+            variant="ghost"
+          >
+            {isFullscreen ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+          </Button>
 
           <div className="mx-0.5 h-6 w-px bg-[#ddd5cc]" />
 

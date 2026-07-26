@@ -9,7 +9,10 @@ import TranscriptImportTools from "./TranscriptImportTools.jsx";
 export default function BilingualAdminToolbar({
   analyzeTranscriptMutation,
   bilingualError,
+  bilingualProgress = 0,
   bilingualStatus,
+  bilingualTotalCount = 0,
+  bilingualTranslatedCount = 0,
   generateVietsubMutation,
   hasSegments,
   onVietsubDone,
@@ -18,9 +21,9 @@ export default function BilingualAdminToolbar({
   videoId,
 }) {
   const isGenerating = generateVietsubMutation?.isPending;
-  const mutationError = generateVietsubMutation?.error?.response?.data?.message || generateVietsubMutation?.error?.message;
   const analyzeError =
     analyzeTranscriptMutation?.error?.response?.data?.message || analyzeTranscriptMutation?.error?.message;
+  const mutationError = generateVietsubMutation?.error?.response?.data?.message || generateVietsubMutation?.error?.message;
   const displayError = analyzeError || mutationError || bilingualError;
   const canGenerate =
     transcriptStatus === "completed" && !isGenerating && hasSegments && bilingualStatus !== "processing";
@@ -55,7 +58,27 @@ export default function BilingualAdminToolbar({
         </Badge>
       </div>
 
-      {displayError ? (
+      {bilingualStatus === "processing" || isGenerating ? (
+        <div className="rounded-lg border border-coral/30 bg-coral/10 p-3 text-coal">
+          <div className="mb-1.5 flex items-center justify-between text-xs font-medium">
+            <span className="inline-flex items-center gap-1.5 text-coral">
+              <Spinner size="sm" />
+              Đang tạo Vietsub bằng AI...
+            </span>
+            <span className="font-semibold text-coal">
+              {bilingualTranslatedCount || 0} / {bilingualTotalCount || segments?.length || 0} câu ({bilingualProgress || 0}%)
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-black/10">
+            <div
+              className="h-full rounded-full bg-coral transition-all duration-500 ease-out"
+              style={{ width: `${Math.max(3, bilingualProgress || 0)}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {displayError && bilingualStatus !== "processing" ? (
         <Alert className="text-sm" variant="warning">
           {displayError}
         </Alert>

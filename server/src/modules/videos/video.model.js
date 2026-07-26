@@ -92,6 +92,9 @@ const videoLessonSchema = new mongoose.Schema(
     bilingualSourceLanguage: { type: String, default: "en" },
     bilingualTargetLanguage: { type: String, default: "vi" },
     bilingualModel: { type: String, default: "" },
+    bilingualProgress: { type: Number, default: 0, min: 0, max: 100 },
+    bilingualTranslatedCount: { type: Number, default: 0, min: 0 },
+    bilingualTotalCount: { type: Number, default: 0, min: 0 },
     bilingualError: { type: String, default: "" },
     bilingualGeneratedAt: { type: Date },
     bunnyCaptionSyncStatus: {

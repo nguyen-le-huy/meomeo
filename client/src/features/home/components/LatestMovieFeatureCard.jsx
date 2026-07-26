@@ -24,11 +24,8 @@ export default function LatestMovieFeatureCard({ movie, onOpenLibrary, onPlay })
               <Film size={48} strokeWidth={1.4} />
             </span>
           )}
-          {/* Subtle gradient overlay to blend with dark bg if needed */}
-          <span className="absolute inset-0 hidden bg-gradient-to-r from-transparent via-transparent to-[#13141a]/80 sm:block" />
-
           {/* Play Button Overlay */}
-          <div className="absolute inset-0 grid place-items-center bg-black/20 transition duration-300 group-hover:bg-black/40">
+          <div className="absolute inset-0 grid place-items-center">
             <span className="grid h-14 w-14 place-items-center rounded-full border border-white/35 bg-black/50 text-white backdrop-blur-md transition duration-300 group-hover:scale-110 group-hover:bg-[#a9c2f0] group-hover:text-[#1a1c23] group-hover:border-transparent shadow-2xl">
               <Play fill="currentColor" size={22} className="ml-0.5" />
             </span>
@@ -103,4 +100,3 @@ export default function LatestMovieFeatureCard({ movie, onOpenLibrary, onPlay })
     </section>
   );
 }
-
