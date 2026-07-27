@@ -5,10 +5,10 @@ import { validate } from "../../middlewares/validate.middleware.js";
 import { ebookUpload } from "../../middlewares/ebookUpload.middleware.js";
 import {
   bookmarkDeleteSchema, bookmarkQuerySchema, bookmarkRequestSchema, createEbookSchema, ebookIdParamSchema,
-  ebookQuerySchema, ebookSlugParamSchema, progressListQuerySchema, progressQuerySchema, progressRequestSchema, publishEbookSchema, readerSettingsRequestSchema, updateEbookSchema,
+  createDirectEbookSchema, createEbookUploadUrlSchema, ebookQuerySchema, ebookSlugParamSchema, progressListQuerySchema, progressQuerySchema, progressRequestSchema, publishEbookSchema, readerSettingsRequestSchema, updateEbookSchema,
 } from "./ebook.validation.js";
 import {
-  createBookmarkController, createEbookController, deleteBookmarkController, deleteEbookController, getEbookByIdController,
+  createBookmarkController, createDirectEbookController, createEbookController, createEbookUploadUrlController, deleteBookmarkController, deleteEbookController, getEbookByIdController,
   getEbookController, getProgressController, getReaderSettingsController, listBookmarksController, listEbooksController, listProgressesController, publishEbookController,
   saveProgressController, saveReaderSettingsController, streamEbookFileController, updateEbookController,
 } from "./ebook.controller.js";
@@ -19,6 +19,8 @@ router.get("/", optionalAuth, validate(ebookQuerySchema), listEbooksController);
 router.get("/reader-settings", optionalAuth, getReaderSettingsController);
 router.put("/reader-settings", optionalAuth, validate(readerSettingsRequestSchema), saveReaderSettingsController);
 router.get("/progresses", optionalAuth, validate(progressListQuerySchema), listProgressesController);
+router.post("/upload-url", requireAuth, requireRole("admin"), validate(createEbookUploadUrlSchema), createEbookUploadUrlController);
+router.post("/direct", requireAuth, requireRole("admin"), ebookUpload.fields([{ name: "cover", maxCount: 1 }]), validate(createDirectEbookSchema), createDirectEbookController);
 router.get("/admin/:id", requireAuth, requireRole("admin"), validate(ebookIdParamSchema), getEbookByIdController);
 router.get("/:id/progress", optionalAuth, validate(progressQuerySchema), getProgressController);
 router.put("/:id/progress", optionalAuth, validate(progressRequestSchema), saveProgressController);

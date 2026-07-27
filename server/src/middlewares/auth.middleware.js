@@ -39,9 +39,11 @@ export async function requireAuth(req, res, next) {
 export async function optionalAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization || "";
-    const [scheme, token] = authHeader.split(" ");
+    const [scheme, headerToken] = authHeader.split(" ");
+    const queryToken = typeof req.query?.accessToken === "string" ? req.query.accessToken : "";
+    const token = scheme === "Bearer" && headerToken ? headerToken : queryToken;
 
-    if (scheme !== "Bearer" || !token) {
+    if (!token) {
       return next();
     }
 

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { LoadingState } from "../../../components/ui/spinner.jsx";
+import { useAuthStore } from "../../auth/stores/authStore.js";
 import { useEbook } from "../hooks/useEbooks.js";
 import { useEbookReader } from "../hooks/useEbookReader.js";
 import EbookToolbar, { EbookBookmarksPanel, EbookSettingsPanel } from "../components/EbookToolbar.jsx";
@@ -15,6 +16,7 @@ export default function EbookReaderPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { data: ebook, isLoading, isError } = useEbook(slug);
+  const token = useAuthStore((state) => state.token);
   const reader = useEbookReader(ebook?._id);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [bookmarksOpen, setBookmarksOpen] = useState(false);
@@ -131,6 +133,12 @@ export default function EbookReaderPage() {
 
   const readerTheme = getReaderTheme(reader.settings.theme);
   const readingProgress = Math.max(0, Math.min(1, Number(reader.progress?.progress) || 0));
+  const readerEbook = {
+    ...ebook,
+    fileUrl: token && ebook.fileUrl?.includes("/api/ebooks/")
+      ? `${ebook.fileUrl}${ebook.fileUrl.includes("?") ? "&" : "?"}accessToken=${encodeURIComponent(token)}`
+      : ebook.fileUrl,
+  };
   const pageLabel = pageInfo?.current
     ? `Trang ${pageInfo.current}${pageInfo.total ? ` / ${pageInfo.total}` : ""}${pageInfo.estimated ? " (ước tính)" : ""}`
     : "";
@@ -219,7 +227,7 @@ export default function EbookReaderPage() {
           <>
             <div className="-mx-3 flex min-h-0 flex-1 border-b px-3" style={{ borderColor: readerTheme.border }}>
               <EpubReader
-                ebook={ebook}
+                ebook={readerEbook}
                 onBookmarkReady={(getter) => setBookmarkGetter(() => getter)}
                 onControlsReady={setReaderControls}
                 onProgress={saveProgress}
@@ -257,7 +265,7 @@ export default function EbookReaderPage() {
           </>
         ) : (
           <PdfReader
-            ebook={ebook}
+            ebook={readerEbook}
             onPageChange={updatePageInfo}
             onProgress={saveProgress}
             progress={reader.progress}

@@ -16,7 +16,7 @@ Việc quan trọng đầu tiên là chuyển các callback và URL về domain 
 PORT=5000
 NODE_ENV=production
 CLIENT_URL=https://meomeo.quest
-API_PUBLIC_URL=https://meomeo-api.quest
+API_PUBLIC_URL=https://api.meomeo.quest
 MONGODB_URI=your_mongodb_uri
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=7d
@@ -48,6 +48,29 @@ R2_ENDPOINT=
 R2_EBOOK_PREFIX=ebooks
 R2_PUBLIC_BASE_URL=
 ```
+
+### Cấu hình CORS cho R2 direct upload
+
+Ebook file lớn được upload trực tiếp từ trình duyệt lên R2 bằng signed URL để
+tránh giới hạn upload của Cloudflare/proxy/API. Vì vậy bucket R2 phải cho phép
+frontend origin `https://meomeo.quest` gọi `PUT`.
+
+Cấu hình CORS đề xuất cho bucket R2:
+
+```json
+[
+  {
+    "AllowedOrigins": ["https://meomeo.quest", "http://localhost:5173", "http://localhost:5174"],
+    "AllowedMethods": ["PUT", "GET", "HEAD"],
+    "AllowedHeaders": ["*"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+Nếu chưa cấu hình phần này, trình duyệt có thể báo lỗi CORS khi upload file ebook
+lớn dù API `/api/ebooks/upload-url` đã trả signed URL thành công.
 
 ### Cấu hình YouTube cookies cho `yt-dlp`
 
@@ -93,7 +116,7 @@ khi lỗi xác thực xuất hiện lại, hãy xuất file mới và restart se
 
 **B. Tạo/Sửa file `client/.env.production`:**
 ```env
-VITE_API_URL=https://meomeo-api.quest/api
+VITE_API_URL=https://api.meomeo.quest/api
 ```
 
 ## 3. Cập nhật CORS Backend
@@ -145,7 +168,7 @@ cloudflared tunnel create meomeo
 ### 5.3. Trỏ Map Domains (DNS)
 ```bash
 cloudflared tunnel route dns meomeo meomeo.quest
-cloudflared tunnel route dns meomeo meomeo-api.quest
+cloudflared tunnel route dns meomeo api.meomeo.quest
 ```
 
 ### 5.4. Tạo file cấu hình Routing Config
@@ -156,7 +179,7 @@ credentials-file: /etc/cloudflared/<Thay-Bằng-TUNNEL_UUID>.json
 
 ingress:
   # API Backend -> Server Container Port 5000
-  - hostname: meomeo-api.quest
+  - hostname: api.meomeo.quest
     service: http://localhost:5000
     
   # Main Frontend App -> Client Container Port 5180
@@ -191,7 +214,7 @@ sudo systemctl enable cloudflared
 ## 6. Kiểm tra Hậu kiểm deployment
 Mọi thứ lúc này sẽ đã online và sẵn sàng sử dụng:
 🌐 **Web App:** [https://meomeo.quest](https://meomeo.quest)
-🔌 **API/Server:** [https://meomeo-api.quest](https://meomeo-api.quest)
+🔌 **API/Server:** [https://api.meomeo.quest](https://api.meomeo.quest)
 
 ### Các câu lệnh Useful Tracking Log:
 ```bash

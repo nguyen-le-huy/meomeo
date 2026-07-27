@@ -1,4 +1,5 @@
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { config } from "./env.js";
 
 function assertR2Config() {
@@ -35,6 +36,17 @@ export async function putR2Object({ key, body, contentType, contentLength }) {
     ContentLength: contentLength,
   }));
   return { bucket: config.r2.bucketName, key };
+}
+
+export async function createR2PutObjectSignedUrl({ key, contentType, expiresIn = 900 }) {
+  const client = getR2Client();
+  const command = new PutObjectCommand({
+    Bucket: config.r2.bucketName,
+    Key: key,
+    ContentType: contentType,
+  });
+  const uploadUrl = await getSignedUrl(client, command, { expiresIn });
+  return { bucket: config.r2.bucketName, key, uploadUrl };
 }
 
 export async function deleteR2Object(key) {

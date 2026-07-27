@@ -2,7 +2,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { successResponse } from "../../utils/apiResponse.js";
 import { config } from "../../config/env.js";
 import {
-  createBookmark, createEbook, deleteBookmark, deleteEbook, getEbookById, getEbookBySlug,
+  createBookmark, createEbook, createEbookFromDirectUpload, createEbookUploadUrl, deleteBookmark, deleteEbook, getEbookById, getEbookBySlug,
   getEbookFile, getProgress, getReaderSettings, listBookmarks, listEbooks, listProgresses, publishEbook, saveProgress, saveReaderSettings, updateEbook,
 } from "./ebook.service.js";
 
@@ -33,7 +33,9 @@ export const listEbooksController = asyncHandler(async (req, res) => {
 
 export const getEbookController = asyncHandler(async (req, res) => successResponse(res, "Ebook fetched successfully", { ebook: serializeEbook(await getEbookBySlug(req.validated.params.slug, { admin: isAdmin(req) }), req) }));
 export const getEbookByIdController = asyncHandler(async (req, res) => successResponse(res, "Ebook fetched successfully", { ebook: serializeEbook(await getEbookById(req.validated.params.id, { admin: true }), req) }));
+export const createEbookUploadUrlController = asyncHandler(async (req, res) => successResponse(res, "Ebook upload URL created successfully", await createEbookUploadUrl(req.validated.body)));
 export const createEbookController = asyncHandler(async (req, res) => successResponse(res, "Ebook created successfully", { ebook: serializeEbook(await createEbook(req.validated.body, req.files?.file?.[0], req.files?.cover?.[0], req.user), req) }, 201));
+export const createDirectEbookController = asyncHandler(async (req, res) => successResponse(res, "Ebook created successfully", { ebook: serializeEbook(await createEbookFromDirectUpload(req.validated.body, req.files?.cover?.[0], req.user), req) }, 201));
 export const updateEbookController = asyncHandler(async (req, res) => successResponse(res, "Ebook updated successfully", { ebook: serializeEbook(await updateEbook(req.validated.params.id, req.validated.body, req.files?.cover?.[0]), req) }));
 export const deleteEbookController = asyncHandler(async (req, res) => successResponse(res, "Ebook deleted successfully", await deleteEbook(req.validated.params.id)));
 export const publishEbookController = asyncHandler(async (req, res) => successResponse(res, "Ebook publish status updated successfully", { ebook: serializeEbook(await publishEbook(req.validated.params.id, req.validated.body.isPublished), req) }));

@@ -166,7 +166,7 @@ function CreateEbookDialog({ createMutation, onOpenChange, open }) {
       resetForm();
       onOpenChange(false);
     } catch (mutationError) {
-      setError(mutationError?.response?.data?.message || "Không upload được ebook. Vui lòng thử lại.");
+      setError(mutationError?.response?.data?.message || mutationError?.message || "Không upload được ebook. Vui lòng thử lại.");
     }
   }
 

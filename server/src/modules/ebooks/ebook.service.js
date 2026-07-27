@@ -3,7 +3,7 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { cloudinary } from "../../config/cloudinary.js";
 import { config } from "../../config/env.js";
-import { deleteR2Object, getR2ObjectStream, putR2Object } from "../../config/r2.js";
+import { createR2PutObjectSignedUrl, deleteR2Object, getR2ObjectStream, putR2Object } from "../../config/r2.js";
 import { createHttpError } from "../../utils/createHttpError.js";
 import { Ebook } from "./ebook.model.js";
 import { EbookBookmark } from "./ebookBookmark.model.js";
@@ -115,6 +115,19 @@ async function uploadEbookToR2(file) {
   }
 }
 
+function getEbookExtensionFromFilename(filename) {
+  return path.extname(filename || "").toLowerCase().slice(1);
+}
+
+function assertEbookFileMetadata({ originalFilename, contentType }) {
+  const extension = getEbookExtensionFromFilename(originalFilename);
+  const allowedExtensions = new Set(["epub", "pdf"]);
+  const allowedMimeTypes = new Set(["application/epub+zip", "application/pdf", "application/octet-stream"]);
+  if (!allowedExtensions.has(extension)) throw createHttpError(400, "Only EPUB and PDF files are allowed");
+  if (contentType && !allowedMimeTypes.has(contentType)) throw createHttpError(400, "Only EPUB and PDF files are allowed");
+  return extension;
+}
+
 function buildFilter(query = {}, admin = false) {
   const filter = {};
   if (!admin || !query.includeUnpublished) filter.isPublished = true;
@@ -168,6 +181,59 @@ export async function createEbook(data, file, coverFile, adminUser) {
     fileStorageKey: result.key,
     fileSize: file.size,
     originalFilename: file.originalname,
+    coverUrl: coverResult?.secure_url || "",
+    coverPublicId: coverResult?.public_id || "",
+    isPublished,
+    publishedAt: isPublished ? new Date() : null,
+    createdBy: adminUser.id,
+  });
+}
+
+export async function createEbookUploadUrl(data) {
+  const extension = assertEbookFileMetadata(data);
+  const key = buildR2Key({ originalname: data.originalFilename });
+  const result = await createR2PutObjectSignedUrl({
+    key,
+    contentType: data.contentType || (extension === "pdf" ? "application/pdf" : "application/epub+zip"),
+    contentLength: data.fileSize,
+  });
+  const publicUrl = config.r2.publicBaseUrl
+    ? `${config.r2.publicBaseUrl.replace(/\/+$/g, "")}/${encodeURI(result.key)}`
+    : "";
+  return {
+    bucket: result.bucket,
+    key: result.key,
+    uploadUrl: result.uploadUrl,
+    fileUrl: publicUrl || `/api/ebooks/file/${encodeURIComponent(result.key)}`,
+    expiresIn: 900,
+  };
+}
+
+export async function createEbookFromDirectUpload(data, coverFile, adminUser) {
+  const extension = assertEbookFileMetadata(data);
+  let coverResult = null;
+  try {
+    if (coverFile) coverResult = await uploadBuffer(coverFile, { folder: "meomeo/ebook-covers", resourceType: "image" });
+  } catch (error) {
+    try { await deleteR2Object(data.fileStorageKey); } catch { /* best effort cleanup */ }
+    throw error;
+  }
+  const isPublished = data.isPublished ?? false;
+  return Ebook.create({
+    title: data.title,
+    slug: await uniqueSlug(data.slug || data.title),
+    description: data.description,
+    author: data.author,
+    level: data.level,
+    language: data.language,
+    format: extension,
+    fileUrl: data.fileUrl || "",
+    filePublicId: data.fileStorageKey,
+    fileStorageProvider: "r2",
+    fileStorageBucket: data.fileStorageBucket || config.r2.bucketName,
+    fileStorageKey: data.fileStorageKey,
+    fileSize: data.fileSize,
+    originalFilename: data.originalFilename,
     coverUrl: coverResult?.secure_url || "",
     coverPublicId: coverResult?.public_id || "",
     isPublished,

@@ -23,6 +23,23 @@ const ebookFields = z.object({
   removeCover: z.preprocess(optionalBoolean, z.boolean().optional()),
 }).strict();
 
+const directUploadMetadataSchema = ebookFields.extend({
+  originalFilename: z.string().trim().min(1).max(500),
+  fileSize: z.coerce.number().int().positive(),
+  contentType: z.string().trim().max(120).optional(),
+  fileStorageBucket: z.string().trim().max(120).optional(),
+  fileStorageKey: z.string().trim().min(1).max(1000),
+  fileUrl: z.string().trim().max(2000).optional(),
+});
+
+export const createEbookUploadUrlSchema = z.object({
+  body: z.object({
+    originalFilename: z.string().trim().min(1).max(500),
+    fileSize: z.coerce.number().int().positive(),
+    contentType: z.string().trim().max(120).optional(),
+  }).strict(),
+});
+
 export const ebookIdParamSchema = z.object({ params: z.object({ id: z.string().regex(objectIdRegex) }) });
 export const ebookSlugParamSchema = z.object({ params: z.object({ slug: z.string().trim().regex(slugRegex) }) });
 export const ebookQuerySchema = z.object({
@@ -32,6 +49,7 @@ export const ebookQuerySchema = z.object({
   }),
 });
 export const createEbookSchema = z.object({ body: ebookFields });
+export const createDirectEbookSchema = z.object({ body: directUploadMetadataSchema });
 export const updateEbookSchema = z.object({
   params: z.object({ id: z.string().regex(objectIdRegex) }),
   body: ebookFields.partial().refine((value) => Object.keys(value).length > 0, { message: "At least one field is required" }),
