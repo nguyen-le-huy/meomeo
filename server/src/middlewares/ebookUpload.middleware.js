@@ -4,11 +4,12 @@ import { createHttpError } from "../utils/createHttpError.js";
 const allowedExtensions = new Set([".epub", ".pdf"]);
 const allowedMimeTypes = new Set(["application/epub+zip", "application/pdf", "application/octet-stream"]);
 const allowedCoverMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const maxCoverFileSize = 10 * 1024 * 1024;
 
 function fileFilter(req, file, cb) {
   const extension = file.originalname.toLowerCase().slice(file.originalname.lastIndexOf("."));
   if (file.fieldname === "cover") {
-    if (!allowedCoverMimeTypes.has(file.mimetype) || file.size > 10 * 1024 * 1024) {
+    if (!allowedCoverMimeTypes.has(file.mimetype)) {
       return cb(createHttpError(400, "Cover must be a JPG, PNG, or WebP image smaller than 10MB"));
     }
     return cb(null, true);
@@ -19,8 +20,22 @@ function fileFilter(req, file, cb) {
   return cb(null, true);
 }
 
-export const ebookUpload = multer({
+const upload = multer({
   storage: multer.memoryStorage(),
   fileFilter,
-  limits: { fileSize: 150 * 1024 * 1024, files: 2 },
+  limits: { files: 2 },
 });
+
+function rejectLargeCover(req, res, next) {
+  const cover = Array.isArray(req.files?.cover) ? req.files.cover[0] : null;
+  if (cover?.size > maxCoverFileSize) {
+    return next(createHttpError(400, "Cover must be a JPG, PNG, or WebP image smaller than 10MB"));
+  }
+  return next();
+}
+
+export const ebookUpload = {
+  fields(fields) {
+    return [upload.fields(fields), rejectLargeCover];
+  },
+};

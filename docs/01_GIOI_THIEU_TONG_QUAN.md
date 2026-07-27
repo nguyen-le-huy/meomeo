@@ -4,58 +4,64 @@
 
 **AI Learning Map**
 
-## 1.2. Đặt vấn đề
+## 1.2. Bối cảnh dự án
 
-Giáo trình PDF hoặc EPUB thường có số lượng nội dung lớn, nhiều chương, nhiều chủ đề và nhiều phần kiến thức có mức độ quan trọng khác nhau.
+Meomeo hiện là ứng dụng học tiếng Anh trọng tâm theo YouTube Shadowing và Dictation. Ngoài luồng video, dự án đã có module Ebook với các chức năng:
 
-Trong quá trình tự học, người học thường gặp các khó khăn:
+* Admin upload PDF/EPUB.
+* Lưu ebook file trên R2.
+* Lưu cover trên storage hiện tại.
+* Publish/unpublish ebook.
+* Public ebook library.
+* Ebook reader cho PDF/EPUB.
+* Reader settings, progress và bookmark theo `sessionId`.
+* Dictionary popover trong reader.
 
-1. Không nhìn thấy cấu trúc tổng quát của toàn bộ giáo trình.
-2. Không biết nội dung nào là kiến thức trọng tâm.
-3. Không biết nên học theo thứ tự nào.
-4. Mất nhiều thời gian tự tóm tắt từng chương.
-5. Đọc nhiều nhưng không ghi nhớ được kiến thức cốt lõi.
-6. Không có phương tiện đơn giản để theo dõi phần đã học.
+AI Learning Map là tính năng mới trong hệ Ebook. Tính năng này không thay đổi MVP chính của YouTube learning, mà tận dụng ebook đã upload để tạo lộ trình học trực quan.
 
-Ebook Reader hiện tại chủ yếu hỗ trợ đọc nội dung. Hệ thống chưa chuyển giáo trình thành một lộ trình học trực quan.
+## 1.3. Đặt vấn đề
 
----
+PDF/EPUB thường dài, nhiều chương và nhiều tầng kiến thức. Ebook Reader hiện giúp người học đọc sách, nhưng chưa giúp họ:
 
-## 1.3. Mô tả bài toán
+1. Nhìn cấu trúc kiến thức tổng thể.
+2. Biết phần nào là trọng tâm.
+3. Học theo các đơn vị nhỏ có mục tiêu rõ ràng.
+4. Tóm tắt nội dung quan trọng theo từng lesson.
+5. Theo dõi các lesson đã hoàn thành.
 
-Hệ thống cần cho phép quản trị viên upload một giáo trình PDF hoặc EPUB.
+Vì Meomeo không yêu cầu tài khoản học viên, giải pháp cần đơn giản, chạy được trên public UI, nhưng vẫn cho admin quyền tạo lại map và kiểm soát trạng thái xử lý.
 
-Sau khi upload, AI thực hiện:
+## 1.4. Mô tả bài toán
 
-1. Phân tích cấu trúc giáo trình.
-2. Nhận diện phần, chương, mục và chủ đề quan trọng.
-3. Tạo sơ đồ kiến thức dạng cây.
-4. Liên kết từng lesson node với nội dung nguồn.
-5. Sinh bài học trọng tâm khi người học chọn node.
-6. Lưu bài học đã sinh để tái sử dụng.
+Hệ thống cần cho phép admin tạo AI Learning Map cho một ebook đã có trong MongoDB. Sau khi admin yêu cầu tạo map:
 
-Người học có thể:
+1. Backend đọc metadata ebook.
+2. Backend lấy file từ R2 hoặc URL lưu trữ hiện tại.
+3. Parser trích xuất nội dung PDF/EPUB thành các section có thứ tự.
+4. AI phân tích section và trả về cây kiến thức theo schema.
+5. Backend validate output và lưu node vào MongoDB.
+6. Ebook được cập nhật trạng thái map.
 
-1. Xem toàn bộ sơ đồ giáo trình.
-2. Mở hoặc thu gọn các nhánh.
-3. Chọn một lesson node.
-4. Đọc bài học trọng tâm.
-5. Đánh dấu node đã hoàn thành.
-6. Bỏ đánh dấu hoàn thành khi cần.
+Người học mở ebook reader và có thể:
 
----
+1. Mở panel/tab Learning Map.
+2. Xem cây kiến thức.
+3. Mở/đóng group node.
+4. Chọn lesson node.
+5. Xem lesson đã cache hoặc yêu cầu sinh lesson lần đầu.
+6. Đánh dấu hoàn thành/bỏ hoàn thành trên trình duyệt hiện tại.
 
-## 1.4. Mục tiêu
+## 1.5. Mục tiêu
 
 ### Mục tiêu nghiệp vụ
 
-Tạo một quy trình học đơn giản:
+Tạo một luồng học sách rõ ràng:
 
 ```text
-Upload sách
-→ Xem sơ đồ
-→ Chọn node
-→ Học nội dung trọng tâm
+Đọc ebook
+→ Xem sơ đồ học
+→ Chọn lesson trọng tâm
+→ Học phần tóm tắt có căn cứ
 → Đánh dấu hoàn thành
 ```
 
@@ -63,69 +69,59 @@ Upload sách
 
 Người học có thể:
 
-* Hiểu cấu trúc tổng thể của giáo trình.
-* Xác định các kiến thức cần học.
-* Học theo thứ tự rõ ràng.
-* Không phải tự tóm tắt từng phần.
-* Theo dõi các phần đã hoàn thành.
+* Hiểu cấu trúc tổng thể của sách.
+* Xác định các phần nên học trước.
+* Học theo các lesson nhỏ thay vì đọc tràn lan.
+* Xem giải thích trọng tâm dựa trên nội dung sách.
+* Theo dõi tiến độ cơ bản mà không cần đăng nhập.
 
 ### Mục tiêu kỹ thuật
 
-* Tận dụng module Ebook hiện tại.
-* Giữ nguyên React, Express và MongoDB.
-* Không xây tài khoản người học trong MVP.
-* Không sử dụng vector database.
-* Không xây chatbot toàn sách.
-* Cache bài học để giảm số lần gọi AI.
-* Yêu cầu AI trả dữ liệu có cấu trúc.
+* Tích hợp vào `server/src/modules/ebooks` và `client/src/features/ebooks`.
+* Tách business logic AI vào module mới `ebook-learning`.
+* Không làm hỏng luồng ebook reader/progress/bookmark hiện tại.
+* Không hard-code model AI trong source code.
+* Dùng structured output và Zod validation trước khi lưu.
+* Không lưu hoặc trả `sourceText` trong API public map.
+* Cache lesson để giảm chi phí AI.
+* Có trạng thái xử lý và lỗi rõ ràng để admin biết khi map failed.
 
----
+## 1.6. Phạm vi hệ thống
 
-## 1.5. Phạm vi hệ thống
+### Trong phạm vi MVP
 
-### Trong phạm vi
-
-* Upload PDF.
-* Upload EPUB.
-* Trích xuất nội dung giáo trình.
-* Tạo knowledge map bằng AI.
-* Hiển thị group node.
-* Hiển thị lesson node.
-* Sinh bài học khi chọn node.
-* Lưu bài học trong MongoDB.
+* Tạo map cho ebook PDF/EPUB đã upload.
+* Trích xuất nội dung ebook từ file hiện có.
+* Tạo group node và lesson node.
+* Lưu node, source range và source text nội bộ.
+* Hiển thị map trong Ebook Reader.
+* Sinh lesson khi người học chọn lesson node lần đầu.
+* Cache lesson trong MongoDB.
 * Đánh dấu hoàn thành bằng LocalStorage.
-* Tạo lại sơ đồ bởi admin.
+* Admin tạo lại map.
 
-### Ngoài phạm vi
+### Ngoài phạm vi MVP
 
-* Chat tự do với toàn bộ sách.
-* Quiz và chấm điểm.
-* Flashcard.
-* Spaced repetition.
-* Lịch ôn tập.
-* Voice tutor.
-* Audio lesson.
-* Tài khoản người học.
-* Đồng bộ tiến độ đa thiết bị.
-* Chia sẻ sơ đồ.
-* Vector database.
-* RAG.
+* Sửa thủ công từng node trong UI.
+* Chat với toàn bộ sách.
+* Quiz, flashcard, spaced repetition.
+* Voice tutor/audio lesson.
+* Tài khoản học viên.
+* Đồng bộ hoàn thành đa thiết bị.
+* Vector database/RAG.
 * Fine-tuning.
-* n8n workflow.
 
----
+## 1.7. Đối tượng sử dụng
 
-## 1.6. Đối tượng sử dụng
+### Admin
 
-### Quản trị viên
+Admin có thể:
 
-Quản trị viên có thể:
-
-* Upload giáo trình.
-* Tạo sơ đồ kiến thức.
-* Theo dõi trạng thái xử lý.
-* Tạo lại sơ đồ.
-* Xóa hoặc thay thế giáo trình.
+* Upload ebook bằng luồng hiện có.
+* Publish/unpublish ebook.
+* Tạo AI Learning Map cho ebook.
+* Xem trạng thái map.
+* Tạo lại map khi nội dung hoặc prompt thay đổi.
 
 ### Người học
 
@@ -133,248 +129,180 @@ Người học không cần đăng nhập.
 
 Người học có thể:
 
-* Xem sơ đồ.
+* Đọc ebook đã publish.
+* Mở Learning Map.
+* Xem cây kiến thức.
 * Chọn lesson node.
-* Xem bài học.
+* Xem bài học trọng tâm.
 * Đánh dấu hoàn thành.
-* Bỏ đánh dấu hoàn thành.
 
-Tiến độ hoàn thành chỉ được lưu trên trình duyệt hiện tại.
+## 1.8. Định hướng giải quyết
 
----
+### Bước 1 — Reuse Ebook hiện có
 
-## 1.7. Định hướng giải quyết
+Ebook model hiện có các trường quan trọng:
 
-### Bước 1 — Trích xuất nội dung
+```js
+{
+  title: String,
+  slug: String,
+  format: "epub" | "pdf",
+  fileUrl: String,
+  fileStorageProvider: "cloudinary" | "r2",
+  fileStorageKey: String,
+  isPublished: Boolean
+}
+```
 
-Backend xác định định dạng file và trích xuất nội dung.
+Tính năng mới thêm trạng thái AI map vào Ebook hoặc lưu riêng trong `EbookLearningJob`.
 
-Cấu trúc dữ liệu chuẩn hóa:
+### Bước 2 — Parse nội dung
+
+Backend đọc file từ storage rồi chuẩn hóa thành sections:
 
 ```json
 {
-  "title": "Tên giáo trình",
-  "fileType": "pdf",
+  "ebookId": "ebook-id",
+  "format": "pdf",
   "sections": [
     {
-      "title": "Chương 1",
+      "title": "Chapter 1",
+      "orderIndex": 1,
       "pageStart": 1,
       "pageEnd": 20,
-      "content": "Nội dung chương..."
+      "content": "..."
     }
   ]
 }
 ```
 
-Đối với PDF, hệ thống lưu số trang.
+PDF ưu tiên page range. EPUB ưu tiên spine/chapter order và CFI/chapter id nếu lấy được.
 
-Đối với EPUB, hệ thống lưu chương, mục lục và thứ tự nội dung.
+### Bước 3 — Tạo knowledge map
 
-### Bước 2 — Tạo sơ đồ kiến thức
-
-AI phân tích nội dung và trả về cây kiến thức.
+AI trả JSON theo schema:
 
 ```json
 {
   "nodes": [
     {
-      "tempId": "chapter-1",
+      "tempId": "part-1",
       "parentTempId": null,
-      "title": "Chương 1",
+      "title": "Part I",
+      "summary": "Overview",
       "nodeType": "group",
-      "orderIndex": 1
+      "orderIndex": 1,
+      "level": 1
     },
     {
       "tempId": "lesson-1",
-      "parentTempId": "chapter-1",
-      "title": "Chi phí cơ hội",
+      "parentTempId": "part-1",
+      "title": "Two Systems",
+      "summary": "Core idea",
       "nodeType": "lesson",
       "orderIndex": 1,
-      "pageStart": 10,
-      "pageEnd": 15
+      "level": 2,
+      "sourceSectionIndexes": [1],
+      "pageStart": 1,
+      "pageEnd": 12
     }
   ]
 }
 ```
 
-### Bước 3 — Sinh bài học
+### Bước 4 — Sinh lesson
 
 Khi người học chọn lesson node:
 
 ```text
-Tìm node
-→ Kiểm tra lesson cache
-→ Lấy nội dung nguồn
-→ Gọi AI nếu chưa có lesson
-→ Validate output
-→ Lưu MongoDB
-→ Render bài học
+GET lesson
+→ kiểm tra cache
+→ lấy sourceText nội bộ
+→ gọi AI nếu chưa có cache
+→ validate JSON
+→ lưu EbookLearningLesson
+→ trả lesson public
 ```
 
-### Bước 4 — Đánh dấu hoàn thành
+### Bước 5 — Hoàn thành node
 
-Danh sách node hoàn thành được lưu bằng LocalStorage.
+MVP lưu hoàn thành ở LocalStorage:
+
+```text
+meomeo:ebook-learning-map:<ebookId>
+```
 
 ```json
 {
-  "completedNodeIds": [
-    "node-id-1",
-    "node-id-2"
-  ]
+  "version": 1,
+  "completedNodeIds": ["node-id"]
 }
 ```
 
----
+## 1.9. Cơ sở lý thuyết
 
-## 1.8. Cơ sở lý thuyết
+### Hierarchical learning
 
-### Phân rã nội dung phân cấp
-
-Giáo trình được biểu diễn dưới dạng cây:
+Sách được biểu diễn thành cây:
 
 ```text
-Giáo trình
-├── Phần
-│   ├── Chương
-│   │   ├── Chủ đề
-│   │   └── Chủ đề
-│   └── Chương
-└── Phần
+Book
+├── Part
+│   ├── Chapter
+│   │   ├── Lesson
+│   │   └── Lesson
+│   └── Chapter
+└── Part
 ```
 
-Cấu trúc cây giúp:
+Tree giúp người học nhìn quan hệ cha-con, thứ tự học và phạm vi của từng lesson.
 
-* Quan sát toàn bộ nội dung.
-* Giữ quan hệ cha – con.
-* Giữ thứ tự học.
-* Giới hạn phạm vi của từng bài học.
+### Grounded generation
 
-### Grounded Generation
+Lesson phải dựa trên `sourceText` của node. AI không được tự thêm dữ kiện ngoài sách như nguồn chính. Ví dụ AI tự tạo phải được gắn nhãn.
 
-Bài học phải được sinh dựa trên nội dung nguồn của node.
+### Lazy generation và cache
 
-Quy tắc:
+Map được tạo trước, lesson sinh sau khi cần. Cách này giảm thời gian tạo map, giảm chi phí AI và tránh sinh lesson cho node không ai mở.
 
-* Không dùng kiến thức sẵn có của model làm nguồn chính.
-* Không tự thêm số liệu hoặc kết luận.
-* Ví dụ do AI tạo phải được gắn nhãn.
-* Nếu nguồn không đủ, hệ thống phải thông báo rõ.
+### Structured output
 
-### Xác định trọng tâm
+AI output phải là JSON đúng schema. Backend validate trước khi lưu để UI render ổn định.
 
-Một nội dung được xem là bắt buộc khi thuộc một trong các nhóm:
+## 1.10. Công nghệ sử dụng
 
-* Định nghĩa chính.
-* Khái niệm chính.
-* Nguyên lý.
-* Quy tắc.
-* Công thức.
-* Điều kiện áp dụng.
-* Ngoại lệ quan trọng.
-* Kết luận cần thiết cho phần tiếp theo.
+| Thành phần | Công nghệ |
+| --- | --- |
+| Frontend | React, Vite |
+| UI | Tailwind CSS, reusable UI primitives, lucide-react |
+| Server state | TanStack Query |
+| Client state | Zustand hoặc local hook |
+| Reader | PDF.js, EPUB.js |
+| Backend | Node.js, Express |
+| Database | MongoDB, Mongoose |
+| Validation | Zod |
+| Auth | JWT admin role |
+| AI | OpenAI Responses API hoặc Chat Completions structured JSON |
+| Storage | R2/Cloudinary theo Ebook hiện có |
+| Completion state | LocalStorage |
 
-### Lazy Generation
-
-Bài học chỉ được sinh khi lesson node được mở lần đầu.
-
-Lợi ích:
-
-* Giảm chi phí AI.
-* Giảm thời gian upload.
-* Không sinh nội dung không được sử dụng.
-* Dễ thay đổi prompt cho các node chưa được sinh.
-
-### Caching
-
-Sau lần sinh đầu tiên, bài học được lưu trong MongoDB.
-
-```text
-Lần đầu:
-Node → AI → MongoDB → Frontend
-
-Lần sau:
-Node → MongoDB → Frontend
-```
-
-### Structured Output
-
-AI phải trả về JSON theo schema cố định.
-
-Điều này giúp:
-
-* Validate output.
-* Render giao diện ổn định.
-* Tránh lỗi parse Markdown.
-* Dễ lưu dữ liệu.
-* Dễ thay đổi model AI.
-
----
-
-## 1.9. Công nghệ sử dụng
-
-| Thành phần         | Công nghệ            |
-| ------------------ | -------------------- |
-| Frontend           | React, Vite          |
-| Giao diện          | Tailwind CSS         |
-| Client state       | Zustand              |
-| Server state       | TanStack Query       |
-| Routing            | React Router         |
-| PDF Reader         | PDF.js               |
-| EPUB Reader        | EPUB.js              |
-| Backend            | Node.js, Express     |
-| Database           | MongoDB, Mongoose    |
-| Xác thực admin     | JWT                  |
-| AI                 | OpenAI Responses API |
-| Tiến độ hoàn thành | LocalStorage         |
-
-### Biến môi trường AI
+### Biến môi trường đề xuất
 
 ```env
 OPENAI_API_KEY=
-OPENAI_MAP_MODEL=
-OPENAI_LESSON_MODEL=
+OPENAI_EBOOK_MAP_MODEL=
+OPENAI_EBOOK_LESSON_MODEL=
+EBOOK_LEARNING_MAX_SECTION_CHARS=12000
+EBOOK_LEARNING_MAX_LESSON_SOURCE_CHARS=18000
 ```
-
-Tên model không được hard-code trong source code.
-
----
-
-## 1.10. Kiến trúc tổng quát
-
-```mermaid
-flowchart LR
-    Admin[Admin] --> UI[React Frontend]
-    Learner[Người học] --> UI
-
-    UI --> API[Express API]
-
-    API --> Ebook[Ebook Module]
-    API --> Learning[AI Learning Module]
-
-    Ebook --> DB[(MongoDB)]
-    Ebook --> Storage[File Storage]
-
-    Learning --> Parser[Document Parser]
-    Learning --> AIService[OpenAI Service]
-
-    Parser --> Storage
-    AIService --> OpenAI[OpenAI API]
-    Learning --> DB
-
-    UI --> LocalStorage[LocalStorage]
-```
-
----
 
 ## 1.11. Tiêu chí thành công
 
-MVP được xem là thành công khi:
-
-1. Admin upload được PDF hoặc EPUB.
-2. Hệ thống tạo được sơ đồ kiến thức.
-3. Sơ đồ có group node và lesson node.
-4. Lesson node liên kết với đúng nội dung nguồn.
-5. Người học chọn node và xem được bài học.
-6. Bài học được cache sau lần sinh đầu tiên.
-7. Người học đánh dấu hoàn thành.
-8. Trạng thái hoàn thành còn tồn tại sau khi reload.
+1. Admin tạo được map cho ebook PDF/EPUB đã tồn tại.
+2. Map có group node và lesson node theo đúng thứ tự.
+3. Public reader hiển thị được Learning Map cho ebook đã publish.
+4. Lesson node sinh bài học từ source text đúng phạm vi.
+5. Lesson được cache sau lần đầu.
+6. Hoàn thành node còn sau reload trình duyệt.
+7. Tạo lại map xóa hoặc archive map cũ theo rule rõ ràng.
+8. Luồng reader/progress/bookmark cũ vẫn hoạt động.

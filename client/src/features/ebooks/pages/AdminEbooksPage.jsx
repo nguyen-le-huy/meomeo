@@ -26,7 +26,6 @@ import { Pagination } from "../../../components/ui/pagination.jsx";
 import { Textarea } from "../../../components/ui/textarea.jsx";
 import { useCreateEbook, useDeleteEbook, useEbooks, usePublishEbook, useUpdateEbook } from "../hooks/useEbooks.js";
 
-const maxEbookFileSize = 150 * 1024 * 1024;
 const maxCoverFileSize = 10 * 1024 * 1024;
 const pageSize = 9;
 
@@ -84,7 +83,7 @@ function FileDropField({ accept, file, icon: Icon, inputRef, label, onChange, ty
         </span>
         <span className="mt-3 max-w-full truncate text-sm font-semibold">{file?.name || `Chọn ${type}`}</span>
         <span className="mt-1 text-xs text-ink-muted">
-          {file ? formatFileSize(file.size) : type === "file ebook" ? "EPUB hoặc PDF, tối đa 150 MB" : "JPG, PNG hoặc WebP, tối đa 10 MB"}
+          {file ? formatFileSize(file.size) : type === "file ebook" ? "EPUB hoặc PDF, không giới hạn dung lượng" : "JPG, PNG hoặc WebP, tối đa 10 MB"}
         </span>
       </button>
       <input ref={inputRef} accept={accept} className="sr-only" type="file" onChange={onChange} />
@@ -134,12 +133,6 @@ function CreateEbookDialog({ createMutation, onOpenChange, open }) {
   function selectEbook(event) {
     const selectedFile = event.target.files?.[0] || null;
     setError("");
-    if (selectedFile && selectedFile.size > maxEbookFileSize) {
-      event.target.value = "";
-      setFile(null);
-      setError(`File ebook đang là ${formatFileSize(selectedFile.size)}. Giới hạn hiện tại là 150 MB.`);
-      return;
-    }
     setFile(selectedFile);
   }
 
