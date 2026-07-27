@@ -45,7 +45,7 @@ export default function BilingualWatchPage() {
   const transcriptStageLabels = {
     queued: "Đang xếp hàng phân tích transcript…",
     fetching_youtube_subtitle: "Đang tìm phụ đề trên YouTube…",
-    downloading_audio: "Không có phụ đề — đang tải audio…",
+    downloading_audio: "Đang tải audio để căn timeline…",
     transcribing_audio: "Đang nhận dạng giọng nói từ audio…",
     creating_segments: "Đang tạo các đoạn transcript…",
   };

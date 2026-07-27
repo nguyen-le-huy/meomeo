@@ -54,10 +54,15 @@ R2_PUBLIC_BASE_URL=
 Trên máy cá nhân đã đăng nhập YouTube, xuất cookies theo định dạng Netscape
 `cookies.txt`. Không commit file này vào Git và không gửi nội dung cookies vào log.
 
-Transcript YouTube được căn lại bằng OpenAI Whisper word timestamps từ audio,
-không dùng timeline subtitle/caption của YouTube. Vì vậy backend production phải có
-`OPENAI_API_KEY`; sau deploy hãy bấm **Phân tích lại transcript** và kiểm tra
-`transcriptSource` của video là `openai_whisper`.
+Backend ưu tiên tải phụ đề tiếng Anh có sẵn trực tiếp bằng `yt-dlp`: phụ đề thủ
+công được lưu với `transcriptSource=youtube_manual`, phụ đề tự động của YouTube
+được lưu với `transcriptSource=youtube_auto`. Chỉ khi video thực sự không có phụ
+đề tiếng Anh (hoặc cue buộc phải căn lại theo audio), backend mới dùng OpenAI
+Whisper và lưu `transcriptSource=openai_whisper`.
+
+Nếu video có phụ đề nhưng `yt-dlp` tải thất bại, job sẽ retry và hiển thị lỗi thay
+vì âm thầm tự tạo transcript mới. Sau deploy, bấm **Phân tích lại transcript** và
+kiểm tra badge `Source` trên giao diện.
 
 Tạo thư mục riêng trên server, chép file vào đó và giới hạn quyền đọc:
 

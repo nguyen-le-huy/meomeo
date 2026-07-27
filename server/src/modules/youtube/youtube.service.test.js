@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { normalizeTranscriptSegments, requiresAudioWordAlignment } from "./youtube.service.js";
+import {
+  normalizeTranscriptSegments,
+  pickPreferredSubtitleTrack,
+  requiresAudioWordAlignment,
+} from "./youtube.service.js";
 
 function segment(startTime, endTime, text) {
   const words = text.split(/\s+/).map((word, index, allWords) => {
@@ -62,4 +66,32 @@ test("audio alignment check handles long untimed subtitle cues", () => {
     ]),
     true,
   );
+});
+
+test("subtitle selection prefers a manual English track over automatic captions", () => {
+  const track = pickPreferredSubtitleTrack({
+    subtitles: {
+      en: [{ ext: "json3", url: "https://example.com/manual" }],
+    },
+    automatic_captions: {
+      en: [{ ext: "json3", url: "https://example.com/auto" }],
+    },
+  });
+
+  assert.equal(track.source, "manual");
+  assert.equal(track.language, "en");
+  assert.equal(track.ext, "json3");
+  assert.equal(track.url, "https://example.com/manual");
+});
+
+test("subtitle selection accepts regional and generated English language keys", () => {
+  const track = pickPreferredSubtitleTrack({
+    subtitles: {},
+    automatic_captions: {
+      "en-orig": [{ ext: "vtt", url: "https://example.com/auto-en-orig" }],
+    },
+  });
+
+  assert.equal(track.source, "auto");
+  assert.equal(track.language, "en-orig");
 });

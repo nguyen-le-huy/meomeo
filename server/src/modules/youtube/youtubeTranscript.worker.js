@@ -8,9 +8,11 @@ import {
   requiresAudioWordAlignment,
 } from "./youtube.service.js";
 import { YoutubeTranscriptJob } from "./youtubeTranscriptJob.model.js";
+import { getYoutubeTranscriptQueueStatuses } from "./youtubeTranscriptJob.service.js";
 
 const pollIntervalMs = 2000;
 const staleLockMs = 20 * 60 * 1000;
+const queueStatuses = getYoutubeTranscriptQueueStatuses();
 let pollTimer;
 let workerBusy = false;
 
@@ -98,6 +100,23 @@ async function processJob(job) {
   await updateVideoStage(video._id, "fetching_youtube_subtitle", 15);
   const analyzed = await analyzeYoutubeUrl(video.youtubeUrl);
 
+  if (analyzed.transcripts?.length) {
+    await updateVideoStage(video._id, "creating_segments", 85);
+    await replaceSegments(
+      video,
+      analyzed.transcripts,
+      analyzed.transcriptSource === "auto" ? "youtube_auto" : "youtube_manual",
+      analyzed.transcriptLanguage,
+    );
+    return;
+  }
+
+  if (!analyzed.canFallbackToAudio) {
+    throw new Error(
+      analyzed.transcriptError || "YouTube subtitle analysis failed before audio fallback.",
+    );
+  }
+
   if (Number(analyzed.video?.duration || 0) >= 2 * 60 * 60) {
     throw new Error("Video is too long for OpenAI Whisper transcription in this pipeline (maximum 2 hours).");
   }
@@ -126,18 +145,18 @@ async function claimNextJob() {
   return YoutubeTranscriptJob.findOneAndUpdate(
     {
       $or: [
-        { status: "queued", nextAttemptAt: { $lte: now } },
-        { status: "processing", lockedAt: { $lte: staleBefore } },
+        { status: queueStatuses.queued, nextAttemptAt: { $lte: now } },
+        { status: queueStatuses.processing, lockedAt: { $lte: staleBefore } },
       ],
     },
-    { $set: { status: "processing", lockedAt: now }, $inc: { attempts: 1 } },
+    { $set: { status: queueStatuses.processing, lockedAt: now }, $inc: { attempts: 1 } },
     { new: true, sort: { createdAt: 1 } },
   );
 }
 
 async function finishJob(job) {
   await YoutubeTranscriptJob.updateOne(
-    { _id: job._id, status: "processing" },
+    { _id: job._id, status: queueStatuses.processing },
     { $set: { status: "completed", completedAt: new Date(), lastError: "" }, $unset: { lockedAt: 1 } },
   );
 }
@@ -151,7 +170,11 @@ async function failJob(job, error) {
     { _id: job._id },
     shouldRetry
       ? {
-          $set: { status: "queued", nextAttemptAt: new Date(Date.now() + retryDelayMs), lastError: message },
+          $set: {
+            status: queueStatuses.queued,
+            nextAttemptAt: new Date(Date.now() + retryDelayMs),
+            lastError: message,
+          },
           $unset: { lockedAt: 1 },
         }
       : {

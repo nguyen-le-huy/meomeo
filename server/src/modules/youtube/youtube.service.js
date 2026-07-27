@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { constants as fsConstants } from "node:fs";
-import { access, mkdtemp, readdir, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
@@ -192,12 +192,14 @@ function normalizeSegment(segment, index) {
   };
 }
 
-function pickPreferredSubtitleTrack(metadata) {
+export function pickPreferredSubtitleTrack(metadata) {
   for (const container of ["subtitles", "automatic_captions"]) {
     const availableTracks = metadata[container] || {};
     const languages = [
       "en",
       "en-US",
+      "en-GB",
+      "en-orig",
       ...Object.keys(availableTracks).filter((language) => /^en(?:[-_]|$)/i.test(language)),
     ].filter((language, index, values) => values.indexOf(language) === index);
 
@@ -256,24 +258,49 @@ export async function getYoutubeTranscript(metadata) {
     throw createHttpError(422, "No English transcript found for this video.");
   }
 
-  const response = await fetch(track.url);
+  const directory = await mkdtemp(path.join(os.tmpdir(), "meomeo-youtube-subtitle-"));
+  const outputTemplate = path.join(directory, "subtitle.%(ext)s");
 
-  if (!response.ok) {
-    throw createHttpError(502, "Failed to download YouTube transcript.");
+  try {
+    await runYtDlp(metadata.video.youtubeUrl, {
+      skipDownload: true,
+      noPlaylist: true,
+      noWarnings: true,
+      subLang: track.language,
+      subFormat: track.ext,
+      output: outputTemplate,
+      ...(track.source === "manual" ? { writeSub: true } : { writeAutoSub: true }),
+    });
+
+    const files = await readdir(directory);
+    const subtitleName = files.find(
+      (name) => name.startsWith("subtitle.") && name.toLowerCase().endsWith(`.${track.ext.toLowerCase()}`),
+    );
+    if (!subtitleName) {
+      throw new Error("yt-dlp did not produce the requested subtitle file");
+    }
+
+    const rawSubtitle = await readFile(path.join(directory, subtitleName), "utf8");
+    const transcripts = parseSubtitleToSegments(rawSubtitle, track.ext);
+
+    if (!transcripts.length) {
+      throw createHttpError(422, "No usable transcript segments found for this video.");
+    }
+
+    return {
+      language: track.language,
+      source: track.source,
+      transcripts,
+    };
+  } catch (error) {
+    if (error.statusCode) throw error;
+    throw createHttpError(
+      502,
+      `Failed to download YouTube ${track.source} transcript (${track.language}/${track.ext}) with yt-dlp: ${error.message}`,
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
   }
-
-  const rawSubtitle = await response.text();
-  const transcripts = parseSubtitleToSegments(rawSubtitle, track.ext);
-
-  if (!transcripts.length) {
-    throw createHttpError(422, "No usable transcript segments found for this video.");
-  }
-
-  return {
-    language: track.language,
-    source: track.source,
-    transcripts,
-  };
 }
 
 export async function downloadYoutubeAudio(youtubeUrl) {
@@ -611,17 +638,6 @@ export async function analyzeYoutubeUrl(youtubeUrl) {
 
     try {
       const transcript = await getYoutubeTranscript(metadata);
-      if (transcript.source === "auto") {
-        return {
-          video: metadata.video,
-          transcriptLanguage: transcript.language,
-          transcriptSource: transcript.source,
-          transcripts: [],
-          transcriptError: "YouTube automatic captions are available, but audio transcription is required for accurate timing.",
-          requiresAudioAlignment: true,
-        };
-      }
-
       if (requiresAudioWordAlignment(transcript.transcripts)) {
         return {
           video: metadata.video,
@@ -630,6 +646,7 @@ export async function analyzeYoutubeUrl(youtubeUrl) {
           transcripts: [],
           transcriptError: "YouTube subtitles do not contain precise word timestamps for long cues.",
           requiresAudioAlignment: true,
+          canFallbackToAudio: true,
         };
       }
       const transcripts = normalizeTranscriptSegments(transcript.transcripts, {
@@ -642,6 +659,7 @@ export async function analyzeYoutubeUrl(youtubeUrl) {
         transcriptLanguage: transcript.language,
         transcriptSource: transcript.source,
         transcripts,
+        canFallbackToAudio: false,
       };
     } catch (error) {
       return {
@@ -649,6 +667,7 @@ export async function analyzeYoutubeUrl(youtubeUrl) {
         transcriptLanguage: "",
         transcripts: [],
         transcriptError: error.message,
+        canFallbackToAudio: error.statusCode === 422,
       };
     }
   } catch (error) {
@@ -666,6 +685,7 @@ export async function analyzeYoutubeUrl(youtubeUrl) {
       transcripts: [],
       transcriptError: `yt-dlp failed: ${error.message}`,
       warning: `yt-dlp metadata fallback used: ${error.message}`,
+      canFallbackToAudio: false,
     };
   }
 }

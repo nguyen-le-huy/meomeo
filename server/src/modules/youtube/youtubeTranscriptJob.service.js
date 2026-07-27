@@ -1,11 +1,20 @@
 import { YoutubeTranscriptJob } from "./youtubeTranscriptJob.model.js";
 
+export function getYoutubeTranscriptQueueStatuses(nodeEnv = process.env.NODE_ENV) {
+  const isProduction = nodeEnv === "production";
+  return {
+    queued: isProduction ? "queued" : "queued_local",
+    processing: isProduction ? "processing" : "processing_local",
+  };
+}
+
 export async function enqueueYoutubeTranscript(videoId) {
+  const statuses = getYoutubeTranscriptQueueStatuses();
   return YoutubeTranscriptJob.findOneAndUpdate(
     { videoId },
     {
       $set: {
-        status: "queued",
+        status: statuses.queued,
         attempts: 0,
         nextAttemptAt: new Date(),
         lastError: "",

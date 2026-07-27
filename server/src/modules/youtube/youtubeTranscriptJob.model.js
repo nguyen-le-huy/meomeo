@@ -5,7 +5,15 @@ const youtubeTranscriptJobSchema = new mongoose.Schema(
     videoId: { type: mongoose.Schema.Types.ObjectId, ref: "VideoLesson", required: true, unique: true },
     status: {
       type: String,
-      enum: ["queued", "processing", "completed", "failed", "cancelled"],
+      enum: [
+        "queued",
+        "processing",
+        "queued_local",
+        "processing_local",
+        "completed",
+        "failed",
+        "cancelled",
+      ],
       default: "queued",
       index: true,
     },
