@@ -79,11 +79,7 @@ export default function LessonCard({
         <Badge className="absolute bottom-1.5 right-1.5 gap-1 rounded bg-black/90 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
           <Clock3 size={11} strokeWidth={2.4} /> {formatDuration(video.duration || 0)}
         </Badge>
-        {isFeatured ? (
-          <Badge className="absolute left-2 top-2 rounded bg-coral px-2 py-1 text-[10px] font-bold text-white shadow-sm">
-            Mới
-          </Badge>
-        ) : null}
+
         {isShadowingDone ? (
           <Badge className="absolute bottom-1.5 left-1.5 gap-1 rounded bg-emerald-700/95 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
             <CheckCircle2 size={14} /> Done · {shadowingSession.averageScore || 0}đ
