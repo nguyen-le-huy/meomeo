@@ -159,6 +159,9 @@ export async function getMovieDetail(id, options = {}) {
 }
 
 export async function createMovie(data, adminUser, files = {}) {
+  if (data.subtitleSource === "external" && !files.subtitleFile) {
+    throw createHttpError(400, "English SRT subtitle is required when using an external subtitle");
+  }
   const topic = await getDefaultMovieTopic();
   const bunnyVideo = await createBunnyVideo(data.title);
   let posterResult = null;
@@ -182,11 +185,11 @@ export async function createMovie(data, adminUser, files = {}) {
       createdBy: adminUser.id,
     });
     if (files.subtitleFile) {
-      await importEnglishSubtitle(movie._id.toString(), files.subtitleFile.buffer.toString("utf8"), false);
+      await importEnglishSubtitle(movie._id.toString(), files.subtitleFile.buffer, false);
       movie = await VideoLesson.findById(movie._id);
     }
     if (files.viSubtitleFile) {
-      await importVietnameseSubtitle(movie._id.toString(), files.viSubtitleFile.buffer.toString("utf8"), false);
+      await importVietnameseSubtitle(movie._id.toString(), files.viSubtitleFile.buffer, false);
       movie = await VideoLesson.findById(movie._id);
     }
     return { movie, upload: createTusUploadCredentials(movie.bunnyVideoId) };
@@ -304,6 +307,7 @@ export async function getMovieReuploadCredentials(id, fileMetadata) {
   movie.uploadFileSize = fileMetadata.fileSize;
   movie.uploadFileLastModified = fileMetadata.fileLastModified;
   movie.uploadFileType = fileMetadata.fileType;
+  movie.subtitleSource = fileMetadata.subtitleSource;
   movie.uploadProgress = 0;
   movie.uploadBytesUploaded = 0;
   movie.uploadBytesTotal = fileMetadata.fileSize;
@@ -380,7 +384,7 @@ export async function syncMovieStreamStatus(id) {
   await applyBunnyMetadata(movie, remote);
   await movie.save();
   if (movie.streamStatus === "ready") {
-    await syncMovieCaptions(movie, { force: true, replaceExisting: true });
+    await syncMovieCaptions(movie, { force: true, remoteCaptions: remote.captions });
   }
   return movie;
 }
@@ -435,13 +439,15 @@ export async function getMoviePlayback(id, options = {}) {
     throw createHttpError(409, `Video đang được Bunny encode (${movie.encodeProgress || 0}%)`);
   }
   try {
-    await syncMovieCaptions(movie);
+    await syncMovieCaptions(movie, { remoteCaptions: remote.captions });
   } catch (error) {
     console.error(`[Bunny captions] Không thể đồng bộ phụ đề cho phim ${movie._id}:`, error.message);
   }
   return createPlaybackData(
     movie.bunnyVideoId,
-    getBilingualCaptionCode(movie.bunnyCaptionSyncVersion),
+    movie.subtitleSource === "embedded"
+      ? null
+      : getBilingualCaptionCode(movie.bunnyCaptionSyncVersion),
   );
 }
 
@@ -452,6 +458,7 @@ export async function importEnglishSubtitle(id, content, dryRun) {
   const preview = { count: result.segments.length, warnings: result.warnings, duration: result.segments.at(-1)?.endTime || 0 };
   if (dryRun) return preview;
   const segments = await createTranscriptSegments(movie._id, result.segments, "manual");
+  movie.subtitleSource = "external";
   movie.transcriptStatus = segments.length ? "completed" : "failed";
   movie.transcriptError = "";
   await movie.save();

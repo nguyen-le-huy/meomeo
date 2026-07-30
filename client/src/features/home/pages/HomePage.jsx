@@ -1,51 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { getGuestSessionId } from "../../../utils/sessionId.js";
-import { LoadingState } from "../../../components/ui/spinner.jsx";
 import { useAuthStore } from "../../auth/stores/authStore.js";
 import { useMovieAdminMutations, useMovieLibrary } from "../../movies/hooks/useMovies.js";
 import { normalizeMovie } from "../../movies/utils/movieData.js";
 import ManageHomeHeroDialog from "../../movies/components/ManageHomeHeroDialog.jsx";
-import LearningModeDialog from "../../videos/components/LearningModeDialog.jsx";
-import LessonCard from "../../videos/components/LessonCard.jsx";
-import TopicCategoryChips, { allTopicsValue } from "../../videos/components/TopicCategoryChips.jsx";
-import VideoLibraryAdminActions from "../../videos/components/VideoLibraryAdminActions.jsx";
-import VideoLibraryEmptyState from "../../videos/components/VideoLibraryEmptyState.jsx";
-import VideoLibraryErrorState from "../../videos/components/VideoLibraryErrorState.jsx";
+import VideoLibraryContent from "../../videos/components/VideoLibraryContent.jsx";
 import {
   heroCatUrl,
-  homeInitialDesktopVideoLimit,
-  homeInitialMobileVideoLimit,
-  homeVideoLoadBatchSize,
   practiceCatUrl,
 } from "../../videos/constants/videoLibrary.constants.js";
-import {
-  useCreateTopic,
-  useCreateVideo,
-  useDeleteTopic,
-  useDeleteVideo,
-  useMyShadowingSessions,
-  usePublishVideo,
-  useReorderTopics,
-  useTopics,
-  useUpdateTopic,
-  useUpdateVideo,
-  useVideos,
-} from "../../videos/hooks/useVideoLearning.js";
-import { useLazyTopicSections } from "../../videos/hooks/useLazyTopicSections.js";
-import {
-  buildTopicSections,
-  getNewestVideoIds,
-  interleaveTopicSections,
-} from "../../videos/utils/videoLibrary.js";
 import LatestMovieFeatureCard from "../components/LatestMovieFeatureCard.jsx";
-
-const videosPerCategoryTurn = 2;
-
-function roundUpToCategoryTurn(value) {
-  return Math.ceil(value / videosPerCategoryTurn) * videosPerCategoryTurn;
-}
 
 const lessonCategories = [
   {
@@ -106,52 +71,13 @@ function getGreeting(date = new Date()) {
   return "chào buổi đêm";
 }
 
-function useIsDesktopTopicGrid() {
-  const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window === "undefined" ? true : window.matchMedia("(min-width: 1024px)").matches,
-  );
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 1024px)");
-    const handleChange = () => setIsDesktop(mediaQuery.matches);
-
-    handleChange();
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
-
-  return isDesktop;
-}
-
 export default function HomePage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
   const [greeting, setGreeting] = useState(() => getGreeting());
-  const [modePickerVideo, setModePickerVideo] = useState(null);
-  const [selectedTopicId, setSelectedTopicId] = useState(allTopicsValue);
-  const isDesktopTopicGrid = useIsDesktopTopicGrid();
-  const {
-    data: videos = [],
-    error: videosError,
-    isError: isVideosError,
-    isLoading,
-    refetch: refetchVideos,
-  } = useVideos({ includeUnpublished: isAdmin || undefined });
   const latestMovieQuery = useMovieLibrary({});
   const movieMutations = useMovieAdminMutations();
-  const { data: topics = [], isLoading: isTopicsLoading } = useTopics({ includeUnpublished: isAdmin || undefined });
-  const createVideoMutation = useCreateVideo();
-  const createTopicMutation = useCreateTopic();
-  const updateTopicMutation = useUpdateTopic();
-  const reorderTopicsMutation = useReorderTopics();
-  const deleteTopicMutation = useDeleteTopic();
-  const updateVideoMutation = useUpdateVideo();
-  const publishVideoMutation = usePublishVideo();
-  const deleteVideoMutation = useDeleteVideo();
-  const sessionId = getGuestSessionId();
-  const { data: myShadowingSessions = [] } = useMyShadowingSessions(sessionId);
-  const visibleTopics = useMemo(() => topics.filter((topic) => topic.slug !== "all-videos"), [topics]);
   const latestMovie = useMemo(() => {
     if (latestMovieQuery.data?.homeFeaturedMovie) {
       return normalizeMovie(latestMovieQuery.data.homeFeaturedMovie);
@@ -160,88 +86,11 @@ export default function HomePage() {
       .sort((left, right) => new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime())[0];
     return newest ? normalizeMovie(newest) : null;
   }, [latestMovieQuery.data]);
-  const topicSections = useMemo(
-    () => buildTopicSections({ isAdmin, topics: visibleTopics, videos }),
-    [isAdmin, visibleTopics, videos],
-  );
-  const categoryTopics = useMemo(() => {
-    const videoCountByTopicId = new Map(
-      topicSections
-        .filter((section) => section.topic?._id)
-        .map((section) => [section.topic._id, section.videos.length]),
-    );
-    const topicsWithCounts = visibleTopics.map((topic) => ({
-      ...topic,
-      videoCount: videoCountByTopicId.get(topic._id) || 0,
-    }));
-
-    if (isAdmin) return topicsWithCounts;
-
-    return topicsWithCounts.filter((topic) => topic.videoCount > 0);
-  }, [isAdmin, topicSections, visibleTopics]);
-  const filteredTopicSections = useMemo(() => {
-    if (selectedTopicId === allTopicsValue) {
-      return interleaveTopicSections(topicSections, videosPerCategoryTurn);
-    }
-
-    return topicSections.filter((section) => section.topic?._id === selectedTopicId);
-  }, [selectedTopicId, topicSections]);
-  const baseInitialVideoLimit = isDesktopTopicGrid ? homeInitialDesktopVideoLimit : homeInitialMobileVideoLimit;
-  const initialVideoLimit = selectedTopicId === allTopicsValue
-    ? roundUpToCategoryTurn(baseInitialVideoLimit)
-    : baseInitialVideoLimit;
-  const videoLoadBatchSize = selectedTopicId === allTopicsValue
-    ? roundUpToCategoryTurn(homeVideoLoadBatchSize)
-    : homeVideoLoadBatchSize;
-  const {
-    hasMoreSections,
-    loadMoreRef,
-    visibleSections: visibleTopicSections,
-  } = useLazyTopicSections(filteredTopicSections, {
-    batchSize: videoLoadBatchSize,
-    initialCount: initialVideoLimit,
-  });
-  const shadowingSessionByVideoId = useMemo(
-    () => new Map(myShadowingSessions.map((session) => [String(session.videoId), session])),
-    [myShadowingSessions],
-  );
-  const visibleVideoItems = useMemo(
-    () => {
-      const newestVideoIds = new Set(
-        topicSections.flatMap((section) => [...getNewestVideoIds(section.videos)]),
-      );
-
-      return visibleTopicSections.flatMap((section) =>
-        section.videos.map((video) => ({
-          isNew: newestVideoIds.has(video._id),
-          video,
-        })),
-      );
-    },
-    [topicSections, visibleTopicSections],
-  );
 
   useEffect(() => {
     const intervalId = window.setInterval(() => setGreeting(getGreeting()), 60_000);
     return () => window.clearInterval(intervalId);
   }, []);
-
-  useEffect(() => {
-    if (selectedTopicId === allTopicsValue) return;
-    if (!categoryTopics.some((topic) => topic._id === selectedTopicId)) {
-      setSelectedTopicId(allTopicsValue);
-    }
-  }, [categoryTopics, selectedTopicId]);
-
-  function startLearning(mode) {
-    if (!modePickerVideo?._id) return;
-    setModePickerVideo(null);
-    if (mode === "bilingual") {
-      navigate(`/videos/${modePickerVideo._id}/bilingual`);
-      return;
-    }
-    navigate(`/videos/${modePickerVideo._id}?mode=${mode}`);
-  }
 
   return (
     <section className="min-h-full bg-canvas px-4 py-8 text-coal sm:px-6 lg:px-10">
@@ -314,66 +163,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="mb-8 mt-10 flex items-end justify-between gap-4">
-          <div>
-            <h2 className="mt-2 font-display text-2xl font-normal tracking-tight sm:text-3xl">Học qua Youtube</h2>
-          </div>
-          {isAdmin ? (
-            <VideoLibraryAdminActions
-              createTopicMutation={createTopicMutation}
-              createVideoMutation={createVideoMutation}
-              deleteTopicMutation={deleteTopicMutation}
-              onVideoCreated={(video) => navigate(`/videos/${video._id}/bilingual`)}
-              reorderTopicsMutation={reorderTopicsMutation}
-              topics={visibleTopics}
-              updateTopicMutation={updateTopicMutation}
-            />
-          ) : null}
-        </div>
-
-        <TopicCategoryChips
-          onSelectTopic={setSelectedTopicId}
-          selectedTopicId={selectedTopicId}
-          topics={categoryTopics}
-        />
-
-        {isLoading || isTopicsLoading ? <LoadingState label="Đang tải thư viện..." /> : null}
-
-        {isVideosError ? (
-          <VideoLibraryErrorState error={videosError} onRetry={() => refetchVideos()} />
-        ) : null}
-
-        {!isLoading && !isVideosError && videos.length === 0 ? <VideoLibraryEmptyState /> : null}
-
-        {visibleVideoItems.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3" data-lesson-grid>
-              {visibleVideoItems.map(({ isNew, video }) => (
-                <LessonCard
-                  deleteVideoMutation={deleteVideoMutation}
-                  isAdmin={isAdmin}
-                  isNew={isNew}
-                  key={video._id}
-                  onSelect={() => setModePickerVideo(video)}
-                  publishVideoMutation={publishVideoMutation}
-                  shadowingSession={shadowingSessionByVideoId?.get(String(video._id))}
-                  topics={visibleTopics}
-                  updateVideoMutation={updateVideoMutation}
-                  video={video}
-                />
-              ))}
-            </div>
-            {hasMoreSections ? <div aria-hidden="true" className="h-8" ref={loadMoreRef} /> : null}
-          </>
-        ) : null}
-
-        <LearningModeDialog
-          onOpenChange={(isOpen) => {
-            if (!isOpen) setModePickerVideo(null);
-          }}
-          onSelectMode={startLearning}
-          open={Boolean(modePickerVideo)}
-        />
+        <VideoLibraryContent className="mt-10" />
       </div>
     </section>
   );

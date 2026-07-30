@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { deleteBunnyCaption, upsertBunnyCaption } from "../bunny/bunny.service.js";
+import { deleteBunnyCaption, getBunnyVideo, upsertBunnyCaption } from "../bunny/bunny.service.js";
 import { TranscriptSegment } from "../transcripts/transcriptSegment.model.js";
 import { VideoLesson } from "../videos/video.model.js";
 import { createHttpError } from "../../utils/createHttpError.js";
@@ -103,6 +103,22 @@ async function getMovie(movieOrId) {
   return movie;
 }
 
+async function pruneUnmanagedCaptions(movie, allowedCodes, remoteCaptions) {
+  const captions = remoteCaptions || (await getBunnyVideo(movie.bunnyVideoId)).captions || [];
+  const obsoleteCodes = captions
+    .map((caption) => caption?.srclang)
+    .filter((code) => code && !allowedCodes.has(code));
+
+  await Promise.all(
+    [...new Set(obsoleteCodes)].map((code) =>
+      deleteBunnyCaption(movie.bunnyVideoId, code).catch((error) => {
+        if (error.statusCode !== 404) {
+          console.warn(`[Bunny captions] Không thể xóa track không được quản lý ${code}: ${error.message}`);
+        }
+      })),
+  );
+}
+
 async function performSync(movieOrId, options = {}) {
   const movie = await getMovie(movieOrId);
   if (movie.streamStatus !== "ready") {
@@ -111,6 +127,14 @@ async function performSync(movieOrId, options = {}) {
     movie.bunnyCaptionSyncError = "";
     await movie.save();
     return { deferred: true, skipped: true, trackCount: 0 };
+  }
+
+  if (movie.subtitleSource === "embedded") {
+    movie.bunnyCaptionSyncStatus = "synced";
+    movie.bunnyCaptionSyncHash = "embedded";
+    movie.bunnyCaptionSyncError = "";
+    await movie.save();
+    return { captionCode: null, skipped: true, source: "embedded", trackCount: 0 };
   }
 
   const segments = await TranscriptSegment.find({
@@ -129,6 +153,12 @@ async function performSync(movieOrId, options = {}) {
     && movie.bunnyCaptionSyncStatus === "synced"
     && movie.bunnyCaptionSyncHash === hash
   ) {
+    const tracks = getCaptionTracks(previousVersion);
+    await pruneUnmanagedCaptions(
+      movie,
+      new Set(tracks.map((track) => track.srclang)),
+      options.remoteCaptions,
+    );
     return {
       captionCode: getBilingualCaptionCode(previousVersion),
       hash,
@@ -171,6 +201,11 @@ async function performSync(movieOrId, options = {}) {
             console.warn(`[Bunny captions] Không thể xóa track cũ ${code}: ${error.message}`);
           }
         })),
+    );
+    await pruneUnmanagedCaptions(
+      movie,
+      new Set(tracks.map((track) => track.srclang)),
+      options.remoteCaptions,
     );
 
     return {

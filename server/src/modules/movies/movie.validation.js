@@ -2,6 +2,20 @@ import { z } from "zod";
 import { TRANSLATION_MODEL_IDS } from "../bilingual/translationModels.js";
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+const supportedVideoFileRegex = /\.(mp4|mov|webm|mkv)$/i;
+const supportedVideoMimeTypes = [
+  "video/mp4",
+  "video/quicktime",
+  "video/webm",
+  "video/x-matroska",
+  "video/matroska",
+];
+const uploadFileMetadataShape = {
+  uploadFileName: z.string().trim().min(1).max(500),
+  uploadFileSize: z.coerce.number().int().positive(),
+  uploadFileLastModified: z.coerce.number().int().min(0),
+  uploadFileType: z.enum(supportedVideoMimeTypes),
+};
 
 function optionalBoolean(value) {
   if (value === undefined || value === "") return undefined;
@@ -32,15 +46,36 @@ export const movieLibraryQuerySchema = z.object({
   }),
 });
 
-const uploadFileMetadataSchema = z.object({
-  uploadFileName: z.string().trim().min(1).max(500),
-  uploadFileSize: z.coerce.number().int().positive(),
-  uploadFileLastModified: z.coerce.number().int().min(0),
-  uploadFileType: z.enum(["video/mp4", "video/quicktime", "video/webm"]),
+const uploadFileMetadataSchema = z.object(uploadFileMetadataShape).superRefine((data, context) => {
+  if (!supportedVideoFileRegex.test(data.uploadFileName)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Video must be an MP4, MOV, WebM, or MKV file",
+      path: ["uploadFileName"],
+    });
+  }
 });
 
 export const createMovieSchema = z.object({
-  body: movieMetadataSchema.extend(uploadFileMetadataSchema.shape).strict(),
+  body: movieMetadataSchema
+    .extend({
+      ...uploadFileMetadataShape,
+      subtitleSource: z.enum(["external", "embedded"]).default("external"),
+    })
+    .strict()
+    .superRefine((data, context) => {
+      const fileResult = uploadFileMetadataSchema.safeParse(data);
+      if (!fileResult.success) {
+        fileResult.error.issues.forEach((issue) => context.addIssue(issue));
+      }
+      if (data.subtitleSource === "embedded" && !/\.mkv$/i.test(data.uploadFileName)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Embedded subtitles are only available for MKV files",
+          path: ["subtitleSource"],
+        });
+      }
+    }),
 });
 
 export const updateMovieSchema = z.object({
@@ -63,14 +98,46 @@ export const uploadProgressSchema = z.object({
   }).strict(),
 });
 
-export const uploadCredentialsSchema = z.object({
-  params: movieIdParamSchema.shape.params,
-  body: z.object({
+const uploadCredentialsBodyShape = {
     fileName: z.string().trim().min(1).max(500),
     fileSize: z.coerce.number().int().positive(),
     fileLastModified: z.coerce.number().int().min(0),
-    fileType: z.enum(["video/mp4", "video/quicktime", "video/webm"]),
-  }).strict(),
+    fileType: z.enum(supportedVideoMimeTypes),
+};
+
+function validateUploadVideoFile(data, context) {
+    if (!supportedVideoFileRegex.test(data.fileName)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Video must be an MP4, MOV, WebM, or MKV file",
+        path: ["fileName"],
+      });
+    }
+}
+
+export const uploadCredentialsSchema = z.object({
+  params: movieIdParamSchema.shape.params,
+  body: z.object(uploadCredentialsBodyShape).strict().superRefine(validateUploadVideoFile),
+});
+
+export const reuploadCredentialsSchema = z.object({
+  params: movieIdParamSchema.shape.params,
+  body: z
+    .object({
+      ...uploadCredentialsBodyShape,
+      subtitleSource: z.enum(["external", "embedded"]).default("external"),
+    })
+    .strict()
+    .superRefine((data, context) => {
+      validateUploadVideoFile(data, context);
+      if (data.subtitleSource === "embedded" && !/\.mkv$/i.test(data.fileName)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Embedded subtitles are only available for MKV files",
+          path: ["subtitleSource"],
+        });
+      }
+    }),
 });
 
 export const subtitleImportSchema = z.object({

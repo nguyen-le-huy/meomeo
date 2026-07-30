@@ -1,4 +1,4 @@
-import { Film, UploadCloud } from "lucide-react";
+import { Captions, Film, UploadCloud } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Alert } from "../../../components/ui/alert.jsx";
 import { Button } from "../../../components/ui/button.jsx";
@@ -13,6 +13,7 @@ import {
 import { Input } from "../../../components/ui/input.jsx";
 import { Textarea } from "../../../components/ui/textarea.jsx";
 import { uploadMovieFile } from "../utils/tusMovieUpload.js";
+import { getMovieVideoMimeType, MOVIE_VIDEO_ACCEPT } from "../utils/movieVideoFile.js";
 
 const initialForm = {
   title: "",
@@ -21,6 +22,7 @@ const initialForm = {
   ageRating: "13+",
   level: "A2",
   rating: 0,
+  subtitleSource: "external",
 };
 
 export default function AddMovieDialog({ createMutation, onCreated }) {
@@ -60,9 +62,9 @@ export default function AddMovieDialog({ createMutation, onCreated }) {
       formData.append("uploadFileName", file.name);
       formData.append("uploadFileSize", String(file.size));
       formData.append("uploadFileLastModified", String(file.lastModified || 0));
-      formData.append("uploadFileType", file.type || "video/mp4");
+      formData.append("uploadFileType", getMovieVideoMimeType(file));
       formData.append("poster", poster);
-      formData.append("subtitle", subtitle);
+      if (subtitle) formData.append("subtitle", subtitle);
       if (viSubtitle) formData.append("viSubtitle", viSubtitle);
       const response = await createMutation.mutateAsync(formData);
       const data = response.data.data;
@@ -89,6 +91,8 @@ export default function AddMovieDialog({ createMutation, onCreated }) {
   }
 
   const busy = createMutation.isPending || isUploading;
+  const isMkv = /\.mkv$/i.test(file?.name || "");
+  const needsExternalSubtitle = form.subtitleSource === "external";
 
   return (
     <Dialog onOpenChange={(value) => !busy && setOpen(value)} open={open}>
@@ -121,16 +125,52 @@ export default function AddMovieDialog({ createMutation, onCreated }) {
               {poster ? <span className="mt-2 block truncate text-xs text-white/45">{poster.name}</span> : null}
             </label>
             <div className="space-y-3">
-              <label className="block rounded-md border border-dashed border-white/20 bg-white/[0.03] p-3 text-sm">
-                <span className="mb-2 block font-semibold">Phụ đề English (.srt)</span>
-                <input accept=".srt,application/x-subrip,text/plain" disabled={busy} onChange={(event) => setSubtitle(event.target.files?.[0] || null)} required type="file" />
+              <fieldset className="rounded-md border border-white/15 bg-white/[0.03] p-3">
+                <legend className="px-1 text-sm font-semibold">Nguồn phụ đề</legend>
+                <label className="mt-1 flex cursor-pointer items-start gap-2.5 rounded-md p-2 text-sm hover:bg-white/5">
+                  <input
+                    checked={form.subtitleSource === "external"}
+                    className="mt-1 accent-[#e06f50]"
+                    disabled={busy}
+                    name="subtitleSource"
+                    onChange={() => updateField("subtitleSource", "external")}
+                    type="radio"
+                  />
+                  <span><strong className="block">Tự tải file phụ đề</strong><span className="text-xs text-white/45">Hỗ trợ SRT, VTT và SAMI (.smi); bỏ qua caption nhúng.</span></span>
+                </label>
+                <label className={`flex items-start gap-2.5 rounded-md p-2 text-sm ${isMkv ? "cursor-pointer hover:bg-white/5" : "cursor-not-allowed opacity-45"}`}>
+                  <input
+                    checked={form.subtitleSource === "embedded"}
+                    className="mt-1 accent-[#e06f50]"
+                    disabled={busy || !isMkv}
+                    name="subtitleSource"
+                    onChange={() => {
+                      updateField("subtitleSource", "embedded");
+                      setSubtitle(null);
+                      setViSubtitle(null);
+                    }}
+                    type="radio"
+                  />
+                  <span>
+                    <strong className="block">Dùng phụ đề nhúng trong MKV</strong>
+                    <span className="text-xs text-white/45">
+                      Bunny Player dùng caption nếu nhận diện được. Muốn xuất bản bài học vẫn cần import transcript English.
+                    </span>
+                  </span>
+                </label>
+              </fieldset>
+              {needsExternalSubtitle ? <label className="block rounded-md border border-dashed border-white/20 bg-white/[0.03] p-3 text-sm">
+                <span className="mb-2 flex items-center gap-2 font-semibold"><Captions size={16} /> Phụ đề English</span>
+                <input accept=".srt,.vtt,.smi,.sami,application/x-subrip,text/vtt,application/smil,text/plain" disabled={busy} onChange={(event) => setSubtitle(event.target.files?.[0] || null)} required type="file" />
                 {subtitle ? <span className="mt-2 block truncate text-xs text-white/45">{subtitle.name}</span> : null}
-              </label>
-              <label className="block rounded-md border border-dashed border-white/20 bg-white/[0.03] p-3 text-sm">
-                <span className="mb-2 block font-semibold">Phụ đề Việt (.srt) <span className="font-normal text-white/40">— không bắt buộc</span></span>
-                <input accept=".srt,application/x-subrip,text/plain" disabled={busy} onChange={(event) => setViSubtitle(event.target.files?.[0] || null)} type="file" />
-                {viSubtitle ? <span className="mt-2 block truncate text-xs text-white/45">{viSubtitle.name}</span> : null}
-              </label>
+              </label> : null}
+              {needsExternalSubtitle ? (
+                <label className="block rounded-md border border-dashed border-white/20 bg-white/[0.03] p-3 text-sm">
+                  <span className="mb-2 block font-semibold">Phụ đề Việt <span className="font-normal text-white/40">— không bắt buộc</span></span>
+                  <input accept=".srt,.vtt,.smi,.sami,application/x-subrip,text/vtt,application/smil,text/plain" disabled={busy} onChange={(event) => setViSubtitle(event.target.files?.[0] || null)} type="file" />
+                  {viSubtitle ? <span className="mt-2 block truncate text-xs text-white/45">{viSubtitle.name}</span> : null}
+                </label>
+              ) : null}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -141,12 +181,24 @@ export default function AddMovieDialog({ createMutation, onCreated }) {
           </div>
           <label className="block rounded-md border border-dashed border-white/20 bg-white/[0.03] p-4 text-sm">
             <span className="mb-2 flex items-center gap-2 font-semibold"><UploadCloud size={18} /> File video</span>
-            <input accept="video/mp4,video/quicktime,video/webm" disabled={busy} onChange={(event) => setFile(event.target.files?.[0] || null)} required type="file" />
+            <input
+              accept={MOVIE_VIDEO_ACCEPT}
+              disabled={busy}
+              onChange={(event) => {
+                const nextFile = event.target.files?.[0] || null;
+                setFile(nextFile);
+                if (!/\.mkv$/i.test(nextFile?.name || "") && form.subtitleSource === "embedded") {
+                  updateField("subtitleSource", "external");
+                }
+              }}
+              required
+              type="file"
+            />
             {file ? <span className="mt-2 block text-xs text-white/45">{file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB</span> : null}
           </label>
           {progress > 0 ? <div><div className="mb-1 flex justify-between text-xs text-white/55"><span>Đang upload</span><span>{progress}%</span></div><div className="h-2 overflow-hidden rounded bg-white/10"><div className="h-full bg-[#e06f50] transition-all" style={{ width: `${progress}%` }} /></div></div> : null}
           {uploadError ? <Alert variant="error">{uploadError}</Alert> : null}
-          <Button className="w-full bg-[#e06f50] text-white hover:bg-[#c95f43]" disabled={busy || !file || !poster || !subtitle} type="submit">{busy ? `Đang xử lý ${progress || 0}%` : "Tạo draft và upload"}</Button>
+          <Button className="w-full bg-[#e06f50] text-white hover:bg-[#c95f43]" disabled={busy || !file || !poster || (needsExternalSubtitle && !subtitle)} type="submit">{busy ? `Đang xử lý ${progress || 0}%` : "Tạo draft và upload"}</Button>
         </form>
       </DialogContent>
     </Dialog>

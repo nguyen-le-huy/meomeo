@@ -5,6 +5,7 @@ import {
   reportUploadProgress,
   syncStreamStatus,
 } from "../services/movieApi.js";
+import { getMovieVideoMimeType } from "./movieVideoFile.js";
 
 const progressReportIntervalMs = 2000;
 const minimumProgressBytes = 5 * 1024 * 1024;
@@ -24,7 +25,7 @@ function getFileMetadata(file) {
     fileName: file.name,
     fileSize: file.size,
     fileLastModified: file.lastModified || 0,
-    fileType: file.type || "video/mp4",
+    fileType: getMovieVideoMimeType(file),
   };
 }
 
@@ -45,7 +46,15 @@ async function finishUpload(movieId, file) {
   }
 }
 
-export async function uploadMovieFile({ credentials: suppliedCredentials, file, isReupload = false, movieId, onProgress, title }) {
+export async function uploadMovieFile({
+  credentials: suppliedCredentials,
+  file,
+  isReupload = false,
+  movieId,
+  onProgress,
+  subtitleSource = "external",
+  title,
+}) {
   const tus = await import("tus-js-client");
   if (!tus.isSupported) {
     throw new Error("Trình duyệt này không hỗ trợ upload có thể tiếp tục. Hãy dùng phiên bản Chrome, Edge, Firefox hoặc Safari mới.");
@@ -54,7 +63,12 @@ export async function uploadMovieFile({ credentials: suppliedCredentials, file, 
   const credentials = suppliedCredentials
     || (
       isReupload
-        ? (await getReuploadCredentials(movieId, getFileMetadata(file))).data.data.upload
+        ? (
+            await getReuploadCredentials(movieId, {
+              ...getFileMetadata(file),
+              subtitleSource,
+            })
+          ).data.data.upload
         : (await getUploadCredentials(movieId, getFileMetadata(file))).data.data.upload
     );
   let lastReportedAt = 0;
@@ -109,7 +123,7 @@ export async function uploadMovieFile({ credentials: suppliedCredentials, file, 
       },
       metadata: {
         filename: file.name,
-        filetype: file.type || "video/mp4",
+        filetype: getMovieVideoMimeType(file),
         title,
       },
       onProgress(bytesUploaded, bytesTotal) {

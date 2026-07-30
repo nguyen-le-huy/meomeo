@@ -130,9 +130,9 @@ export function createPlaybackData(videoId, captions = "bi") {
     : "";
   const query = new URLSearchParams({
     autoplay: "false",
-    captions,
     preload: "true",
   });
+  if (captions) query.set("captions", captions);
   if (token) {
     query.set("token", token);
     query.set("expires", String(expires));

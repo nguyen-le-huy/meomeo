@@ -14,7 +14,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Edit3, Eye, EyeOff, FolderPlus, GripVertical, Trash2 } from "lucide-react";
+import { Edit3, Eye, EyeOff, FolderPlus, GripVertical, Search, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "../../../components/ui/badge.jsx";
 import { Button } from "../../../components/ui/button.jsx";
@@ -34,6 +34,15 @@ import { Alert } from "../../../components/ui/alert.jsx";
 function getNextTopicOrder(topics) {
   if (!topics.length) return 0;
   return Math.max(...topics.map((topic) => Number(topic.order) || 0)) + 1;
+}
+
+function normalizeSearchValue(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("vi")
+    .replace(/đ/g, "d")
+    .trim();
 }
 
 function SortableTopicCard({ disabled, onDelete, onEdit, topic }) {
@@ -91,6 +100,7 @@ export default function TopicManagerDialog({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [editingTopic, setEditingTopic] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -165,12 +175,21 @@ export default function TopicManagerDialog({
     deleteTopicMutation.error?.response?.data?.message ||
     reorderTopicsMutation.error?.response?.data?.message ||
     "";
+  const normalizedSearchQuery = normalizeSearchValue(searchQuery);
+  const filteredTopics = normalizedSearchQuery
+    ? orderedTopics.filter((topic) =>
+        normalizeSearchValue(`${topic.name} ${topic.description}`).includes(normalizedSearchQuery),
+      )
+    : orderedTopics;
 
   return (
     <Dialog
       onOpenChange={(nextOpen) => {
         setIsOpen(nextOpen);
-        if (!nextOpen) resetForm();
+        if (!nextOpen) {
+          resetForm();
+          setSearchQuery("");
+        }
       }}
       open={isOpen}
     >
@@ -179,14 +198,17 @@ export default function TopicManagerDialog({
           <FolderPlus size={16} /> Topic
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="h-[min(90vh,780px)] max-h-[90vh] grid-rows-[auto_minmax(0,1fr)] overflow-hidden sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Quản lý topic video</DialogTitle>
           <DialogDescription>Tạo topic, sửa thông tin, ẩn/hiện topic và xóa topic chưa có video.</DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-5 lg:grid-cols-[1fr_1.1fr]">
-          <form className="space-y-3 rounded-2xl border border-[#e6dfd8] bg-cream-soft p-4" onSubmit={submitTopic}>
+        <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-5 lg:grid-cols-[1fr_1.1fr] lg:grid-rows-1">
+          <form
+            className="self-start space-y-3 rounded-2xl border border-[#e6dfd8] bg-cream-soft p-4 lg:sticky lg:top-0"
+            onSubmit={submitTopic}
+          >
             <p className="text-sm font-black text-coal">{editingTopic ? "Sửa topic" : "Thêm topic mới"}</p>
             <Input
               onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
@@ -229,38 +251,76 @@ export default function TopicManagerDialog({
             {activeError ? <Alert variant="error">{activeError}</Alert> : null}
           </form>
 
-          <div>
-            {orderedTopics.length > 1 ? (
-              <p className="mb-2 text-xs text-ink-muted">Kéo biểu tượng ⋮⋮ để thay đổi thứ tự hiển thị.</p>
-            ) : null}
-            {orderedTopics.length ? (
-              <DndContext collisionDetection={closestCenter} onDragEnd={reorderTopicList} sensors={sensors}>
-                <SortableContext
-                  items={orderedTopics.map((topic) => topic._id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="space-y-2">
-                    {orderedTopics.map((topic) => (
-                      <SortableTopicCard
-                        disabled={reorderTopicsMutation.isPending}
-                        key={topic._id}
-                        onDelete={(selectedTopic) => {
-                          if (window.confirm(`Xóa topic "${selectedTopic.name}"? Chỉ xóa được topic chưa có video.`)) {
-                            deleteTopicMutation.mutate(selectedTopic._id);
-                          }
-                        }}
-                        onEdit={editTopic}
-                        topic={topic}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            ) : (
-              <Card className="border-dashed bg-canvas">
-                <CardContent className="p-5 text-sm text-ink-muted">Chưa có topic nào.</CardContent>
-              </Card>
-            )}
+          <div className="flex min-h-0 flex-col">
+            <div className="shrink-0 space-y-2 pb-3">
+              <div className="relative">
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted"
+                  size={16}
+                />
+                <Input
+                  aria-label="Tìm kiếm topic"
+                  className="pl-9 pr-10"
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Tìm theo tên hoặc mô tả..."
+                  value={searchQuery}
+                />
+                {searchQuery ? (
+                  <button
+                    aria-label="Xóa tìm kiếm"
+                    className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-ink-muted transition hover:bg-cream-soft hover:text-coal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/40"
+                    onClick={() => setSearchQuery("")}
+                    type="button"
+                  >
+                    <X size={15} />
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex items-center justify-between gap-3 text-xs text-ink-muted">
+                <span>
+                  {orderedTopics.length > 1
+                    ? "Kéo biểu tượng ⋮⋮ để thay đổi thứ tự hiển thị."
+                    : "Danh sách topic"}
+                </span>
+                <span className="shrink-0">
+                  {filteredTopics.length}/{orderedTopics.length}
+                </span>
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+              {filteredTopics.length ? (
+                <DndContext collisionDetection={closestCenter} onDragEnd={reorderTopicList} sensors={sensors}>
+                  <SortableContext
+                    items={filteredTopics.map((topic) => topic._id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2">
+                      {filteredTopics.map((topic) => (
+                        <SortableTopicCard
+                          disabled={reorderTopicsMutation.isPending}
+                          key={topic._id}
+                          onDelete={(selectedTopic) => {
+                            if (window.confirm(`Xóa topic "${selectedTopic.name}"? Chỉ xóa được topic chưa có video.`)) {
+                              deleteTopicMutation.mutate(selectedTopic._id);
+                            }
+                          }}
+                          onEdit={editTopic}
+                          topic={topic}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              ) : (
+                <Card className="border-dashed bg-canvas">
+                  <CardContent className="p-5 text-sm text-ink-muted">
+                    {orderedTopics.length ? "Không tìm thấy topic phù hợp." : "Chưa có topic nào."}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>

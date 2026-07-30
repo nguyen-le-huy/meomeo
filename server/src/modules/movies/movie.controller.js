@@ -28,8 +28,9 @@ function isAdmin(req) {
 }
 
 function getSubtitleContent(req) {
-  const content = req.file?.buffer?.toString("utf8") || req.body?.content;
-  if (!content?.trim()) throw createHttpError(400, "Subtitle file or content is required");
+  const content = req.file?.buffer || req.body?.content;
+  const isEmpty = Buffer.isBuffer(content) ? content.length === 0 : !content?.trim();
+  if (isEmpty) throw createHttpError(400, "Subtitle file or content is required");
   return content;
 }
 

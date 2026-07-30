@@ -37,6 +37,11 @@ const videoLessonSchema = new mongoose.Schema(
     uploadFileSize: { type: Number, default: 0, min: 0 },
     uploadFileLastModified: { type: Number, default: 0, min: 0 },
     uploadFileType: { type: String, trim: true, default: "" },
+    subtitleSource: {
+      type: String,
+      enum: ["external", "embedded"],
+      default: "external",
+    },
     encodeProgress: { type: Number, default: 0, min: 0, max: 100 },
     title: { type: String, required: true, trim: true, maxlength: 180 },
     description: { type: String, default: "" },

@@ -156,7 +156,7 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
       {toast ? <Toast key={toast.id} message={toast.message} onClose={dismissToast} variant={toast.variant} /> : null}
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <button className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium disabled:opacity-40 sm:h-9 sm:w-auto sm:px-3 sm:text-xs" disabled={busy} onClick={syncBunny} type="button"><RefreshCw className={busyAction === "sync" ? "animate-spin" : ""} size={14} /> Đồng bộ Bunny</button>
-        <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium sm:h-9 sm:w-auto sm:px-3 sm:text-xs"><Captions size={14} /> Import EN<input accept=".srt,.vtt" className="sr-only" disabled={busy} onChange={(event) => importSubtitle("en", event.target.files?.[0])} type="file" /></label>
+        <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium sm:h-9 sm:w-auto sm:px-3 sm:text-xs"><Captions size={14} /> Import EN<input accept=".srt,.vtt,.smi,.sami" className="sr-only" disabled={busy} onChange={(event) => importSubtitle("en", event.target.files?.[0])} type="file" /></label>
         <button
           className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium disabled:opacity-40 sm:h-9 sm:w-auto sm:px-3 sm:text-xs"
           disabled={busy || !segmentCount}
@@ -166,7 +166,7 @@ export default function MoviePlayerAdminTools({ eligibility, movie, mutations, s
         >
           <Copy size={14} /> Copy EN Sub
         </button>
-        <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium sm:h-9 sm:w-auto sm:px-3 sm:text-xs"><Languages size={14} /> Import VI (.srt)<input accept=".srt,.vtt" className="sr-only" disabled={busy} onChange={(event) => importSubtitle("vi", event.target.files?.[0])} type="file" /></label>
+        <label className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded border border-white/15 px-2 text-[11px] font-medium sm:h-9 sm:w-auto sm:px-3 sm:text-xs"><Languages size={14} /> Import VI<input accept=".srt,.vtt,.smi,.sami" className="sr-only" disabled={busy} onChange={(event) => importSubtitle("vi", event.target.files?.[0])} type="file" /></label>
         <button
           className="inline-flex h-10 w-full cursor-pointer items-center justify-center gap-1.5 rounded border border-[#e06f50]/40 bg-[#e06f50]/10 px-2 text-[11px] font-medium text-[#f3a38d] disabled:opacity-40 sm:h-9 sm:w-auto sm:px-3 sm:text-xs"
           disabled={busy || !segmentCount}

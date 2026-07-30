@@ -27,6 +27,7 @@ import {
   movieIdParamSchema,
   movieLibraryQuerySchema,
   publishMovieSchema,
+  reuploadCredentialsSchema,
   subtitleImportSchema,
   uploadCredentialsSchema,
   uploadProgressSchema,
@@ -42,8 +43,9 @@ const subtitleUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter(req, file, callback) {
-    const allowed = /\.(srt|vtt)$/i.test(file.originalname) || ["text/plain", "text/vtt", "application/x-subrip"].includes(file.mimetype);
-    callback(allowed ? null : new Error("Only SRT and VTT subtitle files are allowed"), allowed);
+    const allowed = /\.(srt|vtt|smi|sami)$/i.test(file.originalname)
+      || ["text/plain", "text/vtt", "application/x-subrip", "application/smil"].includes(file.mimetype);
+    callback(allowed ? null : new Error("Only SRT, VTT, and SAMI subtitle files are allowed"), allowed);
   },
 });
 const heroThumbnailUpload = multer({
@@ -60,9 +62,12 @@ const movieAssetUpload = multer({
   fileFilter(req, file, callback) {
     const isPoster = file.fieldname === "poster" && file.mimetype.startsWith("image/");
     const isSubtitle = ["subtitle", "viSubtitle"].includes(file.fieldname)
-      && (/\.srt$/i.test(file.originalname) || ["text/plain", "application/x-subrip"].includes(file.mimetype));
+      && (
+        /\.(srt|vtt|smi|sami)$/i.test(file.originalname)
+        || ["text/plain", "text/vtt", "application/x-subrip", "application/smil"].includes(file.mimetype)
+      );
     const allowed = isPoster || isSubtitle;
-    callback(allowed ? null : new Error("Poster must be an image and subtitle must be an SRT file"), allowed);
+    callback(allowed ? null : new Error("Poster must be an image and subtitle must be an SRT, VTT, or SAMI file"), allowed);
   },
 });
 
@@ -98,7 +103,7 @@ router.post(
 );
 router.delete("/:id", ...adminOnly, validate(movieIdParamSchema), deleteMovieController);
 router.post("/:id/upload-credentials", ...adminOnly, validate(uploadCredentialsSchema), getUploadCredentialsController);
-router.post("/:id/reupload-credentials", ...adminOnly, validate(uploadCredentialsSchema), getReuploadCredentialsController);
+router.post("/:id/reupload-credentials", ...adminOnly, validate(reuploadCredentialsSchema), getReuploadCredentialsController);
 router.patch("/:id/upload-completed", ...adminOnly, validate(movieIdParamSchema), markUploadCompletedController);
 router.patch("/:id/upload-progress", ...adminOnly, validate(uploadProgressSchema), reportUploadProgressController);
 router.get("/:id/stream-status", ...adminOnly, validate(movieIdParamSchema), getStreamStatusController);

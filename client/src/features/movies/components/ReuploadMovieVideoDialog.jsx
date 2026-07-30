@@ -1,5 +1,5 @@
 import { CheckCircle2, RefreshCw, UploadCloud, Video } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert } from "../../../components/ui/alert.jsx";
 import { Button } from "../../../components/ui/button.jsx";
 import {
@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "../../../components/ui/dialog.jsx";
 import { uploadMovieFile } from "../utils/tusMovieUpload.js";
+import { MOVIE_VIDEO_ACCEPT } from "../utils/movieVideoFile.js";
 
 function formatBytes(bytes) {
   if (!bytes) return "0 MB";
@@ -24,6 +25,14 @@ export default function ReuploadMovieVideoDialog({ movie, onOpenChange, open, on
   const [bytesUploaded, setBytesUploaded] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [subtitleSource, setSubtitleSource] = useState("external");
+  const isMkv = /\.mkv$/i.test(file?.name || "");
+
+  useEffect(() => {
+    if (open) {
+      setSubtitleSource(movie?.subtitleSource === "embedded" ? "embedded" : "external");
+    }
+  }, [movie?.subtitleSource, movie?._id, open]);
 
   function handleOpenChange(value) {
     if (isUploading) return;
@@ -33,6 +42,7 @@ export default function ReuploadMovieVideoDialog({ movie, onOpenChange, open, on
       setProgress(0);
       setBytesUploaded(0);
       setUploadError("");
+      setSubtitleSource(movie?.subtitleSource === "embedded" ? "embedded" : "external");
     }
   }
 
@@ -55,6 +65,7 @@ export default function ReuploadMovieVideoDialog({ movie, onOpenChange, open, on
           setProgress(p);
           setBytesUploaded(currentUploaded);
         },
+        subtitleSource,
         title: movie.title,
       });
 
@@ -103,9 +114,15 @@ export default function ReuploadMovieVideoDialog({ movie, onOpenChange, open, on
               <Video size={18} /> Chọn file video mới (.mp4, .mkv, .webm)
             </span>
             <input
-              accept="video/mp4,video/quicktime,video/webm,video/x-matroska"
+              accept={MOVIE_VIDEO_ACCEPT}
               disabled={isUploading}
-              onChange={(event) => setFile(event.target.files?.[0] || null)}
+              onChange={(event) => {
+                const nextFile = event.target.files?.[0] || null;
+                setFile(nextFile);
+                if (!/\.mkv$/i.test(nextFile?.name || "")) {
+                  setSubtitleSource("external");
+                }
+              }}
               required
               type="file"
             />
@@ -116,6 +133,46 @@ export default function ReuploadMovieVideoDialog({ movie, onOpenChange, open, on
               </div>
             ) : null}
           </label>
+
+          <fieldset className="rounded-lg border border-white/15 bg-white/[0.03] p-3">
+            <legend className="px-1 text-sm font-semibold text-white">Nguồn phụ đề sau khi thay video</legend>
+            <label className="mt-1 flex cursor-pointer items-start gap-2.5 rounded-md p-2 text-sm hover:bg-white/5">
+              <input
+                checked={subtitleSource === "external"}
+                className="mt-1 accent-[#e06f50]"
+                disabled={isUploading}
+                name="reuploadSubtitleSource"
+                onChange={() => setSubtitleSource("external")}
+                type="radio"
+              />
+              <span>
+                <strong className="block text-white/90">Giữ phụ đề hiện tại</strong>
+                <span className="text-xs text-white/45">
+                  Tiếp tục dùng các câu English, Vietsub và caption song ngữ đã import.
+                </span>
+              </span>
+            </label>
+            <label
+              className={`flex items-start gap-2.5 rounded-md p-2 text-sm ${
+                isMkv ? "cursor-pointer hover:bg-white/5" : "cursor-not-allowed opacity-45"
+              }`}
+            >
+              <input
+                checked={subtitleSource === "embedded"}
+                className="mt-1 accent-[#e06f50]"
+                disabled={isUploading || !isMkv}
+                name="reuploadSubtitleSource"
+                onChange={() => setSubtitleSource("embedded")}
+                type="radio"
+              />
+              <span>
+                <strong className="block text-white/90">Dùng phụ đề nhúng trong MKV mới</strong>
+                <span className="text-xs text-white/45">
+                  Bunny Player sẽ dùng caption nhúng nếu nhận diện được; transcript đã import vẫn được bảo toàn.
+                </span>
+              </span>
+            </label>
+          </fieldset>
 
           {isUploading || progress > 0 ? (
             <div className="space-y-1.5 rounded-lg bg-black/40 p-3">
