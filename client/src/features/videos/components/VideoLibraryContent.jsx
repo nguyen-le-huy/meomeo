@@ -30,7 +30,7 @@ import VideoLibraryAdminActions from "./VideoLibraryAdminActions.jsx";
 import VideoLibraryEmptyState from "./VideoLibraryEmptyState.jsx";
 import VideoLibraryErrorState from "./VideoLibraryErrorState.jsx";
 
-const videosPerCategoryTurn = 4;
+const videosPerCategoryTurn = 6;
 
 function roundUpToCategoryTurn(value) {
   return Math.ceil(value / videosPerCategoryTurn) * videosPerCategoryTurn;
