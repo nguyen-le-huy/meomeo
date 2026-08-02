@@ -32,8 +32,8 @@ function getLookupDay(date = new Date()) {
   }).format(date);
 }
 
-function buildCacheKey(query, context) {
-  return `${query.toLowerCase()}\n${normalizeQuery(context || "").toLowerCase()}`;
+function buildCacheKey(query, context, model) {
+  return `${model}\n${query.toLowerCase()}\n${normalizeQuery(context || "").toLowerCase()}`;
 }
 
 function getCachedResult(cacheKey) {
@@ -141,14 +141,13 @@ function buildUserPrompt(query, context) {
   });
 }
 
-async function translateCambridgeExamples(examples) {
+async function translateCambridgeExamples(examples, model) {
   if (!examples.length || !config.openAi.apiKey) return examples;
 
   try {
     const completion = await getOpenAIClient().chat.completions.create({
-      model: config.openAi.dictionaryModel,
+      model,
       response_format: { type: "json_object" },
-      temperature: 0.1,
       messages: [
         {
           role: "system",
@@ -179,8 +178,9 @@ async function translateCambridgeExamples(examples) {
 export async function lookupDictionary(data) {
   const query = normalizeQuery(data.query);
   if (!query) throw createHttpError(400, "Query is required");
+  const model = data.model || config.openAi.dictionaryModel;
 
-  const cacheKey = buildCacheKey(query, data.context);
+  const cacheKey = buildCacheKey(query, data.context, model);
   const cachedResult = getCachedResult(cacheKey);
   if (cachedResult) return cachedResult;
 
@@ -188,7 +188,7 @@ export async function lookupDictionary(data) {
     try {
       const cambridgeResult = await lookupCambridgeDictionary(query);
       if (cambridgeResult) {
-        cambridgeResult.examples = await translateCambridgeExamples(cambridgeResult.examples);
+        cambridgeResult.examples = await translateCambridgeExamples(cambridgeResult.examples, model);
         setCachedResult(cacheKey, cambridgeResult);
         return cambridgeResult;
       }
@@ -200,9 +200,8 @@ export async function lookupDictionary(data) {
   const openai = getOpenAIClient();
 
   const completion = await openai.chat.completions.create({
-    model: config.openAi.dictionaryModel,
+    model,
     response_format: { type: "json_object" },
-    temperature: 0.2,
     messages: [
       { role: "system", content: buildSystemPrompt() },
       { role: "user", content: buildUserPrompt(query, data.context) },

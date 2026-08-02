@@ -3,7 +3,13 @@ import { ArrowRight, BookOpen, Brain, Clock3, Search, Trash2, X } from "lucide-r
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { Input } from "../../../components/ui/input.jsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select.jsx";
 import { Spinner } from "../../../components/ui/spinner.jsx";
+import {
+  DICTIONARY_MODELS,
+  DICTIONARY_MODEL_STORAGE_KEY,
+  getStoredDictionaryModel,
+} from "../constants/dictionaryModels.js";
 import { clearDictionaryHistory, getDictionaryHistory, lookupDictionary, removeDictionaryHistory } from "../services/dictionaryApi.js";
 import PronunciationButton from "./PronunciationButton.jsx";
 
@@ -40,6 +46,7 @@ export default function DictionaryPopover({ align = "center", mobile = false, on
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [model, setModel] = useState(getStoredDictionaryModel);
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
 
@@ -78,7 +85,7 @@ export default function DictionaryPopover({ align = "center", mobile = false, on
     setError("");
 
     try {
-      const response = await lookupDictionary({ query: value });
+      const response = await lookupDictionary({ model, query: value });
       const nextResult = response.data.data.result;
       const savedHistoryItem = response.data.data.historyItem;
       const nextHistoryItem = savedHistoryItem || { _id: `local-${Date.now()}`, query: value, result: nextResult };
@@ -128,6 +135,29 @@ export default function DictionaryPopover({ align = "center", mobile = false, on
           Tra
         </Button>
       </form>
+
+      <div className="flex items-center justify-between gap-3 border-b border-[#e6dfd8] bg-canvas px-3 py-2">
+        <label className="shrink-0 text-xs font-black uppercase tracking-wide text-ink-muted">Model dịch</label>
+        <Select
+          disabled={loading}
+          onValueChange={(value) => {
+            setModel(value);
+            window.localStorage.setItem(DICTIONARY_MODEL_STORAGE_KEY, value);
+          }}
+          value={model}
+        >
+          <SelectTrigger className="h-8 min-w-0 max-w-[265px] bg-white px-2.5 font-mono text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {DICTIONARY_MODELS.map((item) => (
+              <SelectItem className="font-mono text-xs" key={item.id} value={item.id}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <section className="border-b border-[#e6dfd8] bg-cream-soft px-3 py-2">
         <div className="flex items-center justify-between gap-2">

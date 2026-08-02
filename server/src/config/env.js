@@ -80,7 +80,7 @@ export const config = {
     transcriptionModel: process.env.OPENAI_TRANSCRIPTION_MODEL || "whisper-1",
     translationModel: process.env.OPENAI_TRANSLATION_MODEL || "deepseek-v4-pro",
     translationTargetLanguage: process.env.OPENAI_TRANSLATION_TARGET_LANGUAGE || "vi",
-    dictionaryModel: process.env.OPENAI_DICTIONARY_MODEL || "gpt-4o-mini",
+    dictionaryModel: process.env.OPENAI_DICTIONARY_MODEL || "gpt-5.4-mini-2026-03-17",
     vocabularyModel: process.env.OPENAI_VOCABULARY_MODEL || process.env.OPENAI_DICTIONARY_MODEL || "gpt-4o-mini",
   },
   deepSeek: {
