@@ -1,5 +1,4 @@
 import {
-  AlertTriangle,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -443,7 +442,7 @@ export default function ShadowingPractice({
           </div>
 
           <SegmentYoutubePlayer
-            className="xl:h-[min(40vh,340px)] xl:shrink-0"
+            className="xl:mx-auto xl:h-[min(36vh,320px)] xl:w-full xl:max-w-[820px] xl:shrink-0"
             disableInteraction
             fitDesktop
             onPlayingChange={onPlayingChange}
@@ -838,8 +837,6 @@ function CurrentTurnCard({
             ) : isRecording ? (
               <Badge className="rounded-full bg-[#ffe2e2] text-[#e9414f]">Đang ghi</Badge>
             ) : null}
-            <FilePenLine className="text-coal/65" size={16} />
-            <AlertTriangle className="text-coal/65" size={16} />
           </div>
         </div>
 

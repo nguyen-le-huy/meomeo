@@ -7,10 +7,8 @@ import {
 } from "../constants/videoLearning.constants.js";
 import DictationResult from "./DictationResult.jsx";
 import InlineDictationInputs from "./InlineDictationInputs.jsx";
-import MaskedWordChips from "./MaskedWordChips.jsx";
 
 export default function DictationPractice({
-  answer,
   checkMutation,
   correctPraise,
   correctStickerUrl,
@@ -20,14 +18,12 @@ export default function DictationPractice({
   inlineWordAnswers,
   isPlayerPlaying,
   isYoutubeReady,
-  onChangeAnswer,
   onChangeDifficulty,
   onChangeInlineWord,
   onMoveAndPlay,
   onNext,
   onRevealAllWords,
   onRevealInlineWord,
-  onRevealWord,
   onReplayCurrentSegment,
   onStartFirstSegment,
   onSubmit,
@@ -110,16 +106,6 @@ export default function DictationPractice({
         </div>
       ) : null}
 
-      <div className="hidden rounded-2xl border border-[#e6dfd8] bg-white p-4 shadow-[0_16px_38px_rgba(20,20,19,0.06)] xl:block xl:shrink-0">
-        <label className="mb-3 block text-[11px] font-black uppercase tracking-[0.18em] text-ink-muted">Gõ những gì bạn nghe được</label>
-        <textarea
-          className="min-h-32 w-full resize-none rounded-2xl border border-[#eee7de] bg-[#fbfaf7] px-5 py-4 text-xl font-semibold leading-relaxed text-coal outline-none transition placeholder:text-ink-muted/55 focus:border-coral/45 focus:bg-white focus:ring-4 focus:ring-coral/10 xl:min-h-[26vh] xl:text-2xl"
-          onChange={(event) => onChangeAnswer(event.target.value)}
-          placeholder="Gõ câu trả lời của bạn ở đây..."
-          value={answer}
-        />
-      </div>
-
       {correctPraise ? (
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#bed9c4] bg-[#e3f2e5] px-4 py-3 text-sm font-semibold text-[#356b42] shadow-[0_12px_28px_rgba(53,107,66,0.08)]">
           <span className="min-w-0 flex-1">{correctPraise}</span>
@@ -132,14 +118,21 @@ export default function DictationPractice({
       {segment ? (
         <div className="hidden rounded-2xl border border-[#e6dfd8] bg-white p-4 shadow-[0_16px_38px_rgba(20,20,19,0.05)] xl:block xl:shrink">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-ink-muted">Từ gợi ý</p>
-            <p className="text-xs font-semibold text-ink-muted">Bấm vào từ để hiện đáp án</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-ink-muted">Gõ những gì bạn nghe được</p>
+            <p className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-xs font-semibold text-ink-muted">
+              <span><kbd className="rounded border border-[#d8d0c6] bg-cream-soft px-1.5 py-0.5 font-mono text-[11px] text-coal">Space</kbd> ô tiếp</span>
+              <span><kbd className="rounded border border-[#d8d0c6] bg-cream-soft px-1.5 py-0.5 font-mono text-[11px] text-coal">Shift + Space</kbd> ô trước</span>
+            </p>
           </div>
-          <MaskedWordChips
+          <InlineDictationInputs
+            autoAdvanceOnSpace
             difficulty={difficulty}
-            onRevealWord={onRevealWord}
+            inlineWordAnswers={inlineWordAnswers}
+            onChangeWord={onChangeInlineWord}
+            onRevealWord={onRevealInlineWord}
             revealedWordIndexes={revealedWordIndexes}
             text={segment.text}
+            variant="plain"
           />
           <p className="mt-2 text-sm text-ink-muted">Các từ được tiết lộ sẽ bị tính là lỗi và ảnh hưởng đến điểm số của bạn.</p>
         </div>

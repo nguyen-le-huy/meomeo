@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Eye } from "lucide-react";
 import {
   getMaskedWords,
@@ -6,11 +7,41 @@ import {
   splitWordPunctuation,
 } from "../utils/dictationText.js";
 
-export default function InlineDictationInputs({ difficulty, inlineWordAnswers, onChangeWord, onRevealWord, revealedWordIndexes, text }) {
+export default function InlineDictationInputs({
+  autoAdvanceOnSpace = false,
+  difficulty,
+  inlineWordAnswers,
+  onChangeWord,
+  onRevealWord,
+  revealedWordIndexes,
+  text,
+  variant = "card",
+}) {
   const maskedWords = getMaskedWords(difficulty, text);
+  const inputRefs = useRef([]);
+
+  function focusAdjacentInput(currentIndex, direction) {
+    for (
+      let index = currentIndex + direction;
+      index >= 0 && index < maskedWords.length;
+      index += direction
+    ) {
+      const isRevealed = maskedWords[index].revealed || revealedWordIndexes.includes(index);
+      if (!isRevealed && inputRefs.current[index]) {
+        inputRefs.current[index].focus();
+        return;
+      }
+    }
+  }
 
   return (
-    <div className="flex flex-wrap gap-2 rounded-2xl border border-[#e6dfd8] bg-white p-4 shadow-[0_14px_32px_rgba(20,20,19,0.06)]">
+    <div
+      className={
+        variant === "plain"
+          ? "flex flex-wrap gap-2"
+          : "flex flex-wrap gap-2 rounded-2xl border border-[#e6dfd8] bg-white p-4 shadow-[0_14px_32px_rgba(20,20,19,0.06)]"
+      }
+    >
       {maskedWords.map((word, index) => {
         const isRevealed = word.revealed || revealedWordIndexes.includes(index);
         const { core, leading, trailing } = splitWordPunctuation(word.original);
@@ -59,7 +90,19 @@ export default function InlineDictationInputs({ difficulty, inlineWordAnswers, o
                     isIncorrectAttempt ? "placeholder:text-red-300" : "placeholder:text-coal/40",
                   ].join(" ")}
                   onChange={(event) => onChangeWord(index, event.target.value)}
+                  onKeyDown={(event) => {
+                    if (!autoAdvanceOnSpace || event.key !== " ") return;
+                    event.preventDefault();
+                    if (event.shiftKey) {
+                      focusAdjacentInput(index, -1);
+                    } else if (currentAnswer.trim()) {
+                      focusAdjacentInput(index, 1);
+                    }
+                  }}
                   placeholder={maskWordKeepPunctuation(core)}
+                  ref={(node) => {
+                    inputRefs.current[index] = node;
+                  }}
                   size={inputSize}
                   spellCheck={false}
                   value={currentAnswer}

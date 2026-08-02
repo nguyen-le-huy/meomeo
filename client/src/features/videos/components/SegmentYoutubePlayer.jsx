@@ -213,7 +213,7 @@ const SegmentYoutubePlayer = forwardRef(function SegmentYoutubePlayer(
         immersive
           ? "rounded-none border-0 sm:rounded-xl"
           : "rounded-none border-b-4 border-coral md:rounded-xl md:border-4 md:border-[#181715]",
-        fitDesktop ? "xl:h-full xl:max-h-full" : "",
+        fitDesktop ? "xl:max-h-full" : "",
         disableInteraction ? "[&_iframe]:pointer-events-none" : "",
         className,
       ].join(" ")}

@@ -167,10 +167,6 @@ export default function VideoLearningPage() {
     setRevealedWordIndexes(wordIndexes);
   }
 
-  function revealWord(index) {
-    setRevealedWordIndexes((current) => (current.includes(index) ? current : [...current, index]));
-  }
-
   function revealInlineWord(index) {
     setRevealedWordIndexes((current) => {
       const next = current.includes(index) ? current : [...current, index];
@@ -189,13 +185,6 @@ export default function VideoLearningPage() {
       setAnswer(buildInlineAnswer(segment.text, difficulty, next, revealedWordIndexes));
       return next;
     });
-  }
-
-  function handleAnswerChange(value) {
-    setAnswer(value);
-    if (!value.trim()) {
-      resetDictationFeedback();
-    }
   }
 
   function handleDifficultyChange(nextDifficulty) {
@@ -328,7 +317,6 @@ export default function VideoLearningPage() {
 
         <section className="min-w-0 max-w-full overflow-hidden bg-white p-3 shadow-[0_18px_45px_rgba(20,20,19,0.07)] md:rounded-2xl md:border md:border-[#e6dfd8] md:p-4 xl:h-full xl:min-h-0">
           <DictationPractice
-            answer={answer}
             checkMutation={checkMutation}
             correctPraise={correctPraise}
             correctStickerUrl={correctStickerUrl}
@@ -338,14 +326,12 @@ export default function VideoLearningPage() {
             inlineWordAnswers={inlineWordAnswers}
             isPlayerPlaying={isPlayerPlaying}
             isYoutubeReady={isYoutubeReady}
-            onChangeAnswer={handleAnswerChange}
             onChangeDifficulty={handleDifficultyChange}
             onChangeInlineWord={updateInlineWordAnswer}
             onMoveAndPlay={moveAndPlay}
             onNext={playNextOrContinueToEnd}
             onRevealAllWords={revealAllWords}
             onRevealInlineWord={revealInlineWord}
-            onRevealWord={revealWord}
             onReplayCurrentSegment={replayCurrentSegment}
             onStartFirstSegment={startFirstSegment}
             onSubmit={submitDictation}
