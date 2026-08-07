@@ -1,4 +1,4 @@
-import { ArrowLeft, BookmarkPlus, ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
+import { ArrowLeft, BookmarkPlus, LoaderCircle } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
@@ -7,6 +7,7 @@ import { useAuthStore } from "../../auth/stores/authStore.js";
 import { useEbook } from "../hooks/useEbooks.js";
 import { useEbookReader } from "../hooks/useEbookReader.js";
 import EbookToolbar, { EbookBookmarksPanel, EbookSettingsPanel } from "../components/EbookToolbar.jsx";
+import EbookPageNavigation from "../components/EbookPageNavigation.jsx";
 import EpubReader from "../components/EpubReader.jsx";
 import PdfReader from "../components/PdfReader.jsx";
 import { getReaderTheme } from "../config/readerAppearance.js";
@@ -24,6 +25,7 @@ export default function EbookReaderPage() {
   const [readerControls, setReaderControls] = useState(null);
   const [bookmarkStatus, setBookmarkStatus] = useState(null);
   const [pageInfo, setPageInfo] = useState(null);
+  const [pdfZoom, setPdfZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenDictionaryOpen, setFullscreenDictionaryOpen] = useState(false);
 
@@ -54,6 +56,10 @@ export default function EbookReaderPage() {
 
       return nextPageInfo;
     });
+  }, []);
+
+  const updateBookmarkGetter = useCallback((getter) => {
+    setBookmarkGetter(() => getter);
   }, []);
 
   if (isLoading) return <LoadingState className="h-full p-8" label="Đang mở ebook..." />;
@@ -153,16 +159,19 @@ export default function EbookReaderPage() {
         bookmarkCount={reader.bookmarks.length}
         dictionaryOpen={fullscreenDictionaryOpen}
         isFullscreen={isFullscreen}
+        isPdf={ebook.format === "pdf"}
         onBack={() => navigate("/ebooks")}
         onBookmark={() => setBookmarksOpen(true)}
         onDictionaryClose={() => setFullscreenDictionaryOpen(false)}
         onDictionaryToggle={() => setFullscreenDictionaryOpen((current) => !current)}
         onFullscreen={onToggleFullscreen}
+        onPdfZoom={setPdfZoom}
         onNext={readerControls?.next}
         onPrev={readerControls?.prev}
         onSettings={(patch) => (patch.panel ? setSettingsOpen((current) => !current) : reader.updateSettings(patch))}
         pageLabel={pageLabel}
         progress={readingProgress}
+        pdfZoom={pdfZoom}
         settings={reader.settings}
       />
       <div className="h-14 shrink-0" />
@@ -228,49 +237,31 @@ export default function EbookReaderPage() {
             <div className="-mx-3 flex min-h-0 flex-1 border-b px-3" style={{ borderColor: readerTheme.border }}>
               <EpubReader
                 ebook={readerEbook}
-                onBookmarkReady={(getter) => setBookmarkGetter(() => getter)}
+                onBookmarkReady={updateBookmarkGetter}
                 onControlsReady={setReaderControls}
                 onProgress={saveProgress}
                 progress={reader.progress}
                 settings={reader.settings}
               />
             </div>
-            <div className="-mx-3 shrink-0 px-3 pb-2 pt-1.5" style={{ backgroundColor: readerTheme.background }}>
-              <div className="mx-auto flex h-11 w-full max-w-md items-center justify-between gap-2 rounded-md border px-1.5 py-1" style={{ backgroundColor: readerTheme.surface, borderColor: readerTheme.border }}>
-                <Button
-                  className="reader-static-button h-9 min-w-0 flex-1 justify-center gap-2 rounded-md px-2 text-xs"
-                  disabled={!readerControls?.prev}
-                  onClick={readerControls?.prev}
-                  style={{ color: readerTheme.foreground }}
-                  type="button"
-                  variant="ghost"
-                >
-                  <ChevronLeft size={16} />
-                  <span>Trang trước</span>
-                </Button>
-                <div className="h-6 w-px shrink-0" style={{ backgroundColor: readerTheme.border }} />
-                <Button
-                  className="reader-static-button h-9 min-w-0 flex-1 justify-center gap-2 rounded-md px-2 text-xs"
-                  disabled={!readerControls?.next}
-                  onClick={readerControls?.next}
-                  style={{ color: readerTheme.foreground }}
-                  type="button"
-                  variant="ghost"
-                >
-                  <span>Trang sau</span>
-                  <ChevronRight size={16} />
-                </Button>
-              </div>
-            </div>
+            <EbookPageNavigation controls={readerControls} settings={reader.settings} />
           </>
         ) : (
-          <PdfReader
-            ebook={readerEbook}
-            onPageChange={updatePageInfo}
-            onProgress={saveProgress}
-            progress={reader.progress}
-            settings={reader.settings}
-          />
+          <>
+            <div className="-mx-3 flex min-h-0 flex-1 border-b px-3" style={{ borderColor: readerTheme.border }}>
+              <PdfReader
+                ebook={readerEbook}
+                onBookmarkReady={updateBookmarkGetter}
+                onControlsReady={setReaderControls}
+                onPageChange={updatePageInfo}
+                onProgress={saveProgress}
+                progress={reader.progress}
+                settings={reader.settings}
+                zoom={pdfZoom}
+              />
+            </div>
+            <EbookPageNavigation controls={readerControls} settings={reader.settings} />
+          </>
         )}
       </div>
     </section>

@@ -7,6 +7,8 @@ export default function EbookToolbar({
   bookmarkCount = 0,
   dictionaryOpen = false,
   isFullscreen = false,
+  isPdf = false,
+  pdfZoom = 1,
   settings,
   onSettings,
   onBookmark,
@@ -14,6 +16,7 @@ export default function EbookToolbar({
   onDictionaryClose,
   onDictionaryToggle,
   onFullscreen,
+  onPdfZoom,
 }) {
   return (
     <div className={`fixed inset-x-0 z-30 h-14 border-b border-[#e6dfd8] bg-canvas/95 text-coal shadow-[0_1px_8px_rgba(20,20,19,0.04)] backdrop-blur-md ${isFullscreen ? "top-0" : "top-12 md:top-16"}`}>
@@ -58,11 +61,19 @@ export default function EbookToolbar({
 
           <div className="mx-0.5 h-6 w-px bg-[#ddd5cc]" />
 
-          <div className="flex h-8 items-center rounded-lg border border-[#e3dcd3] bg-canvas shadow-sm">
-            <Button aria-label="Giảm cỡ chữ" className="reader-static-button h-8 w-8 rounded-md" onClick={() => onSettings({ fontSize: Math.max(14, settings.fontSize - 1) })} size="icon" title="Giảm cỡ chữ" type="button" variant="ghost"><Minus size={14} /></Button>
-            <span className="min-w-9 text-center text-[11px] font-bold tabular-nums sm:min-w-11">{settings.fontSize}<span className="hidden sm:inline"> px</span></span>
-            <Button aria-label="Tăng cỡ chữ" className="reader-static-button h-8 w-8 rounded-md" onClick={() => onSettings({ fontSize: Math.min(30, settings.fontSize + 1) })} size="icon" title="Tăng cỡ chữ" type="button" variant="ghost"><Plus size={14} /></Button>
-          </div>
+          {isPdf ? (
+            <div className="flex h-8 items-center rounded-lg border border-[#e3dcd3] bg-canvas shadow-sm">
+              <Button aria-label="Thu nhỏ PDF" className="reader-static-button h-8 w-8 rounded-md" disabled={pdfZoom <= 0.5} onClick={() => onPdfZoom(Math.max(0.5, pdfZoom - 0.25))} size="icon" title="Thu nhỏ PDF" type="button" variant="ghost"><Minus size={14} /></Button>
+              <span className="min-w-10 text-center text-[11px] font-bold tabular-nums sm:min-w-12">{Math.round(pdfZoom * 100)}%</span>
+              <Button aria-label="Phóng to PDF" className="reader-static-button h-8 w-8 rounded-md" disabled={pdfZoom >= 2} onClick={() => onPdfZoom(Math.min(2, pdfZoom + 0.25))} size="icon" title="Phóng to PDF" type="button" variant="ghost"><Plus size={14} /></Button>
+            </div>
+          ) : (
+            <div className="flex h-8 items-center rounded-lg border border-[#e3dcd3] bg-canvas shadow-sm">
+              <Button aria-label="Giảm cỡ chữ" className="reader-static-button h-8 w-8 rounded-md" onClick={() => onSettings({ fontSize: Math.max(14, settings.fontSize - 1) })} size="icon" title="Giảm cỡ chữ" type="button" variant="ghost"><Minus size={14} /></Button>
+              <span className="min-w-9 text-center text-[11px] font-bold tabular-nums sm:min-w-11">{settings.fontSize}<span className="hidden sm:inline"> px</span></span>
+              <Button aria-label="Tăng cỡ chữ" className="reader-static-button h-8 w-8 rounded-md" onClick={() => onSettings({ fontSize: Math.min(30, settings.fontSize + 1) })} size="icon" title="Tăng cỡ chữ" type="button" variant="ghost"><Plus size={14} /></Button>
+            </div>
+          )}
 
           <div className="mx-0.5 h-6 w-px bg-[#ddd5cc]" />
 
