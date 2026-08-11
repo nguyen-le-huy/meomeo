@@ -12,6 +12,7 @@ import EbookLibraryPage from "../features/ebooks/pages/EbookLibraryPage.jsx";
 import EbookReaderPage from "../features/ebooks/pages/EbookReaderPage.jsx";
 import AdminEbooksPage from "../features/ebooks/pages/AdminEbooksPage.jsx";
 import DictionaryHistoryPage from "../features/dictionary/pages/DictionaryHistoryPage.jsx";
+import DictionaryPage from "../features/dictionary/pages/DictionaryPage.jsx";
 import VocabularyDailyPage from "../features/vocabulary/pages/VocabularyDailyPage.jsx";
 import VocabularyDayPathPage from "../features/vocabulary/pages/VocabularyDayPathPage.jsx";
 import VocabularyLessonPage from "../features/vocabulary/pages/VocabularyLessonPage.jsx";
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
           { path: "vocabulary/:dayId", element: <VocabularyDayPathPage /> },
           { path: "vocabulary/:dayId/:lessonId", element: <VocabularyLessonPage /> },
           { path: "ebooks", element: <EbookLibraryPage /> },
+          { path: "dictionary", element: <DictionaryPage /> },
           { path: "dictionary/history", element: <DictionaryHistoryPage /> },
           { path: "ebooks/:slug", element: <EbookReaderPage /> },
           { path: "topics/:slug", element: <TopicVideosPage /> },

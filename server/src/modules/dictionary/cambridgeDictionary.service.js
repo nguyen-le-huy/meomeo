@@ -28,14 +28,21 @@ function buildCambridgeUrl(query) {
   return `${config.cambridgeDictionary.baseUrl.replace(/\/+$/, "")}/${slug}`;
 }
 
-function parseCambridgeHtml(html, query) {
+export function parseCambridgeHtml(html, query) {
   const $ = cheerio.load(html);
-  const headword = cleanText($("h1").first().text()) || query;
-  const partOfSpeech = uniqueItems($(".pos").map((_, element) => $(element).text()).get(), 4).join(", ");
-  const phonetic = uniqueItems($(".ipa").map((_, element) => `/${$(element).text()}/`).get(), 2).join(" ");
-  const audioPath = $(".us.dpron-i source[type='audio/mpeg']").first().attr("src")
-    || $(".uk.dpron-i source[type='audio/mpeg']").first().attr("src")
-    || $("source[type='audio/mpeg']").first().attr("src")
+  const dictionaryRoot = $(".pr.dictionary").first();
+  const entryRoot = dictionaryRoot.find(".d.pr.di").first();
+  if (!entryRoot.length) return null;
+
+  const headword = cleanText(entryRoot.find(".di-title").first().text()) || query;
+  const partOfSpeech = uniqueItems(entryRoot.find(".pos").map((_, element) => $(element).text()).get(), 4).join(", ");
+  const phonetic = uniqueItems(entryRoot.find(".ipa").map((_, element) => {
+    const value = cleanText($(element).text()).replace(/^\/+|\/+$/g, "");
+    return value ? `/${value}/` : "";
+  }).get(), 2).join(" ");
+  const audioPath = entryRoot.find(".us.dpron-i source[type='audio/mpeg']").first().attr("src")
+    || entryRoot.find(".uk.dpron-i source[type='audio/mpeg']").first().attr("src")
+    || entryRoot.find("source[type='audio/mpeg']").first().attr("src")
     || "";
   const audioUrl = audioPath ? new URL(audioPath, "https://dictionary.cambridge.org").toString() : "";
 
@@ -43,7 +50,7 @@ function parseCambridgeHtml(html, query) {
   const translations = [];
   const examples = [];
 
-  $(".def-block").each((_, block) => {
+  entryRoot.find(".def-block").each((_, block) => {
     const definition = cleanText($(block).find(".def").first().text());
     const translation = cleanText($(block).find(".trans").first().text());
 

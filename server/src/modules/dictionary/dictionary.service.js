@@ -60,6 +60,24 @@ function setCachedResult(cacheKey, result) {
   });
 }
 
+function sanitizeStoredCambridgeResult(result) {
+  if (!result || result.source !== "cambridge") return result;
+
+  const firstPhonetic = String(result.phonetic || "").match(/^\/[^/]+\//)?.[0] || result.phonetic || "";
+  return {
+    ...result,
+    audioUrl: "",
+    phonetic: firstPhonetic,
+  };
+}
+
+function sanitizeDictionaryHistory(items) {
+  return items.map((item) => ({
+    ...item,
+    result: sanitizeStoredCambridgeResult(item.result),
+  }));
+}
+
 function guessInputType(query) {
   const wordCount = query.split(/\s+/).filter(Boolean).length;
   const hasSentencePunctuation = /[.!?;:]/.test(query);
@@ -237,16 +255,18 @@ export async function saveDictionaryHistory({ query, result }) {
 
 export async function listDictionaryHistory({ limit } = {}) {
   if (limit) {
-    return DictionaryHistory.aggregate([
+    const history = await DictionaryHistory.aggregate([
       { $sort: { updatedAt: -1 } },
       { $group: { _id: "$normalizedQuery", item: { $first: "$$ROOT" } } },
       { $replaceRoot: { newRoot: "$item" } },
       { $sort: { updatedAt: -1 } },
       { $limit: limit },
     ]);
+    return sanitizeDictionaryHistory(history);
   }
 
-  return DictionaryHistory.find().sort({ lookupDay: -1, updatedAt: -1 }).lean();
+  const history = await DictionaryHistory.find().sort({ lookupDay: -1, updatedAt: -1 }).lean();
+  return sanitizeDictionaryHistory(history);
 }
 
 export async function removeDictionaryHistory({ id }) {

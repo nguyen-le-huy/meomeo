@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, BookOpen, Brain, Clock3, Search, Trash2, X } from "lucide-react";
+import { ArrowRight, BookOpen, Clock3, Search, Trash2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { Input } from "../../../components/ui/input.jsx";
@@ -11,34 +11,9 @@ import {
   getStoredDictionaryModel,
 } from "../constants/dictionaryModels.js";
 import { clearDictionaryHistory, getDictionaryHistory, lookupDictionary, removeDictionaryHistory } from "../services/dictionaryApi.js";
-import PronunciationButton from "./PronunciationButton.jsx";
-
-const inputTypeLabels = {
-  word: "Từ đơn",
-  phrase: "Cụm từ",
-  idiom: "Thành ngữ",
-  sentence: "Câu",
-  paragraph: "Đoạn văn",
-};
+import DictionaryResult from "./DictionaryResult.jsx";
 
 const HISTORY_PREVIEW_LIMIT = 4;
-
-function ResultList({ items, title }) {
-  if (!items?.length) return null;
-
-  return (
-    <section className="space-y-1.5">
-      <p className="text-xs font-black uppercase text-ink-muted">{title}</p>
-      <ul className="space-y-1.5 text-sm leading-relaxed text-ink-body">
-        {items.map((item, index) => (
-          <li className="rounded-md bg-canvas px-2.5 py-2" key={`${title}-${index}`}>
-            {item}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
 
 export default function DictionaryPopover({ align = "center", mobile = false, onClose }) {
   const navigate = useNavigate();
@@ -218,63 +193,7 @@ export default function DictionaryPopover({ align = "center", mobile = false, on
           </div>
         ) : null}
 
-        {result ? (
-          <div className="space-y-4">
-            <div className="space-y-2 rounded-lg border border-[#e6dfd8] bg-cream-soft p-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-coral px-2.5 py-1 text-xs font-bold text-white">
-                  {inputTypeLabels[result.inputType] || result.inputType}
-                </span>
-                <span className="rounded-full bg-canvas px-2.5 py-1 text-xs font-bold text-ink-muted">
-                  Nguồn: {result.sourceLabel}
-                </span>
-              </div>
-              <div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="break-words font-display text-xl font-semibold text-coal">{result.query}</h3>{result.partOfSpeech ? <p className="mt-1 text-sm text-ink-muted">{result.partOfSpeech}</p> : null}</div><PronunciationButton audioUrl={result.audioUrl} text={result.query} /></div>
-              {result.phonetic ? <p className="inline-flex rounded-md bg-canvas px-2.5 py-1.5 font-mono text-sm font-semibold text-coal"><span className="mr-2 text-xs font-black uppercase text-ink-muted">IPA</span>{result.phonetic}</p> : null}
-            </div>
-
-            {result.vietnameseMeaning ? (
-              <section className="space-y-1.5">
-                <p className="text-xs font-black uppercase text-ink-muted">Nghĩa tiếng Việt</p>
-                <p className="rounded-lg bg-canvas p-3 text-sm leading-relaxed text-coal">{result.vietnameseMeaning}</p>
-              </section>
-            ) : null}
-
-            {result.translation ? (
-              <section className="space-y-1.5">
-                <p className="text-xs font-black uppercase text-ink-muted">Bản dịch</p>
-                <p className="rounded-lg bg-canvas p-3 text-sm leading-relaxed text-coal">{result.translation}</p>
-              </section>
-            ) : null}
-
-            {(result.contextualMeaning || result.explanation || result.nuance) ? (
-              <section className="space-y-2 rounded-lg border border-[#e6dfd8] bg-cream-soft p-3">
-                <div className="flex items-center gap-2 text-sm font-semibold text-coal">
-                  <Brain className="h-4 w-4 text-coral" />
-                  Giải thích
-                </div>
-                {[result.contextualMeaning, result.explanation, result.nuance].filter(Boolean).map((item, index) => (
-                  <p className="text-sm leading-relaxed text-ink-body" key={index}>
-                    {item}
-                  </p>
-                ))}
-              </section>
-            ) : null}
-
-            {result.pronunciationHint ? (
-              <section className="space-y-1.5">
-                <p className="text-xs font-black uppercase text-ink-muted">Phát âm</p>
-                <p className="rounded-lg bg-canvas p-3 text-sm leading-relaxed text-ink-body">
-                  {result.pronunciationHint}
-                </p>
-              </section>
-            ) : null}
-
-            <ResultList items={result.examples} title="Ví dụ" />
-            <ResultList items={result.collocations} title="Collocation" />
-            <ResultList items={result.relatedTerms} title="Từ liên quan" />
-          </div>
-        ) : null}
+        {result ? <DictionaryResult compact result={result} /> : null}
       </div>
     </div>
   );

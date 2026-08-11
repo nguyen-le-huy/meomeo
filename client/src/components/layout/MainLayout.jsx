@@ -10,8 +10,8 @@ const navItems = [
   { label: "Trang chủ", to: "/" },
   { label: "Học qua YouTube", to: "/youtube" },
   { label: "Netflix Chill", to: "/netflix" },
-  { label: "Từ vựng mỗi ngày", to: "/vocabulary" },
   { label: "Ebook", to: "/ebooks" },
+  { label: "Từ điển", to: "/dictionary" },
   { label: "Từ đã tra", to: "/dictionary/history" },
 ];
 
@@ -53,7 +53,7 @@ function HeaderNavLink({ item, onClick }) {
               : "text-ink-muted hover:bg-cream-soft hover:text-coal",
         ].join(" ")
       }
-      end={item.to === "/"}
+      end={item.to === "/" || item.to === "/dictionary"}
       onClick={onClick}
       to={item.to}
     >
