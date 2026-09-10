@@ -143,13 +143,13 @@ export default function NetflixChillPage() {
   return (
     <div className="netflix-chill min-h-screen overflow-x-hidden bg-[#111] text-white">
       {featuredMovie ? (
-        <section className="relative h-[68dvh] min-h-[520px] max-h-[780px]" aria-labelledby="featured-movie-title">
-          <img alt="" className="absolute inset-0 h-full w-full object-cover object-center" src={featuredMovie.backdrop} />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-transparent to-black/5" />
-          <div className="absolute inset-x-0 bottom-10 mx-auto max-w-[1720px] px-4 sm:bottom-auto sm:top-[42%] sm:-translate-y-1/2 sm:px-6 lg:px-10">
-            <div className="max-w-xl">
-              <h1 className="max-w-[12ch] text-[2.5rem] font-semibold leading-[0.95] text-white sm:text-[clamp(3rem,7vw,6.5rem)] sm:leading-[0.92]" id="featured-movie-title">{featuredMovie.title}</h1>
+        <section className="relative h-[72dvh] min-h-[560px] max-h-[820px]" aria-labelledby="featured-movie-title">
+          <img alt="" className="absolute inset-0 h-full w-full object-cover object-[center_25%] sm:object-center" src={featuredMovie.backdrop} />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-transparent to-black/40" />
+          <div className="absolute inset-x-0 bottom-8 sm:bottom-12 md:bottom-16 lg:bottom-20 mx-auto max-w-[1720px] px-4 sm:px-6 lg:px-10">
+            <div className="max-w-xl pt-12 sm:pt-16">
+              <h1 className="max-w-[14ch] text-[2.25rem] font-semibold leading-[0.98] text-white sm:text-[clamp(2.5rem,5vw,4.75rem)] sm:leading-[0.95]" id="featured-movie-title">{featuredMovie.title}</h1>
               <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-white/75 sm:mt-4 sm:text-sm">
                 <span>{featuredMovie.year}</span>
                 <span className="rounded border border-white/20 bg-white/5 px-1.5 py-0.5 text-[10px] sm:text-xs leading-none uppercase">{featuredMovie.age}</span>
@@ -161,7 +161,7 @@ export default function NetflixChillPage() {
                   </span>
                 ) : null}
               </div>
-              <p className="mt-3 max-w-md text-sm leading-6 text-white/90 sm:text-lg sm:leading-7">{featuredMovie.description}</p>
+              <p className="mt-3 max-w-md text-sm leading-6 text-white/90 sm:text-base sm:leading-7">{featuredMovie.description}</p>
               <div className="mt-4 flex flex-wrap gap-2.5 sm:mt-5">
                 <button className="inline-flex h-10 items-center gap-2 rounded-md bg-white px-5 text-sm font-bold text-black transition hover:bg-white/80 sm:h-12 sm:px-6 sm:text-base" onClick={() => openPlayer(featuredMovie)} type="button"><Play fill="currentColor" size={20} /> Xem ngay</button>
                 <button className="inline-flex h-10 items-center gap-2 rounded-md bg-[#6d6d6e]/80 px-4 text-sm font-bold text-white transition hover:bg-[#6d6d6e]/60 sm:h-12 sm:px-5 sm:text-base" onClick={() => openPlayer(featuredMovie)} type="button"><Info size={21} /> Thông tin</button>
@@ -169,7 +169,7 @@ export default function NetflixChillPage() {
             </div>
           </div>
           {isAdmin && !isOfflineDemo ? (
-            <div className="absolute right-4 top-5 z-20 sm:right-6 lg:right-10">
+            <div className="absolute right-4 top-7 z-20 sm:right-6 sm:top-9 lg:right-10">
               <ManageMovieHeroDialog featuredMovie={featuredMovie} movies={allMovies} mutation={movieMutations.setHero} />
             </div>
           ) : null}

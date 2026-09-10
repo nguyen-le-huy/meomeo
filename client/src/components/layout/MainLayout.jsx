@@ -73,7 +73,11 @@ export default function MainLayout() {
   const { logout, user } = useAuthStore();
   const isNetflixPage = location.pathname.startsWith("/netflix") || location.pathname.startsWith("/movies");
   const isNetflixPlayerPage = /^\/(netflix|movies)\/[^/]+$/.test(location.pathname);
-  const isImmersivePage = location.pathname.startsWith("/videos/") || location.pathname.startsWith("/ebooks/") || isNetflixPlayerPage;
+  const isReadingPage = /^\/videos\/[^/]+\/reading$/.test(location.pathname);
+  const isImmersivePage =
+    (location.pathname.startsWith("/videos/") && !isReadingPage) ||
+    location.pathname.startsWith("/ebooks/") ||
+    isNetflixPlayerPage;
 
   useEffect(() => {
     if (mobileOpen) {

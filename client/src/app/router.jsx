@@ -8,6 +8,7 @@ import VideoLearningPage from "../features/videos/pages/VideoLearningPage.jsx";
 import VideoLibraryPage from "../features/videos/pages/VideoLibraryPage.jsx";
 import TopicVideosPage from "../features/videos/pages/TopicVideosPage.jsx";
 import BilingualWatchPage from "../features/bilingual/pages/BilingualWatchPage.jsx";
+import VideoReadingPage from "../features/videos/pages/VideoReadingPage.jsx";
 import EbookLibraryPage from "../features/ebooks/pages/EbookLibraryPage.jsx";
 import EbookReaderPage from "../features/ebooks/pages/EbookReaderPage.jsx";
 import AdminEbooksPage from "../features/ebooks/pages/AdminEbooksPage.jsx";
@@ -55,6 +56,7 @@ export const router = createBrowserRouter([
           { path: "videos/:id", element: <VideoLearningPage /> },
           { path: "videos/:id/dictation", element: <VideoLearningPage /> },
           { path: "videos/:id/bilingual", element: <BilingualWatchPage /> },
+          { path: "videos/:id/reading", element: <VideoReadingPage /> },
           {
             element: <ProtectedRoute allowedRoles={["admin"]} />,
             children: [

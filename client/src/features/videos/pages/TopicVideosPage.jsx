@@ -75,6 +75,11 @@ export default function TopicVideosPage() {
     if (!modePickerVideo?._id) return;
     setModePickerVideo(null);
 
+    if (mode === "reading") {
+      navigate(`/videos/${modePickerVideo._id}/reading`);
+      return;
+    }
+
     if (mode === "bilingual") {
       navigate(`/videos/${modePickerVideo._id}/bilingual`);
       return;

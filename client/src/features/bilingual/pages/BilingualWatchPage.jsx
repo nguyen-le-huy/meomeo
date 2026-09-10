@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Captions, Maximize, Minimize, Pause, Play, RefreshCw } from "lucide-react";
+import { ArrowLeft, BookOpen, Captions, Maximize, Minimize, Pause, Play, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "../../../components/ui/button.jsx";
 import { Badge } from "../../../components/ui/badge.jsx";
@@ -141,9 +141,22 @@ export default function BilingualWatchPage() {
                 <h1 className="truncate text-sm font-semibold text-white sm:text-base">{video.title}</h1>
               </div>
             </div>
-            <div className="ml-3 hidden shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/65 sm:flex">
-              <Captions className="h-3.5 w-3.5 text-coral" />
-              {segments.length} đoạn
+            <div className="flex items-center gap-2">
+              <Button
+                asChild
+                className="h-8 gap-1.5 rounded-lg border border-white/15 bg-white/10 px-2.5 text-xs font-semibold text-white hover:bg-white/20"
+                size="sm"
+                variant="ghost"
+              >
+                <Link to={`/videos/${id}/reading`}>
+                  <BookOpen className="h-3.5 w-3.5 text-coral" />
+                  <span className="hidden sm:inline">Đọc báo sub</span>
+                </Link>
+              </Button>
+              <div className="hidden shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/65 sm:flex">
+                <Captions className="h-3.5 w-3.5 text-coral" />
+                {segments.length} đoạn
+              </div>
             </div>
           </div>
 

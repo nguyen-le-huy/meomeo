@@ -8,6 +8,8 @@ export const shadowingStickerUrl =
   "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3aHJuZzM2eGFxcTRobnVoN2tyNDVpZ2E3cGc0dHpheHVuM3BoY3ljMiZlcD12MV9zdGlja2Vyc19yZWxhdGVkJmN0PXM/ZrDBGncV67i6UUGnj4/giphy.gif";
 export const bilingualStickerUrl =
   "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExandpdXN3M2lpMzM2N2w0bDRvcXdsc2djNXF2dmFseWhieWE5eHlsZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/2NYPupxBORY8upRLh9/giphy.gif";
+export const readingStickerUrl =
+  "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdW4ycjkyNGE0NnI1ZHR6cXZ1eGFvOXNvdG9pd3E1aDdvbHV2ZXBieSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/Lq0h93752f6J9tijrh/giphy.gif";
 export const heroCatUrl =
   "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExMDE2NG1mbDl5NWFuaXp6MXA3c3J3eWpyajl3ZW1kajl3em81bmZhdSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/Q66dCIgxnb4uzEYDqS/giphy.gif";
 export const practiceCatUrl =
@@ -34,5 +36,12 @@ export const modeConfig = [
     desc: "Xem video với phụ đề Anh - Việt đồng bộ",
     imageAlt: "Xem song ngữ",
     imageUrl: bilingualStickerUrl,
+  },
+  {
+    mode: "reading",
+    title: "Đọc phụ đề",
+    desc: "Đọc sub và bản dịch như một bài báo",
+    imageAlt: "Đọc phụ đề song ngữ",
+    imageUrl: readingStickerUrl,
   },
 ];

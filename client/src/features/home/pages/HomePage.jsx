@@ -1,16 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useAuthStore } from "../../auth/stores/authStore.js";
-import { useMovieAdminMutations, useMovieLibrary } from "../../movies/hooks/useMovies.js";
-import { normalizeMovie } from "../../movies/utils/movieData.js";
-import ManageHomeHeroDialog from "../../movies/components/ManageHomeHeroDialog.jsx";
 import VideoLibraryContent from "../../videos/components/VideoLibraryContent.jsx";
 import {
   heroCatUrl,
   practiceCatUrl,
 } from "../../videos/constants/videoLibrary.constants.js";
-import LatestMovieFeatureCard from "../components/LatestMovieFeatureCard.jsx";
 
 const lessonCategories = [
   {
@@ -76,16 +72,6 @@ export default function HomePage() {
   const { user } = useAuthStore();
   const isAdmin = user?.role === "admin";
   const [greeting, setGreeting] = useState(() => getGreeting());
-  const latestMovieQuery = useMovieLibrary({});
-  const movieMutations = useMovieAdminMutations();
-  const latestMovie = useMemo(() => {
-    if (latestMovieQuery.data?.homeFeaturedMovie) {
-      return normalizeMovie(latestMovieQuery.data.homeFeaturedMovie);
-    }
-    const newest = [...(latestMovieQuery.data?.movies || [])]
-      .sort((left, right) => new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime())[0];
-    return newest ? normalizeMovie(newest) : null;
-  }, [latestMovieQuery.data]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => setGreeting(getGreeting()), 60_000);
@@ -118,23 +104,6 @@ export default function HomePage() {
               src={practiceCatUrl}
             />
           </div>
-        </div>
-
-        <div className="relative">
-          {isAdmin ? (
-            <div className="absolute right-4 top-12 z-20 sm:right-6 sm:top-14 lg:right-8 lg:top-14">
-              <ManageHomeHeroDialog
-                featuredMovie={latestMovieQuery.data?.homeFeaturedMovie}
-                movies={latestMovieQuery.data?.movies || []}
-                mutation={movieMutations.setHomeHero}
-              />
-            </div>
-          ) : null}
-          <LatestMovieFeatureCard
-            movie={latestMovie}
-            onOpenLibrary={() => navigate("/netflix")}
-            onPlay={() => navigate(`/netflix/${latestMovie?.id}`)}
-          />
         </div>
 
         <div className="border-b border-[#e6dfd8] py-8 sm:py-10">

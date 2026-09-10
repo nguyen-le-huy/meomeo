@@ -153,6 +153,10 @@ export default function VideoLibraryContent({
   function startLearning(mode) {
     if (!modePickerVideo?._id) return;
     setModePickerVideo(null);
+    if (mode === "reading") {
+      navigate(`/videos/${modePickerVideo._id}/reading`);
+      return;
+    }
     if (mode === "bilingual") {
       navigate(`/videos/${modePickerVideo._id}/bilingual`);
       return;
