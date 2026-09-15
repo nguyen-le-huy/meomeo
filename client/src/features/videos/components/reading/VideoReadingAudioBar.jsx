@@ -63,7 +63,7 @@ export default function VideoReadingAudioBar({
       <div className="mx-auto flex max-w-5xl justify-end px-4 sm:px-6">
         <button
           aria-label={isCollapsed ? "Mở thanh audio" : "Thu gọn thanh audio"}
-          className="flex items-center gap-1 rounded-t-lg border border-b-0 border-[#e6dfd8] bg-white px-3 py-1 text-[11px] font-semibold text-coal shadow-xs hover:bg-cream"
+          className="flex items-center gap-1 rounded-t-lg border border-b-0 border-[#e6dfd8] bg-white px-3 py-1 text-[11px] font-semibold text-coal shadow-xs hover:bg-cream dark:border-[#2e2b27] dark:bg-[#1f1e1b] dark:text-[#faf9f5] dark:hover:bg-[#252320]"
           onClick={() => setIsCollapsed((prev) => !prev)}
           type="button"
         >
@@ -73,7 +73,7 @@ export default function VideoReadingAudioBar({
         </button>
       </div>
 
-      <div className="border-t border-[#e6dfd8] bg-[#ffffff]/98 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md">
+      <div className="border-t border-[#e6dfd8] bg-[#ffffff]/98 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-[#2e2b27] dark:bg-[#181715]/98">
         <div className="mx-auto max-w-5xl px-4 py-2.5 sm:px-6">
           <div className="flex flex-col gap-2">
             {/* Top row: progress slider & timestamps */}
@@ -85,7 +85,7 @@ export default function VideoReadingAudioBar({
               <div className="flex-1 flex items-center">
                 <input
                   aria-label="Tua thời gian video"
-                  className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-[#e6dfd8] accent-coral outline-none"
+                  className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-[#e6dfd8] accent-coral outline-none dark:bg-[#2e2b27]"
                   max={Math.max(1, duration || 100)}
                   min={0}
                   onChange={(e) => onSeek(Number(e.target.value))}
@@ -105,7 +105,7 @@ export default function VideoReadingAudioBar({
               {/* Left: Active segment preview */}
               <div className="hidden min-w-0 flex-1 sm:block">
                 {activeSegment ? (
-                  <p className="truncate text-xs font-medium text-coal" title={activeSegment.text}>
+                  <p className="truncate text-xs font-medium text-coal dark:text-[#faf9f5]" title={activeSegment.text}>
                     <span className="font-semibold text-coral">Đang đọc: </span>
                     {activeSegment.text}
                   </p>
@@ -118,7 +118,7 @@ export default function VideoReadingAudioBar({
               <div className="flex items-center gap-2">
                 <Button
                   aria-label="Nghe lại câu hiện tại"
-                  className="h-8 w-8 rounded-full text-ink-muted hover:bg-cream hover:text-coal"
+                  className="h-8 w-8 rounded-full text-ink-muted hover:bg-cream hover:text-coal dark:hover:bg-[#252320] dark:hover:text-[#faf9f5]"
                   disabled={!activeSegment}
                   onClick={onReplaySegment}
                   size="icon"
@@ -144,7 +144,7 @@ export default function VideoReadingAudioBar({
                 {/* Speed selector */}
                 <div className="relative" ref={speedRef}>
                   <Button
-                    className="h-8 gap-1 rounded-lg px-2 text-xs font-semibold text-coal hover:bg-cream"
+                    className="h-8 gap-1 rounded-lg px-2 text-xs font-semibold text-coal hover:bg-cream dark:text-[#faf9f5] dark:hover:bg-[#252320]"
                     onClick={() => setSpeedMenuOpen((prev) => !prev)}
                     size="sm"
                     variant="ghost"
@@ -154,14 +154,14 @@ export default function VideoReadingAudioBar({
                   </Button>
 
                   {speedMenuOpen ? (
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-28 rounded-xl border border-[#e6dfd8] bg-white p-1 shadow-lg">
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-28 rounded-xl border border-[#e6dfd8] bg-white p-1 shadow-lg dark:border-[#2e2b27] dark:bg-[#1f1e1b]">
                       {rates.map((rate) => (
                         <button
                           className={cn(
                             "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition",
                             playbackRate === rate
-                              ? "bg-cream-soft font-semibold text-coral"
-                              : "text-coal hover:bg-cream-soft",
+                              ? "bg-cream-soft font-semibold text-coral dark:bg-coral/15"
+                              : "text-coal hover:bg-cream-soft dark:hover:bg-[#252320]",
                           )}
                           key={rate}
                           onClick={() => {
@@ -185,8 +185,8 @@ export default function VideoReadingAudioBar({
                   className={cn(
                     "h-8 gap-1.5 rounded-lg px-2.5 text-xs font-medium transition",
                     autoScroll
-                      ? "bg-cream text-coral font-semibold"
-                      : "text-ink-muted hover:bg-cream hover:text-coal",
+                      ? "bg-cream text-coral font-semibold dark:bg-coral/15"
+                      : "text-ink-muted hover:bg-cream hover:text-coal dark:hover:bg-[#252320] dark:hover:text-[#faf9f5]",
                   )}
                   onClick={onToggleAutoScroll}
                   size="sm"
@@ -206,8 +206,8 @@ export default function VideoReadingAudioBar({
                   className={cn(
                     "h-8 gap-1.5 rounded-lg px-2.5 text-xs font-medium transition",
                     showMiniPlayer
-                      ? "bg-cream text-coral font-semibold"
-                      : "text-ink-muted hover:bg-cream hover:text-coal",
+                      ? "bg-cream text-coral font-semibold dark:bg-coral/15"
+                      : "text-ink-muted hover:bg-cream hover:text-coal dark:hover:bg-[#252320] dark:hover:text-[#faf9f5]",
                   )}
                   onClick={onToggleMiniPlayer}
                   size="sm"

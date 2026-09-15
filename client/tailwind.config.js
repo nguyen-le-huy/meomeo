@@ -1,26 +1,28 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
       colors: {
-        matcha: "#F5F0E8",
-        coal: "#141413",
-        canvas: "#FAF9F5",
+        matcha: "rgb(var(--color-matcha-rgb) / <alpha-value>)",
+        coal: "rgb(var(--color-coal-rgb) / <alpha-value>)",
+        canvas: "rgb(var(--color-canvas-rgb) / <alpha-value>)",
         coral: {
           DEFAULT: "#CC785C",
           dark: "#A9583E",
         },
         cream: {
-          DEFAULT: "#EFE9DE",
-          soft: "#F5F0E8",
-          strong: "#E8E0D2",
+          DEFAULT: "rgb(var(--color-cream-rgb) / <alpha-value>)",
+          soft: "rgb(var(--color-cream-soft-rgb) / <alpha-value>)",
+          strong: "rgb(var(--color-cream-strong-rgb) / <alpha-value>)",
         },
         ink: {
-          DEFAULT: "#141413",
-          body: "#3D3D3A",
-          muted: "#6C6A64",
+          DEFAULT: "rgb(var(--color-coal-rgb) / <alpha-value>)",
+          body: "rgb(var(--color-ink-body-rgb) / <alpha-value>)",
+          muted: "rgb(var(--color-ink-muted-rgb) / <alpha-value>)",
         },
+        hairline: "rgb(var(--color-hairline-rgb) / <alpha-value>)",
       },
       fontFamily: {
         sans: ['"Google Sans"', "Arial", "sans-serif"],

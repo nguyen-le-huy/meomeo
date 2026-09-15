@@ -18,11 +18,11 @@ export default function VideoColumn({
   video,
 }) {
   return (
-    <section className="min-w-0 max-w-full overflow-hidden bg-white shadow-[0_18px_45px_rgba(20,20,19,0.07)] md:rounded-2xl md:border md:border-[#e6dfd8] md:p-4 xl:flex xl:h-full xl:min-h-0 xl:flex-col">
+    <section className="min-w-0 max-w-full overflow-hidden bg-white shadow-[0_18px_45px_rgba(20,20,19,0.07)] md:rounded-2xl md:border md:border-[#e6dfd8] md:p-4 dark:border-[#2e2b27] dark:bg-[#1f1e1b] xl:flex xl:h-full xl:min-h-0 xl:flex-col">
       <div className="mb-4 hidden items-center justify-between gap-3 xl:flex">
         <h2 className="eyebrow">Video lesson</h2>
         {video.duration ? (
-          <Badge className="rounded-full bg-cream-soft px-3 py-1 text-coal">{formatDuration(video.duration)}</Badge>
+          <Badge className="rounded-full bg-cream-soft px-3 py-1 text-coal dark:border dark:border-[#2e2b27] dark:bg-[#252320] dark:text-[#faf9f5]">{formatDuration(video.duration)}</Badge>
         ) : null}
       </div>
       <div className="space-y-4">
@@ -41,7 +41,7 @@ export default function VideoColumn({
           <p className="mb-2 text-xs font-black uppercase tracking-wide text-coal/65">Điều khiển</p>
           <div className="grid grid-cols-2 gap-2">
             <Button
-              className="h-12 rounded-xl bg-coal text-white hover:bg-coral-dark"
+              className="h-12 rounded-xl bg-coal text-canvas hover:bg-coral-dark dark:bg-[#faf9f5] dark:text-[#181715]"
               disabled={!segment || !isYoutubeReady}
               onClick={onStartFirstSegment}
               type="button"
@@ -50,7 +50,7 @@ export default function VideoColumn({
               <Play size={18} /> Bắt đầu
             </Button>
             <Button
-              className="h-12 rounded-xl border-[#d8d0c6] bg-white shadow-sm hover:bg-cream-soft"
+              className="h-12 rounded-xl border-[#d8d0c6] bg-white shadow-sm hover:bg-cream-soft dark:border-[#2e2b27] dark:bg-[#252320] dark:text-[#faf9f5] dark:hover:bg-[#2c2925]"
               disabled={!segment || !isYoutubeReady}
               onClick={onReplayCurrentSegment}
               type="button"
@@ -60,7 +60,7 @@ export default function VideoColumn({
             </Button>
           </div>
         </div>
-        <div className="hidden min-h-0 border-t border-coal/10 pt-4 xl:block">
+        <div className="hidden min-h-0 border-t border-[#e6dfd8] dark:border-[#2e2b27] pt-4 xl:block">
           <p className="text-xl font-semibold leading-tight text-coal">{video.title}</p>
           <p className="mt-1 text-sm text-ink-muted">YouTube · {video.level}</p>
           {isAdmin ? (

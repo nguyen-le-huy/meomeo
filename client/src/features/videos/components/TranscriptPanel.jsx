@@ -62,13 +62,13 @@ export default function TranscriptPanel({
   }
 
   return (
-    <aside className="hidden min-h-0 flex-col rounded-2xl border border-[#e6dfd8] bg-white p-4 shadow-[0_18px_45px_rgba(20,20,19,0.07)] xl:flex xl:h-full xl:max-h-full">
+    <aside className="hidden min-h-0 flex-col rounded-2xl border border-[#e6dfd8] bg-white p-4 shadow-[0_18px_45px_rgba(20,20,19,0.07)] dark:border-[#2e2b27] dark:bg-[#1f1e1b] xl:flex xl:h-full xl:max-h-full">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="eyebrow">Bản chép</h2>
         <div className="flex items-center gap-2">
           {isAdmin ? (
             <button
-              className="inline-flex h-8 items-center gap-1 rounded-xl border border-[#e6dfd8] bg-white px-3 text-xs font-black text-coal shadow-sm transition hover:bg-cream-soft"
+              className="inline-flex h-8 items-center gap-1 rounded-xl border border-[#e6dfd8] bg-white px-3 text-xs font-black text-coal shadow-sm transition hover:bg-cream-soft dark:border-[#2e2b27] dark:bg-[#252320] dark:text-[#faf9f5] dark:hover:bg-[#2c2925]"
               onClick={() => setShowAddTranscriptForm((current) => !current)}
               type="button"
             >
@@ -77,7 +77,7 @@ export default function TranscriptPanel({
           ) : null}
           {isAdmin ? (
             <button
-              className="inline-flex h-8 items-center gap-1 rounded-xl border border-[#e6dfd8] bg-white px-3 text-xs font-black text-coal shadow-sm transition hover:bg-cream-soft disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-8 items-center gap-1 rounded-xl border border-[#e6dfd8] bg-white px-3 text-xs font-black text-coal shadow-sm transition hover:bg-cream-soft disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#2e2b27] dark:bg-[#252320] dark:text-[#faf9f5] dark:hover:bg-[#2c2925]"
               disabled={!selectedIds.length || isDeleting}
               onClick={() => deleteSegments(selectedIds)}
               type="button"
@@ -86,7 +86,7 @@ export default function TranscriptPanel({
               Xoá {selectedIds.length || ""}
             </button>
           ) : null}
-          <span className="rounded-full bg-coal px-3 py-1 text-xs font-semibold text-white">{progressPercent}%</span>
+          <span className="rounded-full bg-coal px-3 py-1 text-xs font-semibold text-canvas dark:bg-[#252320] dark:text-[#faf9f5] dark:border dark:border-[#2e2b27]">{progressPercent}%</span>
         </div>
       </div>
       {isAdmin ? (
@@ -121,7 +121,7 @@ export default function TranscriptPanel({
             <div
               className={[
                 "rounded-2xl border p-4 text-sm shadow-sm transition",
-                index === currentIndex ? "border-coral bg-coral/5 shadow-[0_10px_24px_rgba(204,120,92,0.10)]" : "border-[#e6dfd8] bg-white hover:bg-cream-soft/60",
+                index === currentIndex ? "border-coral bg-coral/5 shadow-[0_10px_24px_rgba(204,120,92,0.10)]" : "border-[#e6dfd8] bg-white hover:bg-cream-soft/60 dark:border-[#2e2b27] dark:bg-[#252320] dark:hover:bg-[#2c2925]",
               ].join(" ")}
               key={item._id}
             >
@@ -136,7 +136,7 @@ export default function TranscriptPanel({
                     />
                   ) : null}
                   <button
-                    className="rounded-xl border border-[#e6dfd8] bg-cream-soft px-3 py-1 text-sm font-black text-coal"
+                    className="rounded-xl border border-[#e6dfd8] bg-cream-soft px-3 py-1 text-sm font-black text-coal dark:border-[#38342f] dark:bg-[#2e2b27] dark:text-[#faf9f5]"
                     onClick={() => onSelect(index)}
                     type="button"
                   >
@@ -214,7 +214,7 @@ function TranscriptCreateForm({ className = "", isSaving, lastEndTime = 0, onCan
 
   return (
     <form
-      className={`${className} space-y-2 rounded-2xl border border-[#e6dfd8] bg-cream-soft p-3 text-sm shadow-sm`}
+      className={`${className} space-y-2 rounded-2xl border border-[#e6dfd8] bg-cream-soft p-3 text-sm shadow-sm dark:border-[#2e2b27] dark:bg-[#252320]`}
       onSubmit={(event) => {
         event.preventDefault();
         onSave(form);
@@ -222,9 +222,9 @@ function TranscriptCreateForm({ className = "", isSaving, lastEndTime = 0, onCan
     >
       <p className="text-xs font-black uppercase tracking-wide text-coal/65">Thêm transcript card</p>
       <textarea
-        className="min-h-20 w-full resize-none rounded-lg border border-[#e6dfd8] bg-white p-2 text-sm font-semibold outline-none"
+        className="min-h-20 w-full rounded-md border border-coal/15 bg-white p-2 text-sm text-coal outline-none dark:border-[#2e2b27] dark:bg-[#181715] dark:text-[#faf9f5]"
         onChange={(event) => setForm((current) => ({ ...current, text: event.target.value }))}
-        placeholder="Nhập nội dung transcript..."
+        placeholder="Nội dung phụ đề tiếng Anh..."
         required
         value={form.text}
       />
@@ -232,7 +232,7 @@ function TranscriptCreateForm({ className = "", isSaving, lastEndTime = 0, onCan
         <label className="space-y-1 text-xs font-bold text-coal/65">
           Bắt đầu
           <input
-            className="h-9 w-full rounded-lg border border-[#e6dfd8] bg-white px-2 text-sm font-bold text-coal outline-none"
+            className="h-9 w-full rounded-lg border border-[#e6dfd8] bg-white px-2 text-sm font-bold text-coal outline-none dark:border-[#2e2b27] dark:bg-[#181715] dark:text-[#faf9f5]"
             min="0"
             onChange={(event) => setForm((current) => ({ ...current, startTime: Number(event.target.value) }))}
             step="0.1"
@@ -243,7 +243,7 @@ function TranscriptCreateForm({ className = "", isSaving, lastEndTime = 0, onCan
         <label className="space-y-1 text-xs font-bold text-coal/65">
           Kết thúc
           <input
-            className="h-9 w-full rounded-lg border border-[#e6dfd8] bg-white px-2 text-sm font-bold text-coal outline-none"
+            className="h-9 w-full rounded-lg border border-[#e6dfd8] bg-white px-2 text-sm font-bold text-coal outline-none dark:border-[#2e2b27] dark:bg-[#181715] dark:text-[#faf9f5]"
             min="0"
             onChange={(event) => setForm((current) => ({ ...current, endTime: Number(event.target.value) }))}
             step="0.1"
@@ -264,7 +264,7 @@ function TranscriptCreateForm({ className = "", isSaving, lastEndTime = 0, onCan
         <Button disabled={!form.text.trim()} isLoading={isSaving} type="submit">
           Lưu card
         </Button>
-        <button className="h-10 rounded-lg border border-[#e6dfd8] bg-white px-3 text-sm font-black text-coal" onClick={onCancel} type="button">
+        <button className="h-10 rounded-lg border border-[#e6dfd8] bg-white px-3 text-sm font-black text-coal dark:border-[#2e2b27] dark:bg-[#252320] dark:text-[#faf9f5]" onClick={onCancel} type="button">
           Hủy
         </button>
       </div>
@@ -289,20 +289,20 @@ function TranscriptEditForm({ item, onCancel, onSave }) {
       }}
     >
       <textarea
-        className="min-h-20 w-full rounded-md border border-coal/15 p-2 text-sm outline-none"
+        className="min-h-20 w-full rounded-md border border-coal/15 bg-white p-2 text-sm text-coal outline-none dark:border-[#2e2b27] dark:bg-[#181715] dark:text-[#faf9f5]"
         onChange={(event) => setForm((current) => ({ ...current, text: event.target.value }))}
         value={form.text}
       />
       <div className="grid grid-cols-2 gap-2">
         <input
-          className="h-9 rounded-md border border-coal/15 px-2 text-sm outline-none"
+          className="h-9 rounded-md border border-coal/15 bg-white px-2 text-sm text-coal outline-none dark:border-[#2e2b27] dark:bg-[#181715] dark:text-[#faf9f5]"
           onChange={(event) => setForm((current) => ({ ...current, startTime: Number(event.target.value) }))}
           step="0.1"
           type="number"
           value={form.startTime}
         />
         <input
-          className="h-9 rounded-md border border-coal/15 px-2 text-sm outline-none"
+          className="h-9 rounded-md border border-coal/15 bg-white px-2 text-sm text-coal outline-none dark:border-[#2e2b27] dark:bg-[#181715] dark:text-[#faf9f5]"
           onChange={(event) => setForm((current) => ({ ...current, endTime: Number(event.target.value) }))}
           step="0.1"
           type="number"

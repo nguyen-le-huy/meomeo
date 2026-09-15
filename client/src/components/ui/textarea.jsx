@@ -4,7 +4,7 @@ function Textarea({ className, ...props }) {
   return (
     <textarea
       className={cn(
-        "flex min-h-20 w-full rounded-lg border border-[#d8d0c6] bg-canvas px-3.5 py-2.5 text-sm text-coal outline-none transition placeholder:text-ink-muted/70 focus:border-coral focus:ring-2 focus:ring-coral/15 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex min-h-20 w-full rounded-lg border border-[#d8d0c6] bg-canvas px-3.5 py-2.5 text-sm text-coal outline-none transition placeholder:text-ink-muted/70 focus:border-coral focus:ring-2 focus:ring-coral/15 disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#2e2b27] dark:bg-[#1a1917] dark:text-[#faf9f5] dark:placeholder:text-[#a09d96]/60",
         className,
       )}
       {...props}

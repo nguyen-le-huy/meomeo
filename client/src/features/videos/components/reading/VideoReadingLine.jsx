@@ -41,8 +41,8 @@ const VideoReadingLine = memo(function VideoReadingLine({
       className={cn(
         "group relative -mx-2.5 flex items-start justify-between rounded-lg px-2.5 py-1.5 transition-colors duration-200 sm:-mx-3 sm:px-3 sm:py-2",
         isActive
-          ? "bg-[#faeee4]/80 ring-1 ring-coral/25"
-          : "hover:bg-[#f4efe8]/70",
+          ? "bg-[#faeee4]/80 ring-1 ring-coral/25 dark:bg-coral/15 dark:ring-coral/40"
+          : "hover:bg-[#f4efe8]/70 dark:hover:bg-[#252320]",
       )}
       data-segment-id={segment._id}
       ref={lineRef}
@@ -62,9 +62,9 @@ const VideoReadingLine = memo(function VideoReadingLine({
         {showEn ? (
           <p
             className={cn(
-              "font-medium text-[#1c1917] tracking-normal transition-colors",
+              "font-medium text-coal tracking-normal transition-colors dark:text-[#faf9f5]",
               currentSize.primary,
-              isActive && "font-semibold text-coal",
+              isActive && "font-semibold text-coal dark:text-white",
             )}
           >
             {segment.text}
@@ -75,13 +75,13 @@ const VideoReadingLine = memo(function VideoReadingLine({
         {showVi ? (
           <p
             className={cn(
-              "font-normal text-[#57534e] tracking-normal",
+              "font-normal text-[#57534e] tracking-normal dark:text-[#a09d96]",
               currentSize.secondary,
-              isActive && "text-[#44403c] font-medium",
+              isActive && "text-[#44403c] font-medium dark:text-[#d5d2cc]",
             )}
           >
             {segment.translationText || (
-              <span className="italic text-[#a8a29e]">(Chưa có bản dịch tiếng Việt)</span>
+              <span className="italic text-[#a8a29e] dark:text-[#787571]">(Chưa có bản dịch tiếng Việt)</span>
             )}
           </p>
         ) : null}
@@ -91,7 +91,7 @@ const VideoReadingLine = memo(function VideoReadingLine({
       <div className="ml-2 flex shrink-0 items-center gap-1 self-start pt-1 opacity-0 transition-opacity group-hover:opacity-100">
         <button
           aria-label="Nghe câu này"
-          className="flex h-7 w-7 items-center justify-center rounded-md bg-white/90 text-coal shadow-xs hover:bg-cream hover:text-coral"
+          className="flex h-7 w-7 items-center justify-center rounded-md bg-white/90 text-coal shadow-xs hover:bg-cream hover:text-coral dark:bg-[#252320] dark:text-[#faf9f5] dark:hover:bg-[#2c2925] dark:hover:text-coral"
           onClick={(e) => {
             e.stopPropagation();
             onPlaySegment?.(segment.startTime);
@@ -105,7 +105,7 @@ const VideoReadingLine = memo(function VideoReadingLine({
         {isAdmin ? (
           <button
             aria-label="Sửa câu này"
-            className="flex h-7 w-7 items-center justify-center rounded-md bg-white/90 text-ink-muted shadow-xs hover:bg-cream hover:text-coal"
+            className="flex h-7 w-7 items-center justify-center rounded-md bg-white/90 text-ink-muted shadow-xs hover:bg-cream hover:text-coal dark:bg-[#252320] dark:text-[#a09d96] dark:hover:bg-[#2c2925] dark:hover:text-[#faf9f5]"
             onClick={(e) => {
               e.stopPropagation();
               onEdit?.(segment);

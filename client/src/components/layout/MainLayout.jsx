@@ -2,7 +2,9 @@ import { LogIn, LogOut, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button.jsx";
+import { ThemeToggle } from "../ui/ThemeToggle.jsx";
 import { useAuthStore } from "../../features/auth/stores/authStore.js";
+import { useTheme } from "../../hooks/useTheme.js";
 import DictionaryPopover from "../../features/dictionary/components/DictionaryPopover.jsx";
 
 const logoUrl = "https://res.cloudinary.com/dknin0hhf/image/upload/v1781682627/Black_Cat_Sticker_psynzk.gif";
@@ -16,11 +18,14 @@ const navItems = [
 ];
 
 function Brand({ dark = false }) {
+  const { isDark } = useTheme();
+  const shouldInvert = dark || isDark;
+
   return (
     <NavLink aria-label="Meomeo home" className="inline-flex items-center" to="/">
       <img
         alt="Meomeo"
-        className={`h-8 w-8 shrink-0 object-contain md:h-10 md:w-10 ${dark ? "brightness-0 invert" : ""}`}
+        className={`h-8 w-8 shrink-0 object-contain md:h-10 md:w-10 transition duration-200 ${shouldInvert ? "brightness-0 invert" : ""}`}
         src={logoUrl}
       />
     </NavLink>
@@ -122,6 +127,7 @@ export default function MainLayout() {
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
+            <ThemeToggle isDarkOverride={isNetflixPage} />
             <div className="relative">
               <Button
                 aria-expanded={dictionaryOpen}
@@ -132,7 +138,7 @@ export default function MainLayout() {
                 type="button"
                 variant="ghost"
               >
-                <img alt="Dịch" className={`h-5 w-5 ${isNetflixPage ? "brightness-0 invert" : ""}`} src="https://res.cloudinary.com/dknin0hhf/image/upload/v1783514800/translate_zo4sh6.png" />
+                <img alt="Dịch" className={`h-5 w-5 ${isNetflixPage ? "brightness-0 invert" : "dark:brightness-0 dark:invert"}`} src="https://res.cloudinary.com/dknin0hhf/image/upload/v1783514800/translate_zo4sh6.png" />
               </Button>
               {dictionaryOpen && dictionaryMode === "desktop" ? (
                 <DictionaryPopover onClose={() => setDictionaryOpen(false)} />
@@ -159,6 +165,7 @@ export default function MainLayout() {
           </div>
 
           <div className="flex items-center gap-1 md:hidden">
+            <ThemeToggle isDarkOverride={isNetflixPage} />
             <Button
               aria-expanded={dictionaryOpen}
               aria-label="Mở từ điển"
@@ -168,7 +175,7 @@ export default function MainLayout() {
               type="button"
               variant="ghost"
             >
-              <img alt="Dịch" className={`h-5 w-5 ${isNetflixPage ? "brightness-0 invert" : ""}`} src="https://res.cloudinary.com/dknin0hhf/image/upload/v1783514800/translate_zo4sh6.png" />
+              <img alt="Dịch" className={`h-5 w-5 ${isNetflixPage ? "brightness-0 invert" : "dark:brightness-0 dark:invert"}`} src="https://res.cloudinary.com/dknin0hhf/image/upload/v1783514800/translate_zo4sh6.png" />
             </Button>
             <Button
               aria-label="Mở menu"
@@ -230,7 +237,11 @@ export default function MainLayout() {
                 <HeaderNavLink item={item} key={item.to} onClick={() => setMobileOpen(false)} />
               ))}
             </nav>
-            <div className={`mt-auto border-t pt-5 ${isNetflixPage ? "border-white/10" : "border-[#e6dfd8]"}`}>
+            <div className={`mt-auto border-t pt-5 space-y-3 ${isNetflixPage ? "border-white/10" : "border-[#e6dfd8]"}`}>
+              <div className="flex items-center justify-between rounded-lg px-2 py-1.5 bg-cream-soft">
+                <span className="text-xs font-semibold text-ink-muted">Giao diện</span>
+                <ThemeToggle isDarkOverride={isNetflixPage} />
+              </div>
               {user?.role === "admin" ? (
                 <Button className={`w-full ${isNetflixPage ? "border-white/20 bg-transparent text-white hover:bg-white/10" : ""}`} onClick={handleLogout} type="button" variant="outline">
                   <LogOut size={16} /> Đăng xuất admin

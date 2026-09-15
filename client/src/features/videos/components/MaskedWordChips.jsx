@@ -20,8 +20,8 @@ export default function MaskedWordChips({ difficulty, onRevealWord, revealedWord
             className={[
               "inline-flex min-h-10 items-center rounded-lg border px-3 py-2 text-sm font-semibold",
               word.revealed || revealedWordIndexes.includes(index)
-                ? "border-[#bfe9c9] bg-[#dff4e4] text-[#276237]"
-                : "border-[#e6dfd8] bg-cream-soft text-coal",
+                ? "border-[#bfe9c9] bg-[#dff4e4] text-[#276237] dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                : "border-[#e6dfd8] bg-cream-soft text-coal dark:border-[#2e2b27] dark:bg-[#252320] dark:text-[#faf9f5]",
             ].join(" ")}
           >
             {word.revealed || revealedWordIndexes.includes(index) ? word.original : word.value}

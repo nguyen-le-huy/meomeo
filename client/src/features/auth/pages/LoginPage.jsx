@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Button } from "../../../components/ui/button.jsx";
+import { ThemeToggle } from "../../../components/ui/ThemeToggle.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
 import { Input } from "../../../components/ui/input.jsx";
 import { loginApi } from "../services/authApi.js";
@@ -41,11 +42,14 @@ export default function LoginPage() {
     <main className="min-h-screen bg-canvas px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
       <div className="mx-auto flex max-w-[1180px] items-center justify-between">
         <Link aria-label="Meomeo home" className="inline-flex items-center" to="/">
-          <img alt="Meomeo" className="h-10 w-10 object-contain" src="https://res.cloudinary.com/dknin0hhf/image/upload/v1781682627/Black_Cat_Sticker_psynzk.gif" />
+          <img alt="Meomeo" className="h-10 w-10 object-contain transition duration-200 dark:brightness-0 dark:invert" src="https://res.cloudinary.com/dknin0hhf/image/upload/v1781682627/Black_Cat_Sticker_psynzk.gif" />
         </Link>
-        <Button asChild variant="ghost">
-          <Link to="/"><ArrowLeft size={16} /> Về thư viện</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button asChild variant="ghost">
+            <Link to="/"><ArrowLeft size={16} /> Về thư viện</Link>
+          </Button>
+        </div>
       </div>
 
       <section className="mx-auto mt-10 grid max-w-[1180px] overflow-hidden rounded-2xl border border-[#e6dfd8] bg-cream lg:min-h-[650px] lg:grid-cols-[1.05fr_0.95fr]">

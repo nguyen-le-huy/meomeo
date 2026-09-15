@@ -231,7 +231,7 @@ export default function VideoReadingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f5] pb-28 text-[#141413]">
+    <div className="min-h-screen bg-canvas pb-28 text-coal">
       {/* Top Reading Navigation Bar */}
       <VideoReadingToolbar
         autoScroll={autoScroll}
@@ -249,9 +249,9 @@ export default function VideoReadingPage() {
       {/* Main Editorial Article Container */}
       <main className="mx-auto max-w-3xl px-4 pt-8 pb-16 sm:px-6 md:pt-12">
         {/* Article Headline & Metadata */}
-        <header className="mb-8 border-b border-[#e6dfd8] pb-6 sm:mb-10 sm:pb-8">
+        <header className="mb-8 border-b border-[#e6dfd8] pb-6 sm:mb-10 sm:pb-8 dark:border-[#2e2b27]">
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-cream px-3 py-1 text-xs font-semibold text-coral">
+            <span className="rounded-full bg-cream px-3 py-1 text-xs font-semibold text-coral dark:bg-coral/15 dark:text-coral">
               {video.channelTitle || "YouTube Transcript"}
             </span>
             <span className="flex items-center gap-1 text-xs font-medium text-ink-muted">
@@ -284,11 +284,11 @@ export default function VideoReadingPage() {
 
         {/* Translation Alert if missing */}
         {!hasTranslations ? (
-          <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-amber-900">
+          <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold">Bài đọc này hiện chưa có bản dịch tiếng Việt</p>
-                <p className="text-xs text-amber-700">
+                <p className="text-xs text-amber-700 dark:text-amber-400">
                   {isAdmin
                     ? "Bạn có thể bấm nút bên phải để AI tự động dịch song ngữ toàn bộ video."
                     : "Chờ ban quản trị cập nhật bản dịch hoặc đọc trước bản phụ đề tiếng Anh."}

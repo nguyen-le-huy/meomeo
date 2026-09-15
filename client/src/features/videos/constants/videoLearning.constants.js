@@ -32,11 +32,11 @@ export const correctStickerUrls = [
 ];
 
 export const inactiveButtonClass =
-  "inline-flex items-center gap-1 rounded-xl border border-[#d8d0c6] bg-white px-3 py-2 text-sm font-semibold shadow-sm transition hover:border-coal/20 hover:bg-cream-soft disabled:opacity-50";
+  "inline-flex items-center gap-1 rounded-xl border border-[#d8d0c6] bg-canvas px-3 py-2 text-sm font-semibold shadow-sm transition hover:border-coal/20 hover:bg-cream-soft disabled:opacity-50 dark:border-[#2e2b27] dark:bg-[#1f1e1b] dark:text-[#faf9f5]";
 
-export const compactActiveButtonClass = "rounded-lg bg-coal px-4 py-2 text-sm font-semibold capitalize text-white shadow-sm";
+export const compactActiveButtonClass = "rounded-lg bg-coal px-4 py-2 text-sm font-semibold capitalize text-canvas shadow-sm dark:bg-[#faf9f5] dark:text-[#181715]";
 
-export const compactButtonClass = "rounded-lg px-4 py-2 text-sm font-semibold capitalize text-ink-muted transition hover:bg-white hover:text-coal";
+export const compactButtonClass = "rounded-lg px-4 py-2 text-sm font-semibold capitalize text-ink-muted transition hover:bg-cream-soft hover:text-coal dark:hover:bg-[#252320] dark:hover:text-[#faf9f5]";
 
 export const toolbarButtonClass =
-  "inline-flex h-10 w-10 items-center justify-center rounded-xl text-coal transition hover:bg-cream-soft disabled:cursor-not-allowed disabled:opacity-40";
+  "inline-flex h-10 w-10 items-center justify-center rounded-xl text-coal transition hover:bg-cream-soft disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-[#252320]";

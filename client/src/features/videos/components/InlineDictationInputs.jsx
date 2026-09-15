@@ -39,7 +39,7 @@ export default function InlineDictationInputs({
       className={
         variant === "plain"
           ? "flex flex-wrap gap-2"
-          : "flex flex-wrap gap-2 rounded-2xl border border-[#e6dfd8] bg-white p-4 shadow-[0_14px_32px_rgba(20,20,19,0.06)]"
+          : "flex flex-wrap gap-2 rounded-2xl border border-[#e6dfd8] bg-white p-4 shadow-[0_14px_32px_rgba(20,20,19,0.06)] dark:border-[#2e2b27] dark:bg-[#1f1e1b]"
       }
     >
       {maskedWords.map((word, index) => {
@@ -57,7 +57,7 @@ export default function InlineDictationInputs({
           <span className="inline-flex flex-col items-center gap-1" key={`${word.original}-${index}`}>
             <button
               aria-label={`Hiện từ ${index + 1}`}
-              className="inline-flex h-6 w-6 items-center justify-center rounded-full text-ink-muted transition hover:bg-cream-soft hover:text-coal disabled:opacity-70"
+              className="inline-flex h-6 w-6 items-center justify-center rounded-full text-ink-muted transition hover:bg-cream-soft hover:text-coal disabled:opacity-70 dark:hover:bg-[#252320]"
               disabled={isRevealed}
               onClick={() => onRevealWord(index)}
               type="button"
@@ -65,7 +65,7 @@ export default function InlineDictationInputs({
               <Eye size={14} />
             </button>
             {isRevealed ? (
-              <span className="rounded-xl border border-[#bfe9c9] bg-[#d7f8df] px-3 py-2 text-sm font-black text-[#0e7a3d] shadow-sm">
+              <span className="rounded-xl border border-[#bfe9c9] bg-[#d7f8df] px-3 py-2 text-sm font-black text-[#0e7a3d] shadow-sm dark:border-emerald-800/80 dark:bg-emerald-950/60 dark:text-emerald-300">
                 {word.original}
               </span>
             ) : (
@@ -73,10 +73,10 @@ export default function InlineDictationInputs({
                 className={[
                   "inline-flex items-center rounded-xl border px-3 py-2 text-sm font-black shadow-sm transition-colors",
                   isIncorrectAttempt
-                    ? "border-red-300 bg-red-50 text-red-700"
+                    ? "border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/60 dark:text-red-300"
                     : isCorrectAttempt
-                      ? "border-[#bfe9c9] bg-[#d7f8df] text-[#0e7a3d]"
-                      : "border-[#e6dfd8] bg-[#fbfaf7] text-coal",
+                      ? "border-[#bfe9c9] bg-[#d7f8df] text-[#0e7a3d] dark:border-emerald-800/80 dark:bg-emerald-950/60 dark:text-emerald-300"
+                      : "border-[#e6dfd8] bg-[#fbfaf7] text-coal dark:border-[#38342f] dark:bg-[#181715] dark:text-[#faf9f5]",
                 ].join(" ")}
               >
                 {leading ? <span>{leading}</span> : null}
