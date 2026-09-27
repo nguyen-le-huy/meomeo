@@ -111,27 +111,48 @@ export default function LessonCard({
 
       {isAdmin ? (
         <div className="mt-3 space-y-2 border-t border-[#e6dfd8] pt-3" onClick={(event) => event.stopPropagation()}>
-          <Select
-            onValueChange={(value) => {
-              updateVideoMutation.mutate({
-                id: video._id,
-                data: { topicId: value === "__none__" ? null : value },
-              });
-            }}
-            value={currentTopicValue}
-          >
-            <SelectTrigger className="h-9 bg-white text-xs font-semibold">
-              <SelectValue placeholder="Chọn topic" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">Chưa phân loại</SelectItem>
-              {topics.map((topic) => (
-                <SelectItem key={topic._id} value={topic._id}>
-                  {topic.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 gap-2">
+            <Select
+              onValueChange={(value) => {
+                updateVideoMutation.mutate({
+                  id: video._id,
+                  data: { topicId: value === "__none__" ? null : value },
+                });
+              }}
+              value={currentTopicValue}
+            >
+              <SelectTrigger className="h-9 bg-white text-xs font-semibold">
+                <SelectValue placeholder="Chọn topic" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Chưa phân loại</SelectItem>
+                {topics.map((topic) => (
+                  <SelectItem key={topic._id} value={topic._id}>
+                    {topic.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              onValueChange={(value) => {
+                updateVideoMutation.mutate({
+                  id: video._id,
+                  data: { language: value },
+                });
+              }}
+              value={video.language || "en-US"}
+            >
+              <SelectTrigger className="h-9 bg-white text-xs font-semibold">
+                <SelectValue placeholder="Ngôn ngữ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en-US">🇺🇸 Tiếng Anh</SelectItem>
+                <SelectItem value="zh-CN">🇨🇳 Tiếng Trung</SelectItem>
+                <SelectItem value="es-ES">🇪🇸 Tây Ban Nha</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex gap-2">
             <Button
               onClick={(event) => {

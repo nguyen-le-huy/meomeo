@@ -58,6 +58,7 @@ const videoLessonSchema = new mongoose.Schema(
     isFeatured: { type: Boolean, default: false },
     isHomeFeatured: { type: Boolean, default: false },
     level: { type: String, enum: ["A1", "A2", "B1", "B2", "C1"], default: "A2" },
+    language: { type: String, default: "en-US", trim: true },
     source: { type: String, enum: ["youtube", "bunny"], default: "youtube" },
     transcriptStatus: {
       type: String,

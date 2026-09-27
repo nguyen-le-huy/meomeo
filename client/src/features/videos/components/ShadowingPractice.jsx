@@ -1,19 +1,25 @@
 import {
+  Award,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   EyeOff,
   FilePenLine,
+  GraduationCap,
   Mic,
   Pause,
   Play,
   RotateCcw,
+  Sparkles,
   Trash2,
+  Trophy,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Badge } from "../../../components/ui/badge.jsx";
 import { Button } from "../../../components/ui/button.jsx";
 import { Card, CardContent } from "../../../components/ui/card.jsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select.jsx";
 import { Spinner } from "../../../components/ui/spinner.jsx";
 import { getGuestSessionId } from "../../../utils/sessionId.js";
 import { cn } from "../../../utils/cn.js";
@@ -24,6 +30,7 @@ import {
   useSubmitShadowingSession,
   useShadowingSessions,
   useDeleteShadowingSession,
+  useUpdateVideo,
 } from "../hooks/useVideoLearning.js";
 import { formatDuration } from "../utils/dictationText.js";
 import { useAuthStore } from "../../auth/stores/authStore.js";
@@ -32,6 +39,39 @@ import SegmentYoutubePlayer from "./SegmentYoutubePlayer.jsx";
 const passingScore = 60;
 const actionButtonMotionClass = "transition-all duration-200 ease-out active:scale-[0.98] disabled:active:scale-100";
 const recordingButtonClass = "animate-pulse shadow-[0_0_0_5px_rgba(204,120,92,0.18),0_14px_32px_rgba(204,120,92,0.28)]";
+
+function getExamGrade(score) {
+  if (score >= 85) {
+    return {
+      title: "Xuất sắc (Excellent)",
+      badgeClass: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300",
+      colorClass: "text-emerald-600 dark:text-emerald-400",
+      message: "Khả năng phát âm, ngữ điệu và độ lưu loát rất tự nhiên chuẩn bản xứ!",
+    };
+  }
+  if (score >= 70) {
+    return {
+      title: "Giỏi (Very Good)",
+      badgeClass: "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300",
+      colorClass: "text-blue-600 dark:text-blue-400",
+      message: "Bắt chước ngữ điệu tốt, phát âm chuẩn xác và rõ ràng.",
+    };
+  }
+  if (score >= 60) {
+    return {
+      title: "Đạt chuẩn (Passed)",
+      badgeClass: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300",
+      colorClass: "text-amber-600 dark:text-amber-400",
+      message: "Đạt chuẩn bài thi! Bạn có thể luyện thêm các từ khó để nâng cao điểm số.",
+    };
+  }
+  return {
+    title: "Cần cải thiện (Needs Practice)",
+    badgeClass: "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300",
+    colorClass: "text-red-600 dark:text-red-400",
+    message: "Hãy nghe lại video kỹ hơn và nhại theo từng cụm nhỏ để cải thiện.",
+  };
+}
 
 function getSupportedRecordingMimeType() {
   const candidates = [
@@ -147,6 +187,7 @@ export default function ShadowingPractice({
   const assessMutation = useAssessShadowing();
   const saveProgressMutation = useSaveShadowingSessionProgress();
   const submitMutation = useSubmitShadowingSession();
+  const updateVideoMutation = useUpdateVideo();
   const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === "admin";
 
@@ -206,19 +247,74 @@ export default function ShadowingPractice({
     });
   }
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlSubMode = searchParams.get("type") || searchParams.get("subMode");
+  const [shadowingMode, setShadowingMode] = useState(() => {
+    if (urlSubMode === "exam" || urlSubMode === "practice") return urlSubMode;
+    try {
+      return localStorage.getItem("shadowing-preferred-mode") || "practice";
+    } catch {
+      return "practice";
+    }
+  });
+
+  function handleSubModeChange(nextMode) {
+    setShadowingMode(nextMode);
+    try {
+      localStorage.setItem("shadowing-preferred-mode", nextMode);
+    } catch {}
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("type", nextMode);
+    setSearchParams(nextParams, { replace: true });
+  }
+
+  function handleSelectSegment(index) {
+    if (isRecording) {
+      stopRecording({ skipSubmit: true });
+    }
+    onSelectSegment?.(index);
+    const targetSegment = segments[index];
+    if (targetSegment && playerRef?.current?.playSegment) {
+      playerRef.current.playSegment(targetSegment);
+    }
+  }
+
   const completedSegmentScores = segments
     .map((item) => getBestScore(item._id))
-    .filter((score) => score?.bestPronunciationScore >= passingScore);
+    .filter((score) => score && score.bestPronunciationScore >= passingScore);
   const completedCount = completedSegmentScores.length;
   const allCompleted = segments.length > 0 && completedCount >= segments.length;
   const unlockedUntilIndex = getFirstUnpassedIndex(segments, segmentScores);
   const currentBestScore = segment?._id ? getBestScore(segment._id)?.bestPronunciationScore : undefined;
   const hasCurrentAttempt = currentBestScore !== undefined;
   const showResultActions = hasCurrentAttempt && !isRecording && !assessMutation.isPending;
-  const isCurrentSegmentPassed = (() => {
-    const score = segment?._id ? getBestScore(segment._id) : null;
-    return score ? score.bestPronunciationScore >= passingScore : false;
-  })();
+  const isCurrentSegmentPassed = Boolean(
+    segment?._id && getBestScore(segment._id)?.bestPronunciationScore >= passingScore,
+  );
+
+  const avgPronunciation = completedSegmentScores.length
+    ? Math.round(completedSegmentScores.reduce((s, x) => s + (x.bestPronunciationScore || 0), 0) / completedSegmentScores.length)
+    : 0;
+  const avgAccuracy = completedSegmentScores.length
+    ? Math.round(completedSegmentScores.reduce((s, x) => s + (x.bestAccuracyScore || 0), 0) / completedSegmentScores.length)
+    : 0;
+  const avgFluency = completedSegmentScores.length
+    ? Math.round(completedSegmentScores.reduce((s, x) => s + (x.bestFluencyScore || 0), 0) / completedSegmentScores.length)
+    : 0;
+  const avgCompleteness = completedSegmentScores.length
+    ? Math.round(completedSegmentScores.reduce((s, x) => s + (x.bestCompletenessScore || 0), 0) / completedSegmentScores.length)
+    : 0;
+
+  function handleRetakeExam() {
+    if (!window.confirm("Bạn muốn làm lại bài thi từ đầu? Toàn bộ kết quả bài thi hiện tại sẽ được xoá để bạn thi lại.")) return;
+    stopRecording({ skipSubmit: true });
+    clearScores();
+    setSegmentScores(new Map());
+    setSubmittedSession(null);
+    setAssessmentResult(null);
+    setRecordingError("");
+    onSelectSegment(0);
+  }
 
   useEffect(() => {
     if (hasRestoredSession || !existingSession || !segments.length) return;
@@ -294,7 +390,7 @@ export default function ShadowingPractice({
 
   function handlePrimaryAction() {
     if (locked) return;
-    if (allCompleted) {
+    if (shadowingMode === "exam" && allCompleted) {
       handleSubmit();
       return;
     }
@@ -313,7 +409,7 @@ export default function ShadowingPractice({
   }
 
   function handleContinueAction() {
-    if (allCompleted) {
+    if (shadowingMode === "exam" && allCompleted) {
       handleSubmit();
       return;
     }
@@ -435,10 +531,42 @@ export default function ShadowingPractice({
     <section className="h-full w-full max-w-full overflow-hidden bg-canvas pb-20 text-coal md:overflow-y-auto md:p-4 md:pb-4 xl:overflow-hidden xl:pb-4">
       <div className="mx-auto grid w-full max-w-[1500px] gap-4 xl:h-full xl:grid-cols-[minmax(0,1fr)_360px]">
         <main className="min-w-0 overflow-hidden bg-white shadow-[0_18px_45px_rgba(20,20,19,0.07)] md:rounded-2xl md:border md:border-[#e6dfd8] md:p-4 dark:border-[#2e2b27] dark:bg-[#1f1e1b] xl:flex xl:h-full xl:min-h-0 xl:flex-col">
-          <div className="hidden items-center gap-3 pb-2 xl:flex xl:shrink-0">
-            <div className="h-1.5 w-36 rounded-full bg-coal" />
-            <p className="min-w-0 flex-1 truncate text-sm font-black text-ink-body">{video.title}</p>
-            <Badge className="rounded-full bg-coral text-white">{video.level || "A2"}</Badge>
+          <div className="flex items-center gap-2 px-3 pt-2 pb-1 md:px-0 xl:gap-3 xl:pb-2 xl:pt-0 xl:shrink-0">
+            <div className="hidden h-1.5 w-28 rounded-full bg-coal sm:block xl:w-36" />
+            <p className="min-w-0 flex-1 truncate text-xs font-black text-ink-body sm:text-sm">{video.title}</p>
+            <Badge className="shrink-0 rounded-full bg-coral px-2 text-[11px] font-bold text-white sm:text-xs">{video.level || "A2"}</Badge>
+            {isAdmin ? (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Select
+                  disabled={updateVideoMutation.isPending}
+                  onValueChange={(val) => {
+                    updateVideoMutation.mutate({
+                      id: video._id,
+                      data: { language: val },
+                    });
+                  }}
+                  value={video.language || (video.transcriptLanguage === "zh" ? "zh-CN" : video.transcriptLanguage === "es" ? "es-ES" : "en-US")}
+                >
+                  <SelectTrigger className="h-7 w-auto min-w-[125px] rounded-full border-[#e6dfd8] bg-cream-soft px-2.5 text-xs font-bold text-ink-body shadow-none hover:bg-cream dark:border-[#2e2b27] dark:bg-[#252320] dark:text-[#faf9f5]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en-US">🇺🇸 Tiếng Anh</SelectItem>
+                    <SelectItem value="zh-CN">🇨🇳 Tiếng Trung</SelectItem>
+                    <SelectItem value="es-ES">🇪🇸 Tây Ban Nha</SelectItem>
+                  </SelectContent>
+                </Select>
+                {updateVideoMutation.isPending && <Spinner className="h-3.5 w-3.5 text-coral" />}
+              </div>
+            ) : (
+              <Badge className="shrink-0 rounded-full border border-[#e6dfd8] bg-cream-soft text-xs font-semibold text-ink-body dark:border-[#2e2b27] dark:bg-[#252320] dark:text-[#faf9f5]">
+                {video.language === "zh-CN" || video.transcriptLanguage === "zh"
+                  ? "🇨🇳 Tiếng Trung"
+                  : video.language === "es-ES" || video.transcriptLanguage === "es"
+                  ? "🇪🇸 Tây Ban Nha"
+                  : "🇺🇸 Tiếng Anh"}
+              </Badge>
+            )}
           </div>
 
           <SegmentYoutubePlayer
@@ -454,6 +582,63 @@ export default function ShadowingPractice({
           />
 
           <div className="min-h-0 space-y-3 px-3 py-4 md:px-0 xl:flex xl:flex-1 xl:flex-col xl:overflow-y-auto xl:py-2">
+            {/* Mode Switcher Tabs */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-[#e6dfd8] pb-3 dark:border-[#2e2b27]">
+              <div className="inline-flex rounded-xl bg-cream-soft p-1 dark:bg-[#252320]">
+                <button
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-black transition-all",
+                    shadowingMode === "practice"
+                      ? "bg-white text-coal shadow-sm dark:bg-[#181715] dark:text-[#faf9f5]"
+                      : "text-ink-muted hover:text-coal dark:hover:text-[#faf9f5]",
+                  )}
+                  onClick={() => handleSubModeChange("practice")}
+                  type="button"
+                >
+                  <Sparkles className={shadowingMode === "practice" ? "text-amber-500" : ""} size={14} />
+                  Luyện tập
+                </button>
+                <button
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-black transition-all",
+                    shadowingMode === "exam"
+                      ? "bg-coral text-white shadow-sm"
+                      : "text-ink-muted hover:text-coal dark:hover:text-[#faf9f5]",
+                  )}
+                  onClick={() => handleSubModeChange("exam")}
+                  type="button"
+                >
+                  <GraduationCap size={14} />
+                  Làm bài thi
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {shadowingMode === "practice" ? (
+                  <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                    <Sparkles size={13} /> Tự do chọn câu & thử lại
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-coral/10 px-2.5 py-1 text-xs font-black text-coral">
+                    <GraduationCap size={13} /> Câu {currentIndex + 1} / {segments.length}
+                  </span>
+                )}
+
+                <Button
+                  className={cn(
+                    "gap-1 text-xs font-bold xl:hidden",
+                    isTranscriptVisible ? "text-coal" : "text-ink-muted",
+                  )}
+                  onClick={() => setIsTranscriptVisible((current) => !current)}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  <EyeOff size={14} /> {isTranscriptVisible ? "Ẩn text" : "Hiện text"}
+                </Button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
               <div aria-hidden="true" />
               <div className="flex items-center justify-center gap-2">
@@ -487,12 +672,16 @@ export default function ShadowingPractice({
                 >
                   {isPlayerPlaying ? <Pause size={18} /> : <Play size={18} />}
                 </Button>
-	                <Button
-	                  className="h-11 w-11 rounded-full border-[#e6dfd8] bg-white shadow-sm transition hover:bg-cream-soft dark:border-[#2e2b27] dark:bg-[#252320] dark:text-[#faf9f5] dark:hover:bg-[#2c2925]"
-	                  disabled={!isYoutubeReady || locked || !isCurrentSegmentPassed}
-	                  onClick={onNext}
-	                  size="icon"
-	                  type="button"
+                <Button
+                  className="h-11 w-11 rounded-full border-[#e6dfd8] bg-white shadow-sm transition hover:bg-cream-soft dark:border-[#2e2b27] dark:bg-[#252320] dark:text-[#faf9f5] dark:hover:bg-[#2c2925]"
+                  disabled={
+                    !isYoutubeReady ||
+                    locked ||
+                    (shadowingMode === "exam" ? !isCurrentSegmentPassed : currentIndex >= segments.length - 1)
+                  }
+                  onClick={onNext}
+                  size="icon"
+                  type="button"
                   variant="outline"
                 >
                   <ChevronRight size={18} />
@@ -539,6 +728,23 @@ export default function ShadowingPractice({
               </div>
             ) : null}
 
+            {/* Exam Summary Report when completed in exam mode */}
+            {shadowingMode === "exam" && allCompleted ? (
+              <ExamSummaryCard
+                allCompleted={allCompleted}
+                avgAccuracy={avgAccuracy}
+                avgCompleteness={avgCompleteness}
+                avgFluency={avgFluency}
+                avgPronunciation={avgPronunciation}
+                isLocked={locked}
+                isSubmitting={submitMutation.isPending}
+                onRetakeExam={handleRetakeExam}
+                onSubmitExam={handleSubmit}
+                onSwitchToPractice={() => handleSubModeChange("practice")}
+                submitError={submitMutation.isError ? (submitMutation.error?.response?.data?.message || "Không thể nộp bài.") : null}
+              />
+            ) : null}
+
             <div className="max-h-[calc(100dvh-430px)] min-h-[210px] space-y-3 overflow-y-auto overscroll-contain pb-2 pr-1 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:pb-0 xl:pr-0">
               <CurrentTurnCard
                 assessmentResult={assessmentResult}
@@ -549,21 +755,26 @@ export default function ShadowingPractice({
                 isLocked={locked}
                 isRecording={isRecording}
                 isTranscriptVisible={isTranscriptVisible}
+                language={video?.language || (video?.transcriptLanguage === "zh" ? "zh-CN" : video?.transcriptLanguage === "es" ? "es-ES" : "en-US")}
                 recordingError={recordingError}
                 segment={activeSegment}
+                shadowingMode={shadowingMode}
+                totalSegments={segments.length}
               />
-	              <MobileTranscriptFeed
-	                currentIndex={currentIndex}
-	                maxSelectableIndex={unlockedUntilIndex}
-	                isTranscriptVisible={isTranscriptVisible}
-	                onSelectSegment={onSelectSegment}
-	                segments={segments}
+              <MobileTranscriptFeed
+                currentIndex={currentIndex}
+                isTranscriptVisible={isTranscriptVisible}
+                language={video?.language || (video?.transcriptLanguage === "zh" ? "zh-CN" : video?.transcriptLanguage === "es" ? "es-ES" : "en-US")}
+                maxSelectableIndex={shadowingMode === "practice" ? segments.length : unlockedUntilIndex}
+                onSelectSegment={handleSelectSegment}
+                segments={segments}
+                shadowingMode={shadowingMode}
               />
             </div>
 
             <div className="hidden shrink-0 items-center justify-center gap-3 pt-2 xl:flex">
               {showResultActions ? (
-                isCurrentSegmentPassed ? (
+                shadowingMode === "practice" || isCurrentSegmentPassed ? (
                   <>
                     <Button
                       className={cn("h-12 min-w-44 rounded-xl border-[#e6dfd8] bg-white text-sm font-black uppercase text-ink-muted shadow-sm hover:bg-cream-soft dark:border-[#2e2b27] dark:bg-[#252320] dark:text-[#faf9f5] dark:hover:bg-[#2c2925]", actionButtonMotionClass)}
@@ -582,7 +793,7 @@ export default function ShadowingPractice({
                       type="button"
                     >
                       {!submitMutation.isPending && (allCompleted ? <CheckCircle2 size={16} /> : <ChevronRight size={16} />)}
-                      {allCompleted ? "Hoàn thành" : "Tiếp tục"}
+                      {allCompleted ? (shadowingMode === "exam" ? "Hoàn thành bài thi" : "Hoàn thành") : "Tiếp tục"}
                     </Button>
                   </>
                 ) : (
@@ -628,32 +839,45 @@ export default function ShadowingPractice({
 
         <aside className="hidden min-h-0 flex-col rounded-2xl border border-[#e6dfd8] bg-white p-4 shadow-[0_18px_45px_rgba(20,20,19,0.07)] dark:border-[#2e2b27] dark:bg-[#1f1e1b] xl:flex xl:h-full xl:max-h-full">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="eyebrow">Bản chép</h2>
+            <div>
+              <h2 className="eyebrow">{shadowingMode === "exam" ? "Bài thi Shadowing" : "Bản chép & Luyện tập"}</h2>
+              {shadowingMode === "exam" ? (
+                <p className="text-[11px] font-semibold text-ink-muted">
+                  Đã đạt {completedCount}/{segments.length} câu
+                </p>
+              ) : null}
+            </div>
             <span className="rounded-full bg-coal px-3 py-1 text-sm font-black text-canvas dark:bg-[#252320] dark:text-[#faf9f5] dark:border dark:border-[#2e2b27]">
-              {progressPercent}%
+              {shadowingMode === "exam" ? `${Math.round((completedCount / (segments.length || 1)) * 100)}%` : `${progressPercent}%`}
             </span>
           </div>
           <div className="mb-4 h-2 overflow-hidden rounded-full bg-cream-soft dark:bg-[#252320]">
-            <div className="h-full rounded-full bg-coral" style={{ width: `${progressPercent}%` }} />
+            <div
+              className="h-full rounded-full bg-coral transition-all duration-300"
+              style={{
+                width: `${shadowingMode === "exam" ? Math.round((completedCount / (segments.length || 1)) * 100) : progressPercent}%`,
+              }}
+            />
           </div>
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {segments.length ? (
               segments.map((item, index) => {
-	                const score = getBestScore(item._id);
-	                const bestScore = score?.bestPronunciationScore;
-	                const passed = bestScore !== undefined && bestScore >= passingScore;
-	                const isSelectable = locked || index <= unlockedUntilIndex;
-	                return (
-	                  <TranscriptCard
-	                    bestScore={bestScore}
-	                    index={index}
-	                    isActive={index === currentIndex}
-	                    isSelectable={isSelectable}
-	                    isLocked={locked}
-	                    item={item}
-	                    key={item._id}
-                    onSelectSegment={onSelectSegment}
+                const score = getBestScore(item._id);
+                const bestScore = score?.bestPronunciationScore;
+                const passed = bestScore !== undefined && bestScore >= passingScore;
+                const isSelectable = locked || shadowingMode === "practice" || index <= unlockedUntilIndex;
+                return (
+                  <TranscriptCard
+                    bestScore={bestScore}
+                    index={index}
+                    isActive={index === currentIndex}
+                    isLocked={locked}
+                    isSelectable={isSelectable}
+                    item={item}
+                    key={item._id}
+                    onSelectSegment={handleSelectSegment}
                     passed={passed}
+                    shadowingMode={shadowingMode}
                   />
                 );
               })
@@ -664,24 +888,24 @@ export default function ShadowingPractice({
             )}
           </div>
 
-          {allCompleted && !locked ? (
+          {allCompleted && !locked && shadowingMode === "exam" ? (
             <div className="mt-4 border-t border-[#e6dfd8] pt-4 dark:border-[#2e2b27]">
               <div className="flex items-center justify-between text-sm font-semibold text-ink-muted">
-                <span>Điểm TB</span>
-	                <span className="text-lg font-black text-coal">
-	                  {Math.round(completedSegmentScores.reduce((s, x) => s + x.bestPronunciationScore, 0) / completedSegmentScores.length)}
-	                </span>
+                <span>Điểm TB bài thi</span>
+                <span className="text-lg font-black text-coal dark:text-[#faf9f5]">
+                  {avgPronunciation}đ
+                </span>
               </div>
               <Button
-                className="mt-6 w-full rounded-full bg-coal text-canvas hover:bg-coal/90 dark:bg-[#faf9f5] dark:text-[#181715]"
+                className="mt-6 w-full rounded-full bg-coral text-white hover:bg-coral-dark"
                 disabled={locked}
                 isLoading={submitMutation.isPending}
-                onClick={() => submitMutation.mutate()}
+                onClick={handleSubmit}
                 size="lg"
                 type="button"
               >
                 {!submitMutation.isPending && <CheckCircle2 size={18} />}
-                Nộp bài
+                Nộp bài thi
               </Button>
               {submitMutation.isError ? (
                 <p className="mt-2 text-sm font-semibold text-red-600 dark:text-red-400">
@@ -711,7 +935,7 @@ export default function ShadowingPractice({
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-mono text-ink-muted">{s.sessionId.slice(0, 12)}…</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-black text-coal">{s.averageScore}đ</span>
+                        <span className="font-black text-coal dark:text-[#faf9f5]">{s.averageScore}đ</span>
                         <button
                           className="text-red-500 hover:text-red-700"
                           disabled={deleteMutation.isPending}
@@ -724,11 +948,11 @@ export default function ShadowingPractice({
                         </button>
                       </div>
                     </div>
-	                    <p className="mt-1 text-ink-muted">
-	                      {s.status === "completed" ? "Done" : "Đang học"} · {s.averageScore || 0}đ TB ·{" "}
-	                      {s.completedSegments || 0}/{s.totalSegments || s.segments.length} đoạn
-	                      {s.submittedAt ? ` · ${new Date(s.submittedAt).toLocaleString("vi-VN")}` : ""}
-	                    </p>
+                    <p className="mt-1 text-ink-muted">
+                      {s.status === "completed" ? "Done" : "Đang học"} · {s.averageScore || 0}đ TB ·{" "}
+                      {s.completedSegments || 0}/{s.totalSegments || s.segments.length} đoạn
+                      {s.submittedAt ? ` · ${new Date(s.submittedAt).toLocaleString("vi-VN")}` : ""}
+                    </p>
                   </div>
                 ))}
                 {!sessionsLoading && allSessions?.length === 0 ? (
@@ -741,7 +965,7 @@ export default function ShadowingPractice({
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#e6dfd8] bg-white/95 p-3 shadow-[0_-18px_36px_rgba(20,20,19,0.10)] backdrop-blur dark:border-[#2e2b27] dark:bg-[#181715]/95 xl:hidden">
-        {hasStarted && showResultActions && isCurrentSegmentPassed ? (
+        {hasStarted && showResultActions && (shadowingMode === "practice" || isCurrentSegmentPassed) ? (
           <div className="grid grid-cols-[0.85fr_1fr] gap-2">
             <Button
               className={cn("h-14 rounded-2xl border-[#e6dfd8] bg-white text-base font-black text-ink-muted shadow-sm dark:border-[#2e2b27] dark:bg-[#252320] dark:text-[#faf9f5]", actionButtonMotionClass)}
@@ -760,7 +984,7 @@ export default function ShadowingPractice({
               type="button"
             >
               {!submitMutation.isPending && (allCompleted ? <CheckCircle2 size={17} /> : <ChevronRight size={17} />)}
-              {allCompleted ? "Hoàn thành" : "Tiếp tục"}
+              {allCompleted ? (shadowingMode === "exam" ? "Hoàn thành bài thi" : "Hoàn thành") : "Tiếp tục"}
             </Button>
           </div>
         ) : (
@@ -772,7 +996,7 @@ export default function ShadowingPractice({
             )}
             disabled={!activeSegment || !isYoutubeReady || locked}
             isLoading={assessMutation.isPending || submitMutation.isPending}
-            onClick={hasStarted && showResultActions && !isCurrentSegmentPassed ? handleRetryAction : handlePrimaryAction}
+            onClick={hasStarted && showResultActions && !(shadowingMode === "practice" || isCurrentSegmentPassed) ? handleRetryAction : handlePrimaryAction}
             type="button"
           >
             {!(assessMutation.isPending || submitMutation.isPending) && (
@@ -792,6 +1016,121 @@ export default function ShadowingPractice({
   );
 }
 
+function ExamSummaryCard({
+  allCompleted,
+  avgAccuracy,
+  avgCompleteness,
+  avgFluency,
+  avgPronunciation,
+  isLocked,
+  isSubmitting,
+  onRetakeExam,
+  onSubmitExam,
+  onSwitchToPractice,
+  submitError,
+}) {
+  const grade = getExamGrade(avgPronunciation);
+
+  return (
+    <Card className="overflow-hidden rounded-2xl border-2 border-coral/30 bg-gradient-to-b from-white via-white to-coral/5 shadow-[0_20px_50px_rgba(204,120,92,0.14)] dark:from-[#1f1e1b] dark:to-coral/10">
+      <CardContent className="p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e6dfd8] pb-4 dark:border-[#2e2b27]">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-coral/10 text-coral">
+              <Trophy size={22} />
+            </div>
+            <div>
+              <h3 className="font-display text-base font-black text-coal dark:text-[#faf9f5]">
+                Bảng điểm bài thi Shadowing
+              </h3>
+              <p className="text-xs font-semibold text-ink-muted">
+                Bạn đã hoàn thành kiểm tra tất cả các câu trong bài
+              </p>
+            </div>
+          </div>
+          <Badge className={cn("rounded-full px-3 py-1 text-xs font-black", grade.badgeClass)}>
+            {grade.title}
+          </Badge>
+        </div>
+
+        <div className="my-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border border-[#e6dfd8] bg-cream-soft/50 p-3 text-center dark:border-[#2e2b27] dark:bg-[#252320]">
+            <span className="text-[11px] font-black uppercase text-ink-muted">Điểm tổng</span>
+            <p className={cn("mt-1 text-2xl font-black", grade.colorClass)}>
+              {avgPronunciation}
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#e6dfd8] bg-cream-soft/50 p-3 text-center dark:border-[#2e2b27] dark:bg-[#252320]">
+            <span className="text-[11px] font-black uppercase text-ink-muted">Độ chuẩn xác</span>
+            <p className="mt-1 text-2xl font-black text-coal dark:text-[#faf9f5]">
+              {avgAccuracy}
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#e6dfd8] bg-cream-soft/50 p-3 text-center dark:border-[#2e2b27] dark:bg-[#252320]">
+            <span className="text-[11px] font-black uppercase text-ink-muted">Độ lưu loát</span>
+            <p className="mt-1 text-2xl font-black text-coal dark:text-[#faf9f5]">
+              {avgFluency}
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#e6dfd8] bg-cream-soft/50 p-3 text-center dark:border-[#2e2b27] dark:bg-[#252320]">
+            <span className="text-[11px] font-black uppercase text-ink-muted">Độ trọn vẹn</span>
+            <p className="mt-1 text-2xl font-black text-coal dark:text-[#faf9f5]">
+              {avgCompleteness}
+            </p>
+          </div>
+        </div>
+
+        <p className="mb-5 rounded-xl bg-cream-soft/60 p-3 text-center text-xs font-semibold text-ink-body dark:bg-[#252320] dark:text-[#dfdcd6]">
+          {grade.message}
+        </p>
+
+        <div className="flex flex-wrap items-center justify-end gap-2.5">
+          <Button
+            className="rounded-xl text-xs font-bold"
+            onClick={onSwitchToPractice}
+            type="button"
+            variant="ghost"
+          >
+            <Sparkles size={14} /> Chuyển sang Luyện tập
+          </Button>
+
+          {!isLocked ? (
+            <>
+              <Button
+                className="rounded-xl border-[#e6dfd8] text-xs font-bold dark:border-[#2e2b27]"
+                onClick={onRetakeExam}
+                type="button"
+                variant="outline"
+              >
+                <RotateCcw size={14} /> Thi lại từ đầu
+              </Button>
+              <Button
+                className="gap-1.5 rounded-xl bg-coral text-xs font-black text-white hover:bg-coral-dark"
+                isLoading={isSubmitting}
+                onClick={onSubmitExam}
+                type="button"
+              >
+                {!isSubmitting && <CheckCircle2 size={15} />}
+                Nộp bài thi & Lưu kết quả
+              </Button>
+            </>
+          ) : (
+            <div className="flex items-center gap-1.5 text-xs font-black text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 size={16} /> Đã nộp bài thi
+            </div>
+          )}
+        </div>
+
+        {submitError ? (
+          <p className="mt-3 text-right text-xs font-semibold text-red-600 dark:text-red-400">
+            {submitError}
+          </p>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
 function CurrentTurnCard({
   assessmentResult,
   bestScore,
@@ -801,12 +1140,15 @@ function CurrentTurnCard({
   isLocked,
   isRecording,
   isTranscriptVisible,
+  language = "en-US",
   recordingError,
   segment,
+  shadowingMode,
+  totalSegments,
 }) {
   if (!segment) {
     return (
-      <Card className="rounded-2xl border-dashed border-[#e6dfd8] bg-white shadow-[0_14px_32px_rgba(20,20,19,0.06)] dark:border-[#2e2b27] dark:bg-[#1f1e1b]">
+      <Card className="rounded-2xl border-dashed border-[#e6dfd8] bg-white shadow-[0_14px_32px_rgba(204,120,92,0.06)] dark:border-[#2e2b27] dark:bg-[#1f1e1b]">
         <CardContent className="p-5 text-sm font-bold text-ink-muted">Chưa có transcript để luyện shadowing.</CardContent>
       </Card>
     );
@@ -823,7 +1165,9 @@ function CurrentTurnCard({
             <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-cream-soft px-2 text-xs font-black text-ink-muted dark:bg-[#252320] dark:text-[#a09d96]">
               {segment.index || currentIndex + 1}
             </span>
-            <span className="text-xs font-black uppercase tracking-[0.14em] text-ink-muted">Lượt của bạn</span>
+            <span className="text-xs font-black uppercase tracking-[0.14em] text-ink-muted">
+              {shadowingMode === "exam" ? `Câu thi ${segment.index || currentIndex + 1} / ${totalSegments}` : "Lượt của bạn"}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             {isLocked ? (
@@ -840,15 +1184,27 @@ function CurrentTurnCard({
           </div>
         </div>
 
-        {showAttempted && !isCurrentPassed ? (
-          <p className="text-sm font-bold text-[#e9414f] dark:text-red-400">
-            Điểm {bestScore} — cần ≥ {passingScore} để qua đoạn này
-          </p>
+        {showAttempted ? (
+          shadowingMode === "exam" ? (
+            !isCurrentPassed ? (
+              <p className="text-sm font-bold text-[#e9414f] dark:text-red-400">
+                Điểm {bestScore} — cần ≥ {passingScore} để qua câu này trong bài thi
+              </p>
+            ) : (
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                Đạt chuẩn ({bestScore}đ) — Bạn có thể thử lại hoặc bấm Tiếp tục
+              </p>
+            )
+          ) : (
+            <p className={cn("text-xs font-semibold", bestScore >= passingScore ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400")}>
+              Điểm gần nhất: {bestScore}đ {bestScore >= passingScore ? "• Phát âm tốt!" : "• Chú ý màu từ bên dưới để phát âm chính xác hơn"}
+            </p>
+          )
         ) : null}
 
         {isTranscriptVisible ? (
           <div className="space-y-2">
-            <WordLine assessmentWords={assessmentResult?.words} text={segment.text} />
+            <WordLine assessmentWords={assessmentResult?.words} language={language} text={segment.text} />
             <TranslationLine text={segment.translationText} />
           </div>
         ) : (
@@ -862,7 +1218,7 @@ function CurrentTurnCard({
   );
 }
 
-function TranscriptCard({ bestScore, index, isActive, isLocked, isSelectable, item, onSelectSegment, passed }) {
+function TranscriptCard({ bestScore, index, isActive, isLocked, isSelectable, item, onSelectSegment, passed, shadowingMode }) {
   const scoreClass = bestScore !== undefined
     ? (passed ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300" : "bg-[#ffe2e2] text-[#e9414f] dark:bg-red-950/60 dark:text-red-300")
     : "bg-cream-soft text-ink-body dark:bg-[#252320] dark:text-[#faf9f5]";
@@ -871,7 +1227,7 @@ function TranscriptCard({ bestScore, index, isActive, isLocked, isSelectable, it
       className={cn(
         "rounded-2xl border bg-white shadow-sm transition hover:bg-cream-soft/50 dark:border-[#2e2b27] dark:bg-[#252320] dark:hover:bg-[#2c2925]",
         isActive ? "border-coral bg-coral/5 shadow-[0_10px_24px_rgba(204,120,92,0.10)] dark:border-coral dark:bg-coral/10" : "border-[#e6dfd8]",
-        !isSelectable && "opacity-60",
+        !isSelectable && "opacity-60 cursor-not-allowed",
       )}
     >
       <CardContent className="p-3">
@@ -908,7 +1264,7 @@ function TranscriptCard({ bestScore, index, isActive, isLocked, isSelectable, it
   );
 }
 
-function MobileTranscriptFeed({ currentIndex, isTranscriptVisible, maxSelectableIndex, onSelectSegment, segments }) {
+function MobileTranscriptFeed({ currentIndex, isTranscriptVisible, language = "en-US", maxSelectableIndex, onSelectSegment, segments, shadowingMode }) {
   const upcomingSegments = segments.slice(currentIndex + 1);
   if (!upcomingSegments.length) return null;
 
@@ -916,7 +1272,7 @@ function MobileTranscriptFeed({ currentIndex, isTranscriptVisible, maxSelectable
     <div className="space-y-2 pb-2 xl:hidden">
       {upcomingSegments.map((item, offset) => {
         const index = currentIndex + offset + 1;
-        const isSelectable = index <= maxSelectableIndex;
+        const isSelectable = shadowingMode === "practice" || index <= maxSelectableIndex;
 
         return (
         <Card
@@ -929,7 +1285,9 @@ function MobileTranscriptFeed({ currentIndex, isTranscriptVisible, maxSelectable
                 <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-cream-soft px-2 text-xs font-black text-ink-muted dark:bg-[#181715] dark:text-[#a09d96]">
                   {item.index || index + 1}
                 </span>
-                <span className="text-xs font-black uppercase tracking-wide text-[#a3acba] dark:text-[#a09d96]">Tiếp theo</span>
+                <span className="text-xs font-black uppercase tracking-wide text-[#a3acba] dark:text-[#a09d96]">
+                  {shadowingMode === "exam" ? `Câu tiếp theo (#${item.index || index + 1})` : "Tiếp theo"}
+                </span>
               </div>
               <Button
                 className="h-8 px-2 text-ink-muted hover:text-coal dark:hover:text-[#faf9f5]"
@@ -943,7 +1301,7 @@ function MobileTranscriptFeed({ currentIndex, isTranscriptVisible, maxSelectable
             </div>
             {isTranscriptVisible ? (
               <div className="space-y-2">
-                <WordLine isMuted={index !== currentIndex} text={item.text} />
+                <WordLine isMuted={index !== currentIndex} language={language} text={item.text} />
                 <TranslationLine isMuted={index !== currentIndex} text={item.translationText} />
               </div>
             ) : (
@@ -972,8 +1330,24 @@ function getWordColorClass(color) {
   return "";
 }
 
-function WordLine({ assessmentWords, isMuted = false, text }) {
-  const words = String(text || "").split(/\s+/).filter(Boolean);
+function splitTextWords(text, language = "en-US") {
+  const raw = String(text || "").trim();
+  if (!raw) return [];
+  if (language && language.toLowerCase().startsWith("zh")) {
+    if (typeof Intl !== "undefined" && Intl.Segmenter) {
+      const segmenter = new Intl.Segmenter("zh-CN", { granularity: "word" });
+      const segments = Array.from(segmenter.segment(raw))
+        .map((s) => s.segment.trim())
+        .filter(Boolean);
+      if (segments.length > 0) return segments;
+    }
+    return Array.from(raw).filter((ch) => !/\s/.test(ch));
+  }
+  return raw.split(/\s+/).filter(Boolean);
+}
+
+function WordLine({ assessmentWords, isMuted = false, language = "en-US", text }) {
+  const words = splitTextWords(text, language);
 
   return (
     <div className={cn("flex flex-wrap gap-x-1.5 gap-y-1 text-base font-semibold leading-6", isMuted ? "text-[#687386] dark:text-[#a09d96]" : "text-coal dark:text-[#faf9f5]")}>

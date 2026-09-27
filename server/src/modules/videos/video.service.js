@@ -168,6 +168,7 @@ export async function createVideo(data, adminUser) {
     duration: metadata.video.duration,
     viewCount: metadata.video.viewCount || 0,
     level: data.level || "A2",
+    language: data.language || "en-US",
     transcriptStatus,
     transcriptLanguage: "en",
     transcriptSource: hasManualTranscripts ? "manual" : "",
@@ -221,6 +222,7 @@ export async function updateVideo(id, data) {
   if (data.title !== undefined) video.title = data.title;
   if (data.description !== undefined) video.description = data.description;
   if (data.level !== undefined) video.level = data.level;
+  if (data.language !== undefined) video.language = data.language;
   if (data.isPublished !== undefined) {
     if (data.isPublished && video.transcriptStatus !== "completed") {
       throw createHttpError(400, "Cannot publish video before transcript is completed");

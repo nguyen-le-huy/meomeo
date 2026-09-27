@@ -287,7 +287,7 @@ export default function VideoLearningPage() {
         onReadyChange={setIsYoutubeReady}
         onReplayCurrentSegment={replayCurrentSegment}
         onResumeSegment={resumeShadowingSegment}
-        onSelectSegment={selectSegment}
+        onSelectSegment={playSegmentAt}
         onStartFirstSegment={startFirstSegment}
         onToggleCurrentSegmentPlayback={toggleCurrentSegmentPlayback}
         playerRef={playerRef}
@@ -353,7 +353,7 @@ export default function VideoLearningPage() {
           onCreate={createSegment}
           onDelete={deleteSegments}
           onEdit={setEditingSegmentId}
-          onSelect={selectSegment}
+          onSelect={playSegmentAt}
           onUpdate={updateSegment}
           progressPercent={progressPercent}
           segments={segments}

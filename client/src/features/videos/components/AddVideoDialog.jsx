@@ -32,6 +32,7 @@ export default function AddVideoDialog({ createVideoMutation, onVideoCreated, to
     title: "",
     description: "",
     level: "A2",
+    language: "en-US",
     isPublished: true,
   });
 
@@ -54,7 +55,7 @@ export default function AddVideoDialog({ createVideoMutation, onVideoCreated, to
       transcripts: manualTranscripts.segments.length ? manualTranscripts.segments : undefined,
     });
     const video = response.data.data.video;
-    setVideoForm({ topicId: "__none__", youtubeUrl: "", title: "", description: "", level: "A2", isPublished: true });
+    setVideoForm({ topicId: "__none__", youtubeUrl: "", title: "", description: "", level: "A2", language: "en-US", isPublished: true });
     setTranscriptText("");
     setIsOpen(false);
     onVideoCreated(video);
@@ -82,7 +83,7 @@ export default function AddVideoDialog({ createVideoMutation, onVideoCreated, to
             required
             value={videoForm.youtubeUrl}
           />
-          <div className="grid gap-3 md:grid-cols-[1fr_120px]">
+          <div className="grid gap-3 md:grid-cols-[1fr_120px_140px]">
             <Input
               onChange={(event) => setVideoForm((current) => ({ ...current, title: event.target.value }))}
               placeholder="Title tùy chỉnh"
@@ -101,6 +102,19 @@ export default function AddVideoDialog({ createVideoMutation, onVideoCreated, to
                     {item}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            <Select
+              onValueChange={(value) => setVideoForm((current) => ({ ...current, language: value }))}
+              value={videoForm.language}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Ngôn ngữ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en-US">🇺🇸 Tiếng Anh</SelectItem>
+                <SelectItem value="zh-CN">🇨🇳 Tiếng Trung</SelectItem>
+                <SelectItem value="es-ES">🇪🇸 Tây Ban Nha</SelectItem>
               </SelectContent>
             </Select>
           </div>

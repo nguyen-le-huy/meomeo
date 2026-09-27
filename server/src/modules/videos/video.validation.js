@@ -24,6 +24,7 @@ const videoBodySchema = z
     title: z.string().trim().optional(),
     description: z.string().optional(),
     level: z.enum(["A1", "A2", "B1", "B2", "C1"]).optional(),
+    language: z.string().trim().optional(),
     isPublished: z.preprocess(optionalBoolean, z.boolean().optional()),
     transcripts: z.array(transcriptInputSchema).optional(),
   })

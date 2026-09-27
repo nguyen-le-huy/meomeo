@@ -7,11 +7,23 @@ import ffmpegStatic from "ffmpeg-static";
 import speechSdk from "microsoft-cognitiveservices-speech-sdk";
 import { ShadowingAttempt } from "./shadowingAttempt.model.js";
 import { TranscriptSegment } from "../transcripts/transcriptSegment.model.js";
+import { VideoLesson } from "../videos/video.model.js";
 import { uploadMedia } from "../media/media.service.js";
 import { config } from "../../config/env.js";
 import { createHttpError } from "../../utils/createHttpError.js";
 
 const passingScore = 60;
+
+export function resolveAzureLocale(language = "en-US") {
+  const normalized = String(language || "").toLowerCase().trim();
+  if (normalized.startsWith("zh")) return "zh-CN";
+  if (normalized.startsWith("es")) return normalized.includes("mx") ? "es-MX" : "es-ES";
+  if (normalized.startsWith("fr")) return "fr-FR";
+  if (normalized.startsWith("de")) return "de-DE";
+  if (normalized.startsWith("ja")) return "ja-JP";
+  if (normalized.startsWith("ko")) return "ko-KR";
+  return "en-US";
+}
 
 function normalizeWord(value) {
   return String(value || "")
@@ -86,9 +98,10 @@ function recognizeOnce(recognizer) {
   });
 }
 
-async function assessWithAzure({ audioBuffer, referenceText }) {
+async function assessWithAzure({ audioBuffer, referenceText, language = "en-US" }) {
   const speechConfig = speechSdk.SpeechConfig.fromSubscription(config.azureSpeech.key, config.azureSpeech.region);
-  speechConfig.speechRecognitionLanguage = "en-US";
+  const locale = resolveAzureLocale(language);
+  speechConfig.speechRecognitionLanguage = locale;
 
   const audioConfig = speechSdk.AudioConfig.fromWavFileInput(audioBuffer);
   const pronunciationConfig = new speechSdk.PronunciationAssessmentConfig(
@@ -130,9 +143,23 @@ function getBestAzureResult(azureResult) {
   return azureResult?.NBest?.[0] || {};
 }
 
-function mapWordResults(referenceText, azureWords = []) {
+function mapWordResults(referenceText, azureWords = [], language = "en-US") {
   const remainingAzureWords = [...azureWords];
-  const referenceWords = String(referenceText || "").split(/\s+/).filter(Boolean);
+  let referenceWords = [];
+  const locale = resolveAzureLocale(language);
+
+  if (locale.startsWith("zh")) {
+    if (typeof Intl !== "undefined" && Intl.Segmenter) {
+      const segmenter = new Intl.Segmenter("zh-CN", { granularity: "word" });
+      referenceWords = Array.from(segmenter.segment(String(referenceText || "")))
+        .map((s) => s.segment.trim())
+        .filter(Boolean);
+    } else {
+      referenceWords = Array.from(String(referenceText || "")).filter((c) => /\S/.test(c));
+    }
+  } else {
+    referenceWords = String(referenceText || "").split(/\s+/).filter(Boolean);
+  }
 
   return referenceWords.map((displayWord) => {
     const normalizedReference = normalizeWord(displayWord);
@@ -170,10 +197,15 @@ export async function assessShadowing({ sessionId, segmentId, audioFile }) {
     throw createHttpError(501, "Azure Speech is not configured yet");
   }
 
+  const video = await VideoLesson.findById(segment.videoId).select("language transcriptLanguage");
+  const language = video?.language || video?.transcriptLanguage || "en-US";
+  const locale = resolveAzureLocale(language);
+
   const wavBuffer = await convertAudioToWavBuffer(audioFile);
   const azureResult = await assessWithAzure({
     audioBuffer: wavBuffer,
     referenceText: segment.text,
+    language: locale,
   });
   const bestResult = getBestAzureResult(azureResult);
   const pronunciation = bestResult.PronunciationAssessment || {};
@@ -181,7 +213,7 @@ export async function assessShadowing({ sessionId, segmentId, audioFile }) {
   const accuracyScore = Math.round(Number(pronunciation.AccuracyScore || 0));
   const fluencyScore = Math.round(Number(pronunciation.FluencyScore || 0));
   const completenessScore = Math.round(Number(pronunciation.CompletenessScore || 0));
-  const words = mapWordResults(segment.text, bestResult.Words || []);
+  const words = mapWordResults(segment.text, bestResult.Words || [], locale);
   const media = await uploadMedia(audioFile);
 
   const attempt = await ShadowingAttempt.create({
@@ -207,5 +239,6 @@ export async function assessShadowing({ sessionId, segmentId, audioFile }) {
     passed: attempt.passed,
     recognizedText: bestResult.Display || "",
     words,
+    language: locale,
   };
 }

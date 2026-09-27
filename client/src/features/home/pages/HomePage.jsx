@@ -20,7 +20,7 @@ const lessonCategories = [
   },
   {
     title: "Netflix Chill",
-    description: "Xem phim đi",
+    description: "Luyện nghe qua phim ảnh",
     to: "/netflix",
     gifUrl: "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExMTVpMG5zbnpyaWYzeDd1dTFuZWVmMDJzYzR3aWtjM2t5YXhoMXBmOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/YqhFT4yCuUO51FazQz/giphy.gif",
     className: "border-[#d7c2c2] bg-[#fff1f1] text-[#341717] dark:border-[#521c1c] dark:bg-[#281313] dark:text-[#fcd4d4]",
@@ -29,7 +29,7 @@ const lessonCategories = [
   },
   {
     title: "Từ vựng mỗi ngày",
-    description: "Học từ vựng nhiều vô",
+    description: "Mở rộng vốn từ ngữ cảnh",
     to: "/vocabulary",
     gifUrl: "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExYWtlMzdneWtnZDJqajA0OXlsYTZlcjVmNjBodTBwZmtsMnJzZ2JmOCZlcD12MV9pbnRlcm5hbF9naWQmY3Q9cw/ggpoVsIg0LwtHfTBEY/giphy.gif",
     className: "border-[#a9ddd3] bg-[#eafaf6] text-[#153b35] dark:border-[#1e4740] dark:bg-[#122623] dark:text-[#c4efe7]",
@@ -37,8 +37,8 @@ const lessonCategories = [
     layerClassName: "bg-[#62c6b4] dark:bg-[#287d6f]",
   },
   {
-    title: "Ebook",
-    description: "Đọc sách cho tau",
+    title: "Ebook Song Ngữ",
+    description: "Đọc sách nâng cao phản xạ",
     to: "/ebooks",
     gifUrl: "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExenhqbHFkMHQyZ285b2libW52YnptYnRvY21sM25pd21tbGo3cmZsNiZlcD12MV9pbnRlcm5hbF9naWQmY3Q9cw/RXG7XYXYV4JQBt2i7h/giphy.gif",
     className: "border-[#cfc1ef] bg-[#f4f0ff] text-[#30264d] dark:border-[#3d2f60] dark:bg-[#201833] dark:text-[#dfd6f7]",
@@ -47,7 +47,7 @@ const lessonCategories = [
   },
   {
     title: "Từ đã tra",
-    description: "Lịch sử tra từ",
+    description: "Lịch sử và sổ tay từ vựng",
     to: "/dictionary/history",
     gifUrl: "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExM2xmNWM1c3lhbXFmdm1yMmZ3cmN0MHl0ajJiaXFuZXkwNXJkNGY1OSZlcD12MV9pbnRlcm5hbF9naWQmY3Q9cw/H2Uj3lf7jVd62AAivr/giphy.gif",
     className: "border-[#efd38b] bg-[#fff8df] text-[#443711] dark:border-[#4d3d14] dark:bg-[#2b220d] dark:text-[#f7e8be]",
@@ -59,12 +59,12 @@ const lessonCategories = [
 function getGreeting(date = new Date()) {
   const hour = date.getHours();
 
-  if (hour >= 4 && hour < 12) return "chào buổi sáng";
-  if (hour >= 12 && hour < 14) return "chào buổi trưa";
-  if (hour >= 14 && hour < 18) return "chào buổi chiều";
-  if (hour >= 18) return "chào buổi tối";
+  if (hour >= 4 && hour < 12) return "Chào buổi sáng";
+  if (hour >= 12 && hour < 14) return "Chào buổi trưa";
+  if (hour >= 14 && hour < 18) return "Chào buổi chiều";
+  if (hour >= 18 && hour < 22) return "Chào buổi tối";
 
-  return "chào buổi đêm";
+  return "Chào buổi tối";
 }
 
 export default function HomePage() {
@@ -84,10 +84,10 @@ export default function HomePage() {
         <div className="grid gap-5 overflow-hidden border-b border-[#e6dfd8] pb-8 pt-8 sm:gap-7 sm:pb-10 sm:pt-12 lg:min-h-[340px] lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.78fr)] lg:items-center lg:gap-10 lg:overflow-visible lg:pb-14 lg:pt-4">
           <div className="max-w-3xl">
             <h1 className="display-heading max-w-[340px] text-[30px] leading-[0.96] tracking-normal sm:max-w-xl sm:text-5xl lg:max-w-none lg:text-[56px] lg:leading-[0.96] xl:text-[64px]">
-              meo meo {greeting}<br />Vào học ngay cho tớ.
+              {greeting}!<br />Sẵn sàng luyện tập hôm nay?
             </h1>
             <p className="mt-2 max-w-xl text-sm font-semibold leading-5 text-ink-body sm:mt-6 sm:text-base sm:leading-7">
-              Chịu khó học vào con ranh này
+              Luyện nghe chép chính tả (Dictation) & phát âm (Shadowing) qua video mỗi ngày.
             </p>
           </div>
           <div className="flex items-end justify-between gap-3 overflow-hidden sm:gap-5 lg:justify-end lg:gap-4 lg:overflow-visible">
